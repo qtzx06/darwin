@@ -1,0 +1,46 @@
+{
+  "session_id": "session_20251025_140642",
+  "start_time": "2025-10-25T14:06:42.914254",
+  "agents": {
+    "agent-f8748261-ed3b-46a5-922b-833b16ae0878": {
+      "name": "Frontend Specialist",
+      "type": "coding",
+      "initialized_at": "2025-10-25T14:06:42.951244",
+      "activities": [],
+      "artifacts_created": 0,
+      "messages_sent": 0,
+      "messages_received": 0
+    },
+    "agent-080437d1-83d3-4c74-83d6-71741ce36cd3": {
+      "name": "Backend Architect",
+      "type": "coding",
+      "initialized_at": "2025-10-25T14:06:42.951572",
+      "activities": [],
+      "artifacts_created": 0,
+      "messages_sent": 0,
+      "messages_received": 0
+    },
+    "agent-aa65ae8b-be7a-49c4-a36e-728efcaf09bb": {
+      "name": "DevOps Engineer",
+      "type": "coding",
+      "initialized_at": "2025-10-25T14:06:42.951706",
+      "activities": [],
+      "artifacts_created": 0,
+      "messages_sent": 0,
+      "messages_received": 0
+    },
+    "agent-11e3c16e-b130-4338-b9b4-efbcf57d581c": {
+      "name": "Full-Stack Developer",
+      "type": "coding",
+      "initialized_at": "2025-10-25T14:06:42.951831",
+      "activities": [],
+      "artifacts_created": 0,
+      "messages_sent": 0,
+      "messages_received": 0
+    }
+  },
+  "tasks": [],
+  "artifacts": [],
+  "messages": [],
+  "events": []
+}
