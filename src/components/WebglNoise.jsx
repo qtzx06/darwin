@@ -14,7 +14,7 @@ const WebglNoise = () => {
     const isMobile = window.innerWidth < 640;
 
     class Molecule extends THREE.Object3D {
-      radius = isMobile ? 0.4 : 0.5;
+      radius = isMobile ? 0.5 : 0.65;
       detail = 40;
       particleSizeMin = 0.01;
       particleSizeMax = 0.08;
@@ -30,7 +30,9 @@ const WebglNoise = () => {
         this.material = new THREE.PointsMaterial({
           map: this.dot(),
           blending: THREE.AdditiveBlending,
-          color: 0xFFFFFF, // Pure white color
+          color: 0xAAAAAA, // Dimmed white color
+          opacity: 0.7,
+          transparent: true,
           depthTest: false
         });
 
@@ -220,7 +222,13 @@ float snoise(vec3 v) {
           antialias: true
         });
         this.renderer.setPixelRatio(window.devicePixelRatio);
+        this.renderer.setClearColor(0x000000, 0);
         mountRef.current?.appendChild(this.renderer.domElement);
+
+        // Set canvas background to pure black
+        if (this.renderer.domElement) {
+          this.renderer.domElement.style.backgroundColor = '#000000';
+        }
 
         this.molecule = new Molecule();
         this.scene.add(this.molecule);
@@ -253,8 +261,8 @@ float snoise(vec3 v) {
     <div
       ref={mountRef}
       style={{
-        width: window.innerWidth < 640 ? '8rem' : '12rem',
-        height: window.innerWidth < 640 ? '8rem' : '12rem'
+        width: window.innerWidth < 640 ? '12rem' : '16rem',
+        height: window.innerWidth < 640 ? '12rem' : '16rem'
       }}
     />
   );
