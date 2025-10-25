@@ -47,35 +47,47 @@ class PersonalityAgent:
         self.work_summary = ""
         self.message_count = 0
     
-    async def work_on_task(self, task_description: str, other_agents: list):
-        """Main work loop with personality-driven communication and COLLABORATION."""
+    async def work_on_subtask(self, subtask, other_agents: list, orchestrator):
+        """Work on a specific subtask with focused collaboration."""
         try:
-            print(f"[DEBUG] {self.name} starting work on: {task_description}")
+            print(f"[DEBUG] {self.name} starting subtask: {subtask.title}")
             self.is_working = True
-            self.current_task = task_description
+            self.current_task = subtask.description
             
-            # Create initial artifact
+            # Create initial artifact for this subtask
             from src.artifacts.artifact_manager import ArtifactType
             self.current_artifact_id = await self.artifact_manager.create_artifact(
                 agent_id=self.agent_id,
                 artifact_type=ArtifactType.CODE
             )
             
-            # Send a personality-driven message to the team
-            await self._send_personality_message(task_description, other_agents)
+            # Send focused message about the specific subtask
+            await self._send_subtask_message(subtask, other_agents)
             
-            # COLLABORATION LOOP - agents work together!
-            await self._collaborative_work_loop(task_description, other_agents)
+            # Work on the subtask with Letta
+            response = await self._call_letta_api_for_subtask(subtask)
             
-            # Send completion message with personality
-            await self._send_completion_message(other_agents)
+            # Process and store the code
+            if response:
+                await self._process_and_store_code(response)
+                
+                # Share work with team and get feedback
+                await self._share_subtask_work(subtask, other_agents)
+                await self._listen_for_subtask_feedback(subtask, other_agents)
+                
+                # Iterate based on feedback
+                await self._iterate_subtask_based_on_feedback(subtask, other_agents)
+            
+            # Mark subtask as completed
+            orchestrator.mark_subtask_completed(subtask.id)
+            await self._send_subtask_completion_message(subtask, other_agents)
             
             self.is_working = False
-            return {"success": True, "agent_id": self.agent_id, "task": task_description}
+            return {"success": True, "agent_id": self.agent_id, "subtask": subtask.title}
             
         except Exception as e:
             self.is_working = False
-            print(f"❌ {self.name} error: {e}")
+            print(f"❌ {self.name} subtask error: {e}")
             return {"success": False, "error": str(e)}
     
     async def _collaborative_work_loop(self, task: str, other_agents: list):
@@ -200,43 +212,59 @@ Remember: This is a COLLABORATIVE effort - build something that works together!
                 await self._respond_to_feedback(msg, other_agents)
     
     async def _respond_to_feedback(self, message, other_agents: list):
-        """Respond to feedback from other agents."""
-        feedback_responses = {
-            "Alex The Hacker": [
-                "Thanks for the feedback! 😎 I'll improve it!",
-                "Good point! 💪 Let me make it even better!",
-                "Appreciate it! 🚀 I'll refine this!"
-            ],
-            "Dr Sarah The Nerd": [
-                "Excellent feedback! I'll incorporate your suggestions.",
-                "Thank you for the input. I'll enhance the implementation.",
-                "Great observation! I'll improve the architecture."
-            ],
-            "Jake The Speed Demon": [
-                "Got it! ⚡ I'll make it even FASTER!",
-                "Thanks! 💥 I'll optimize it more!",
-                "Appreciate it! 🏃‍♂️ I'll make it BETTER!"
-            ],
-            "Maya The Artist": [
-                "Beautiful feedback! ✨ I'll make it even more elegant!",
-                "Thanks! 🎨 I'll improve the design!",
-                "Great input! 🌟 I'll make it more beautiful!"
-            ]
-        }
+        """Respond to feedback from other agents - LLM GENERATED!"""
+        # Generate a response using Letta based on personality and the feedback received
+        feedback_prompt = f"""
+You are {self.name} with this personality: {self.personality}
+
+You just received this feedback from {message.from_agent}: "{message.content}"
+
+Generate a short, personality-driven response showing you appreciate the feedback and will improve.
+Keep it under 80 characters.
+
+Examples of your style:
+- If you're Alex The Hacker: Use emojis, be sarcastic but appreciative
+- If you're Dr Sarah The Nerd: Be technical and methodical about improvements
+- If you're Jake The Speed Demon: Be energetic about making it better/faster
+- If you're Maya The Artist: Be creative and appreciative of the feedback
+
+Generate a response now:
+"""
         
-        import random
-        response = random.choice(feedback_responses.get(self.name, ["Thanks for the feedback!"]))
+        try:
+            loop = asyncio.get_event_loop()
+            response = await loop.run_in_executor(
+                None,
+                lambda: self.client.agents.messages.create(
+                    agent_id=self.agent_id,
+                    messages=[{"role": "user", "content": feedback_prompt}]
+                )
+            )
+            
+            # Extract the response from Letta
+            response_text = ""
+            for msg in response.messages:
+                if hasattr(msg, 'content'):
+                    response_text = msg.content.strip()
+                    break
+            
+            if not response_text:
+                response_text = "Thanks for the feedback!"
+            
+        except Exception as e:
+            print(f"❌ {self.name} feedback response error: {e}")
+            response_text = "Thanks for the feedback!"
         
         from src.core.message_system import MessageType
         await self.message_broker.send_message(
             self.agent_id,
             message.from_agent,
-            response,
+            response_text,
             MessageType.COORDINATION
         )
         self.message_count += 1
         
-        print(f"💬 {self.name} responds: {response}")
+        print(f"💬 {self.name} responds: {response_text}")
     
     async def _iterate_based_on_feedback(self, task: str, other_agents: list):
         """Iterate on the work based on team feedback."""
@@ -271,33 +299,51 @@ Make improvements and show your personality in the code!
         except Exception as e:
             print(f"❌ {self.name} improvement error: {e}")
     
-    async def _send_personality_message(self, task: str, other_agents: list):
-        """Send a personality-driven message to other agents."""
-        messages = {
-            "Alex The Hacker": [
-                f"Yo team! 🚀 Got assigned: '{task}' - time to make this code SICK! 💻",
-                f"Alright nerds, let's see who can write the cleanest code for: '{task}' 😎",
-                f"Challenge accepted! 💪 Working on: '{task}' - may the best coder win! 🏆"
-            ],
-            "Dr Sarah The Nerd": [
-                f"Fascinating! I've been assigned: '{task}' - I'll ensure comprehensive documentation and type safety.",
-                f"Excellent! I'll approach '{task}' with proper architecture patterns and extensive testing coverage.",
-                f"Intriguing assignment: '{task}' - I'll implement this with enterprise-grade best practices."
-            ],
-            "Jake The Speed Demon": [
-                f"LET'S GO! ⚡ Got '{task}' - I'll have this shipped in 10 minutes! 🏃‍♂️",
-                f"BOOM! 💥 '{task}' incoming - prepare for some FAST, optimized code!",
-                f"Challenge mode ACTIVATED! 🎯 '{task}' - watch me code at LIGHT SPEED! ⚡"
-            ],
-            "Maya The Artist": [
-                f"Beautiful! ✨ I'll make '{task}' absolutely gorgeous - both code and UI! 🎨",
-                f"Ooh, '{task}' - I can already see the elegant architecture in my mind! 💭",
-                f"Perfect! 🌟 '{task}' will be a masterpiece of clean, beautiful code! 🖼️"
-            ]
-        }
+    async def _send_subtask_message(self, subtask, other_agents: list):
+        """Send a focused message about the specific subtask being worked on."""
+        message_prompt = f"""
+You are {self.name} with this personality: {self.personality}
+
+You just got assigned this SPECIFIC SUBTASK:
+Title: {subtask.title}
+Description: {subtask.description}
+
+Generate a short, technical message to your team about what you're working on.
+Be specific about the technical aspects and show your personality.
+Keep it under 120 characters.
+
+Examples of your style:
+- If you're Alex The Hacker: Be sarcastic but technical, mention specific tech
+- If you're Dr Sarah The Nerd: Be methodical and detailed about the approach
+- If you're Jake The Speed Demon: Be energetic about the tech and speed
+- If you're Maya The Artist: Be creative about the design/UI aspects
+
+Generate a message now:
+"""
         
-        import random
-        message = random.choice(messages.get(self.name, [f"Working on: {task}"]))
+        try:
+            loop = asyncio.get_event_loop()
+            response = await loop.run_in_executor(
+                None,
+                lambda: self.client.agents.messages.create(
+                    agent_id=self.agent_id,
+                    messages=[{"role": "user", "content": message_prompt}]
+                )
+            )
+            
+            # Extract the message from response
+            message = ""
+            for msg in response.messages:
+                if hasattr(msg, 'content'):
+                    message = msg.content.strip()
+                    break
+            
+            if not message:
+                message = f"Working on: {subtask.title}"
+            
+        except Exception as e:
+            print(f"❌ {self.name} subtask message error: {e}")
+            message = f"Working on: {subtask.title}"
         
         # Send to all other agents
         for agent in other_agents:
@@ -306,6 +352,272 @@ Make improvements and show your personality in the code!
                 await self.message_broker.send_message(
                     self.agent_id, 
                     agent.agent_id, 
+                    message,
+                    MessageType.COORDINATION
+                )
+                self.message_count += 1
+        
+        print(f"💬 {self.name}: {message}")
+    
+    async def _call_letta_api_for_subtask(self, subtask):
+        """Call Letta API with subtask-specific prompt."""
+        subtask_prompt = f"""
+You are {self.name}, a fullstack developer with this personality: {self.personality}
+
+You need to work on this SPECIFIC SUBTASK:
+Title: {subtask.title}
+Description: {subtask.description}
+
+Your coding style: {self.coding_style}
+
+Generate the code for this subtask. Be specific and technical.
+Include comments that reflect your personality.
+Focus on the exact requirements of this subtask.
+
+Generate the code now:
+"""
+        
+        try:
+            loop = asyncio.get_event_loop()
+            response = await loop.run_in_executor(
+                None,
+                lambda: self.client.agents.messages.create(
+                    agent_id=self.agent_id,
+                    messages=[{"role": "user", "content": subtask_prompt}]
+                )
+            )
+            
+            print(f"✅ {self.name} got response from Letta for subtask: {subtask.title}")
+            return response
+            
+        except Exception as e:
+            print(f"❌ {self.name} Letta API error for subtask: {e}")
+            return None
+    
+    async def _share_subtask_work(self, subtask, other_agents: list):
+        """Share the completed subtask work with the team."""
+        share_prompt = f"""
+You are {self.name} with this personality: {self.personality}
+
+You just completed this subtask: {subtask.title}
+Description: {subtask.description}
+
+Generate a message to your team sharing what you built.
+Be specific about the technical implementation and show your personality.
+Keep it under 100 characters.
+
+Examples of your style:
+- If you're Alex The Hacker: Be proud but sarcastic about the tech
+- If you're Dr Sarah The Nerd: Be detailed about the implementation
+- If you're Jake The Speed Demon: Brag about how fast you built it
+- If you're Maya The Artist: Be proud of the beautiful code/design
+
+Generate a message now:
+"""
+        
+        try:
+            loop = asyncio.get_event_loop()
+            response = await loop.run_in_executor(
+                None,
+                lambda: self.client.agents.messages.create(
+                    agent_id=self.agent_id,
+                    messages=[{"role": "user", "content": share_prompt}]
+                )
+            )
+            
+            # Extract the message from response
+            message = ""
+            for msg in response.messages:
+                if hasattr(msg, 'content'):
+                    message = msg.content.strip()
+                    break
+            
+            if not message:
+                message = f"Completed: {subtask.title}"
+            
+        except Exception as e:
+            print(f"❌ {self.name} share message error: {e}")
+            message = f"Completed: {subtask.title}"
+        
+        # Send to all other agents
+        for agent in other_agents:
+            if agent.agent_id != self.agent_id:
+                from src.core.message_system import MessageType
+                await self.message_broker.send_message(
+                    self.agent_id, 
+                    agent.agent_id, 
+                    message,
+                    MessageType.COORDINATION
+                )
+                self.message_count += 1
+        
+        print(f"💬 {self.name}: {message}")
+    
+    async def _listen_for_subtask_feedback(self, subtask, other_agents: list):
+        """Listen for feedback on the specific subtask work."""
+        # Get recent messages
+        recent_messages = await self.message_broker.get_recent_messages(limit=10)
+        
+        for msg in recent_messages:
+            if (msg.from_agent != self.agent_id and 
+                msg.to_agent == self.agent_id and
+                "feedback" in msg.content.lower() or 
+                "review" in msg.content.lower() or
+                "suggestion" in msg.content.lower()):
+                
+                print(f"👂 {self.name} heard feedback: {msg.from_agent} said '{msg.content}'")
+                await self._respond_to_subtask_feedback(msg, subtask, other_agents)
+    
+    async def _respond_to_subtask_feedback(self, message, subtask, other_agents: list):
+        """Respond to feedback about specific subtask work - with REAL CRITICISM!"""
+        feedback_prompt = f"""
+You are {self.name} with this personality: {self.personality}
+
+You just received this feedback about your subtask work:
+Subtask: {subtask.title}
+Feedback from {message.from_agent}: "{message.content}"
+
+Generate a response that shows your personality. You can:
+- Agree and be appreciative
+- Disagree and be critical (but constructive)
+- Be sarcastic if that fits your personality
+- Be defensive if you think the feedback is wrong
+
+Be realistic - sometimes feedback is good, sometimes it's not.
+Show your personality in the response.
+Keep it under 100 characters.
+
+Examples of your style:
+- If you're Alex The Hacker: Be sarcastic, maybe defensive
+- If you're Dr Sarah The Nerd: Be methodical about the feedback
+- If you're Jake The Speed Demon: Be competitive about your work
+- If you're Maya The Artist: Be passionate about your creative choices
+
+Generate a response now:
+"""
+        
+        try:
+            loop = asyncio.get_event_loop()
+            response = await loop.run_in_executor(
+                None,
+                lambda: self.client.agents.messages.create(
+                    agent_id=self.agent_id,
+                    messages=[{"role": "user", "content": feedback_prompt}]
+                )
+            )
+            
+            # Extract the response from Letta
+            response_text = ""
+            for msg in response.messages:
+                if hasattr(msg, 'content'):
+                    response_text = msg.content.strip()
+                    break
+            
+            if not response_text:
+                response_text = "Thanks for the feedback!"
+            
+        except Exception as e:
+            print(f"❌ {self.name} feedback response error: {e}")
+            response_text = "Thanks for the feedback!"
+        
+        from src.core.message_system import MessageType
+        await self.message_broker.send_message(
+            self.agent_id,
+            message.from_agent,
+            response_text,
+            MessageType.COORDINATION
+        )
+        self.message_count += 1
+        
+        print(f"💬 {self.name} responds: {response_text}")
+    
+    async def _iterate_subtask_based_on_feedback(self, subtask, other_agents: list):
+        """Iterate on subtask work based on team feedback."""
+        # Get updated context
+        shared_context = await self.shared_memory.read("project_context") or {}
+        
+        # Make improvements based on feedback
+        improvement_prompt = f"""
+Based on team feedback, improve your work on this subtask: {subtask.title}
+
+Current implementation: {shared_context.get(f"{self.agent_id}_status", "No current work")}
+
+Generate improved code that addresses any feedback received.
+Show your personality in the comments.
+Focus on the specific subtask requirements.
+
+Generate improved code now:
+"""
+        
+        try:
+            loop = asyncio.get_event_loop()
+            response = await loop.run_in_executor(
+                None,
+                lambda: self.client.agents.messages.create(
+                    agent_id=self.agent_id,
+                    messages=[{"role": "user", "content": improvement_prompt}]
+                )
+            )
+            
+            # Process and store improved code
+            if response:
+                await self._process_and_store_code(response)
+                print(f"🔄 {self.name} made improvements to {subtask.title} based on team feedback!")
+                
+        except Exception as e:
+            print(f"❌ {self.name} improvement error: {e}")
+    
+    async def _send_subtask_completion_message(self, subtask, other_agents: list):
+        """Send completion message for specific subtask."""
+        completion_prompt = f"""
+You are {self.name} with this personality: {self.personality}
+
+You just completed this subtask: {subtask.title}
+Description: {subtask.description}
+
+Generate a completion message to your team.
+Be specific about what you delivered and show your personality.
+Keep it under 100 characters.
+
+Examples of your style:
+- If you're Alex The Hacker: Be proud but sarcastic about the delivery
+- If you're Dr Sarah The Nerd: Be detailed about what was delivered
+- If you're Jake The Speed Demon: Brag about the speed and efficiency
+- If you're Maya The Artist: Be proud of the beautiful work delivered
+
+Generate a completion message now:
+"""
+        
+        try:
+            loop = asyncio.get_event_loop()
+            response = await loop.run_in_executor(
+                None,
+                lambda: self.client.agents.messages.create(
+                    agent_id=self.agent_id,
+                    messages=[{"role": "user", "content": completion_prompt}]
+                )
+            )
+            
+            # Extract the message from response
+            message = ""
+            for msg in response.messages:
+                if hasattr(msg, 'content'):
+                    message = msg.content.strip()
+                    break
+            
+            if not message:
+                message = f"Completed: {subtask.title}"
+            
+        except Exception as e:
+            print(f"❌ {self.name} completion message error: {e}")
+            message = f"Completed: {subtask.title}"
+        
+        for agent in other_agents:
+            if agent.agent_id != self.agent_id:
+                from src.core.message_system import MessageType
+                await self.message_broker.send_message(
+                    self.agent_id,
+                    agent.agent_id,
                     message,
                     MessageType.COORDINATION
                 )
@@ -366,32 +678,47 @@ Remember: You're working with a team of other developers, so make your code coll
             print(f"✅ {self.name} generated code and stored in artifact")
     
     async def _send_completion_message(self, other_agents: list):
-        """Send completion message with personality."""
-        completion_messages = {
-            "Alex The Hacker": [
-                "BOOM! 💥 Code is DONE and it's CLEAN! Check out my masterpiece! 😎",
-                "Mission accomplished! 🎯 My code is ready - hope you can keep up! 😏",
-                "DONE! 🚀 Just shipped some BEAUTIFUL code - enjoy! 💻✨"
-            ],
-            "Dr Sarah The Nerd": [
-                "Implementation complete with comprehensive documentation and type safety.",
-                "Task finished with enterprise-grade architecture and extensive error handling.",
-                "Code delivered with full test coverage and detailed technical documentation."
-            ],
-            "Jake The Speed Demon": [
-                "SHIPPED! ⚡ That was FAST - code is ready and OPTIMIZED! 🏃‍♂️💨",
-                "DONE in record time! 🏆 My code is FAST and EFFICIENT! ⚡",
-                "BOOM! 💥 Delivered LIGHTNING FAST code - beat that! ⚡"
-            ],
-            "Maya The Artist": [
-                "Finished! ✨ The code is absolutely BEAUTIFUL and elegant! 🎨",
-                "Complete! 🌟 Created a masterpiece of clean, artistic code! 🖼️",
-                "Done! 💎 The code is as beautiful as a diamond - pure elegance! ✨"
-            ]
-        }
+        """Send completion message with personality - LLM GENERATED!"""
+        # Generate a completion message using Letta based on personality and what was accomplished
+        completion_prompt = f"""
+You are {self.name} with this personality: {self.personality}
+
+You just completed your task and want to announce it to your team. 
+Show your personality and excitement about what you accomplished.
+Keep it under 100 characters.
+
+Examples of your style:
+- If you're Alex The Hacker: Use emojis, be sarcastic and funny about your success
+- If you're Dr Sarah The Nerd: Be technical and methodical about what you delivered
+- If you're Jake The Speed Demon: Be energetic and competitive about your speed
+- If you're Maya The Artist: Be creative and proud of the beautiful work
+
+Generate a completion message now:
+"""
         
-        import random
-        message = random.choice(completion_messages.get(self.name, ["Task completed!"]))
+        try:
+            loop = asyncio.get_event_loop()
+            response = await loop.run_in_executor(
+                None,
+                lambda: self.client.agents.messages.create(
+                    agent_id=self.agent_id,
+                    messages=[{"role": "user", "content": completion_prompt}]
+                )
+            )
+            
+            # Extract the message from response
+            message = ""
+            for msg in response.messages:
+                if hasattr(msg, 'content'):
+                    message = msg.content.strip()
+                    break
+            
+            if not message:
+                message = "Task completed!"
+            
+        except Exception as e:
+            print(f"❌ {self.name} completion message error: {e}")
+            message = "Task completed!"
         
         for agent in other_agents:
             if agent.agent_id != self.agent_id:
@@ -490,22 +817,207 @@ class PersonalityPMSimulator:
             return False
     
     async def run_simulation(self, task: str):
-        """Run the personality-driven simulation."""
-        print(f"\n🚀 Starting PERSONALITY-DRIVEN simulation for: {task}")
+        """Run the SYNCHRONOUS CONVERSATIONAL simulation with commentator."""
+        print(f"\n🚀 Starting SYNCHRONOUS CONVERSATIONAL simulation for: {task}")
         
-        # Start all agents working on the same task
-        agent_tasks = []
-        for agent in self.agents:
-            task_coro = agent.work_on_task(task, self.agents)
-            agent_tasks.append(asyncio.create_task(task_coro))
+        # Create orchestrator
+        from src.agents.orchestrator_agent import OrchestrationAgent
+        orchestrator = OrchestrationAgent(
+            client=self.client,
+            agent_id="orchestrator",
+            logger=self.logger
+        )
         
-        # Wait for all agents to complete
-        results = await asyncio.gather(*agent_tasks, return_exceptions=True)
+        # Create commentator
+        from src.agents.commentator_agent import CommentatorAgent
+        commentator = CommentatorAgent(
+            client=self.client,
+            agent_id="commentator",
+            logger=self.logger
+        )
         
-        # Display results
-        await self._display_results()
+        # Create WORK-THEN-SHARE flow (agents work first, then share results)
+        from src.core.work_then_share_flow import WorkThenShareFlow
+        work_flow = WorkThenShareFlow(
+            message_broker=self.message_broker,
+            shared_memory=self.shared_memory,
+            logger=self.logger
+        )
+        
+        # Break down task into subtasks
+        subtasks = await orchestrator.orchestrate_project(task, self.agents)
+        
+        if not subtasks:
+            print("❌ Failed to create subtasks")
+            return []
+        
+        print(f"\n📋 Project broken down into {len(subtasks)} subtasks:")
+        for i, subtask in enumerate(subtasks, 1):
+            print(f"  {i}. {subtask.title} → {subtask.assigned_agent}")
+        
+        # Work on subtasks with WORK-THEN-SHARE workflow
+        results = []
+        all_discussions = []
+        
+        for subtask in subtasks:
+            print(f"\n{'='*60}")
+            print(f"🎯 WORKING ON SUBTASK: {subtask.title}")
+            print(f"{'='*60}")
+            
+            # Execute work-then-share workflow for this subtask
+            discussion_turns = await work_flow.execute_subtask_workflow(self.agents, subtask)
+            all_discussions.extend(discussion_turns)
+            
+            # Commentator narrates the discussion
+            await commentator.narrate_conversation(self.agents, self.message_broker, self.shared_memory)
+            
+            # Mark subtask as completed
+            orchestrator.mark_subtask_completed(subtask.id)
+            
+            # Show progress
+            status = orchestrator.get_project_status()
+            print(f"\n📊 Progress: {status['completed_subtasks']}/{status['total_subtasks']} subtasks completed ({status['progress_percentage']:.1f}%)")
+        
+        # Final commentator summary
+        await commentator.provide_project_summary(orchestrator, self.agents)
+        
+        # Display final results
+        await self._display_work_then_share_results(orchestrator, all_discussions, work_flow.work_results)
         
         return results
+    
+    async def _display_work_then_share_results(self, orchestrator, discussions, work_results):
+        """Display work-then-share simulation results."""
+        print(f"\n🎉 WORK-THEN-SHARE SIMULATION COMPLETE!")
+        
+        # Show project status
+        status = orchestrator.get_project_status()
+        print(f"📊 Project Status:")
+        print(f"  • Total subtasks: {status['total_subtasks']}")
+        print(f"  • Completed: {status['completed_subtasks']}")
+        print(f"  • Progress: {status['progress_percentage']:.1f}%")
+        
+        # Show work results
+        print(f"\n🔨 Work Results:")
+        for work_result in work_results:
+            print(f"  ✅ {work_result.agent_name}: {work_result.subtask_title}")
+            print(f"     Summary: {work_result.work_summary}")
+        
+        # Show discussion stats
+        print(f"\n💬 Discussion Statistics:")
+        print(f"  • Total discussion turns: {len(discussions)}")
+        
+        # Group by phase
+        phases = {}
+        for turn in discussions:
+            phase = turn.phase.value
+            if phase not in phases:
+                phases[phase] = 0
+            phases[phase] += 1
+        
+        print(f"  • Discussion phases:")
+        for phase, count in phases.items():
+            print(f"    - {phase.title()}: {count} turns")
+        
+        # Show subtask breakdown
+        print(f"\n📋 Subtask Breakdown:")
+        for subtask in status['subtasks']:
+            status_emoji = "✅" if subtask['status'] == "completed" else "⏳"
+            print(f"  {status_emoji} {subtask['title']} → {subtask['assigned_agent']}")
+        
+        # Show recent discussions
+        if discussions:
+            print(f"\n💬 Recent Discussions:")
+            recent_turns = discussions[-5:]  # Last 5 turns
+            for turn in recent_turns:
+                print(f"  {turn.agent_name} ({turn.phase.value}): {turn.message}")
+                if turn.response:
+                    print(f"    Responses: {turn.response}")
+        
+        # Show agent communication stats
+        print(f"\n💬 Agent Communication:")
+        for agent in self.agents:
+            agent_status = await agent.get_status()
+            print(f"  • {agent_status['name']}: {agent_status['messages_sent']} messages sent")
+    
+    async def _display_conversational_results(self, orchestrator, conversations):
+        """Display conversational simulation results."""
+        print(f"\n🎉 SYNCHRONOUS CONVERSATIONAL SIMULATION COMPLETE!")
+        
+        # Show project status
+        status = orchestrator.get_project_status()
+        print(f"📊 Project Status:")
+        print(f"  • Total subtasks: {status['total_subtasks']}")
+        print(f"  • Completed: {status['completed_subtasks']}")
+        print(f"  • Progress: {status['progress_percentage']:.1f}%")
+        
+        # Show conversation stats
+        print(f"\n💬 Conversation Statistics:")
+        print(f"  • Total conversation turns: {len(conversations)}")
+        
+        # Group by phase
+        phases = {}
+        for turn in conversations:
+            phase = turn.phase.value
+            if phase not in phases:
+                phases[phase] = 0
+            phases[phase] += 1
+        
+        print(f"  • Conversation phases:")
+        for phase, count in phases.items():
+            print(f"    - {phase.title()}: {count} turns")
+        
+        # Show subtask breakdown
+        print(f"\n📋 Subtask Breakdown:")
+        for subtask in status['subtasks']:
+            status_emoji = "✅" if subtask['status'] == "completed" else "⏳"
+            print(f"  {status_emoji} {subtask['title']} → {subtask['assigned_agent']}")
+        
+        # Show recent conversations
+        if conversations:
+            print(f"\n💬 Recent Conversations:")
+            recent_turns = conversations[-5:]  # Last 5 turns
+            for turn in recent_turns:
+                print(f"  {turn.agent_name} ({turn.phase.value}): {turn.message}")
+                if turn.response:
+                    print(f"    Responses: {turn.response}")
+        
+        # Show agent communication stats
+        print(f"\n💬 Agent Communication:")
+        for agent in self.agents:
+            agent_status = await agent.get_status()
+            print(f"  • {agent_status['name']}: {agent_status['messages_sent']} messages sent")
+    
+    async def _display_orchestrated_results(self, orchestrator):
+        """Display orchestrated simulation results."""
+        print(f"\n🎉 ORCHESTRATED SIMULATION COMPLETE!")
+        
+        # Show project status
+        status = orchestrator.get_project_status()
+        print(f"📊 Project Status:")
+        print(f"  • Total subtasks: {status['total_subtasks']}")
+        print(f"  • Completed: {status['completed_subtasks']}")
+        print(f"  • Progress: {status['progress_percentage']:.1f}%")
+        
+        # Show subtask breakdown
+        print(f"\n📋 Subtask Breakdown:")
+        for subtask in status['subtasks']:
+            status_emoji = "✅" if subtask['status'] == "completed" else "⏳"
+            print(f"  {status_emoji} {subtask['title']} → {subtask['assigned_agent']}")
+        
+        # Show agent communication stats
+        print(f"\n💬 Agent Communication:")
+        for agent in self.agents:
+            agent_status = await agent.get_status()
+            print(f"  • {agent_status['name']}: {agent_status['messages_sent']} messages sent")
+        
+        # Show recent messages
+        all_messages = await self.message_broker.get_all_messages()
+        if all_messages:
+            print(f"\n💬 Recent Agent Communication:")
+            recent_messages = all_messages[-10:]  # Last 10 messages
+            for msg in recent_messages:
+                print(f"  {msg.from_agent} → {msg.to_agent}: {msg.content}")
     
     async def _display_results(self):
         """Display simulation results."""
