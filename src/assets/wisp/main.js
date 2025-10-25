@@ -33,9 +33,11 @@ camera.position.set(10, 10, 10);
 camera.lookAt(scene.position);
 
 const controls = getControls();
-controls.minDistance = 3;
-controls.maxDistance = 100;
+controls.minDistance = 10;
+controls.maxDistance = 10;
 controls.enablePan = false;
+controls.enableZoom = false;
+controls.enableRotate = false;
 
 function init() {
   render();
@@ -47,6 +49,18 @@ let invalidate = false;
 let time = 0;
 let prevTime = performance.now();
 
+// Mouse tracking for orbit controls
+let mouseX = 0;
+let mouseY = 0;
+let targetRotationX = 0;
+let targetRotationY = 0;
+
+window.addEventListener('mousemove', (event) => {
+  // Normalize mouse position to -1 to 1
+  mouseX = (event.clientX / window.innerWidth) * 2 - 1;
+  mouseY = -(event.clientY / window.innerHeight) * 2 + 1;
+});
+
 function render() {
   const t = performance.now();
   const dt = t - prevTime;
@@ -56,8 +70,13 @@ function render() {
     if (!invalidate) {
       time += dt * 0.3; // Slow down time by 70%
 
-      group.rotation.x += dt / 30000; // 3x slower rotation
-      group.rotation.y += (dt / 30000) * 0.66;
+      // Mouse-based rotation
+      targetRotationX = mouseY * 0.5; // Reduced multiplier for subtler effect
+      targetRotationY = -mouseX * 0.5;
+
+      // Smooth lerp to target rotation
+      group.rotation.x += (targetRotationX - group.rotation.x) * 0.05;
+      group.rotation.y += (targetRotationY - group.rotation.y) * 0.05;
     }
     step(renderer, time / 1000, dt / 16);
 

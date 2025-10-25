@@ -30,7 +30,7 @@ const WebglNoise = () => {
         this.material = new THREE.PointsMaterial({
           map: this.dot(),
           blending: THREE.AdditiveBlending,
-          color: 0xB19CD9, // Lilac color
+          color: 0xFFFFFF, // Pure white color
           depthTest: false
         });
 
@@ -249,7 +249,15 @@ float snoise(vec3 v) {
     };
   }, []);
 
-  return <div ref={mountRef} className="w-48 h-48 sm:w-72 sm:h-72" />;
+  return (
+    <div
+      ref={mountRef}
+      style={{
+        width: window.innerWidth < 640 ? '12rem' : '18rem',
+        height: window.innerWidth < 640 ? '12rem' : '18rem'
+      }}
+    />
+  );
 };
 
 export default WebglNoise;
