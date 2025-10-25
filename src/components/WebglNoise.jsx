@@ -14,7 +14,7 @@ const WebglNoise = () => {
     const isMobile = window.innerWidth < 640;
 
     class Molecule extends THREE.Object3D {
-      radius = isMobile ? 0.6 : 0.8;
+      radius = isMobile ? 0.4 : 0.5;
       detail = 40;
       particleSizeMin = 0.01;
       particleSizeMax = 0.08;
@@ -253,8 +253,8 @@ float snoise(vec3 v) {
     <div
       ref={mountRef}
       style={{
-        width: window.innerWidth < 640 ? '12rem' : '18rem',
-        height: window.innerWidth < 640 ? '12rem' : '18rem'
+        width: window.innerWidth < 640 ? '8rem' : '12rem',
+        height: window.innerWidth < 640 ? '8rem' : '12rem'
       }}
     />
   );

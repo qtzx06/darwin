@@ -10,13 +10,19 @@ const Loading = () => {
       transition={{ duration: 0.8, delay: 0.1 }}
       style={{
         position: 'fixed',
-        inset: 0,
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        width: '100vw',
+        height: '100vh',
         zIndex: 50,
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
-        backgroundColor: '#1B1B1B'
+        backgroundColor: '#000000',
+        background: '#000000'
       }}
     >
       <WebglNoise />

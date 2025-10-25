@@ -29,12 +29,12 @@ const post = new Post(renderer);
 
 renderer.shadowMap.enabled = true;
 
-camera.position.set(10, 10, 10);
+camera.position.set(5, 5, 5);
 camera.lookAt(scene.position);
 
 const controls = getControls();
-controls.minDistance = 10;
-controls.maxDistance = 10;
+controls.minDistance = 5;
+controls.maxDistance = 5;
 controls.enablePan = false;
 controls.enableZoom = false;
 controls.enableRotate = false;

@@ -288,9 +288,10 @@ void main() {
   
   // Interpolates between the start and end colors based on the 'interpolate' uniform.
   vec3 color = mix(from, to, interpolate);
-  
-  // Sets the fragment color, with an alpha value of .15 for some transparency.
-  fragColor = vec4(color, .15);
+
+  // Reduce brightness and increase transparency
+  color *= 0.8; // Reduce brightness by 40%
+  fragColor = vec4(color, .1); // Lower alpha for more transparency
 
 }`;
 // Define the width and height for the texture. In this case, it's a square texture of 512x512 pixels.
