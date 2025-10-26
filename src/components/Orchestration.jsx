@@ -13,13 +13,43 @@ import { FaReact, FaPython } from 'react-icons/fa';
 import { RiClaudeFill, RiGeminiFill } from 'react-icons/ri';
 import { SiTypescript, SiLangchain } from 'react-icons/si';
 import livekitLogo from '../assets/livekit-text.svg';
+import { getVoteCounts } from '../utils/suiClient';
 
 function Orchestration() {
   const [query, setQuery] = useState('');
   const [expandedAgent, setExpandedAgent] = useState(null);
   const [showFadeOverlay, setShowFadeOverlay] = useState(true);
   const [chatMessages, setChatMessages] = useState([]);
+  const [voteCounts, setVoteCounts] = useState({
+    speedrunner: 0,
+    bloom: 0,
+    solver: 0,
+    loader: 0
+  });
+  const [blockchainVotes, setBlockchainVotes] = useState({
+    speedrunner: 0,
+    bloom: 0,
+    solver: 0,
+    loader: 0
+  });
   const containerRef = useRef(null);
+
+  // Fetch blockchain vote counts on mount and every 10 seconds
+  useEffect(() => {
+    const fetchVotes = async () => {
+      try {
+        const counts = await getVoteCounts();
+        setBlockchainVotes(counts);
+      } catch (error) {
+        console.error('Failed to fetch blockchain votes:', error);
+      }
+    };
+
+    fetchVotes(); // Initial fetch
+    const interval = setInterval(fetchVotes, 10000); // Fetch every 10 seconds
+
+    return () => clearInterval(interval);
+  }, []);
 
   // Logo Loop data
   const logos = [
@@ -69,7 +99,14 @@ function Orchestration() {
     setExpandedAgent(null);
   };
 
-  const handleAgentLike = (agentName) => {
+  const handleAgentLike = (agentName, agentId) => {
+    // Increment vote count
+    setVoteCounts(prev => ({
+      ...prev,
+      [agentId]: prev[agentId] + 1
+    }));
+
+    // Send message to chat
     const likeMessage = {
       text: `user liked ${agentName}'s work`,
       timestamp: Date.now()
@@ -156,6 +193,7 @@ function Orchestration() {
             isExpanded={expandedAgent === 'speedrunner'}
             onExpand={handleExpandAgent}
             onLike={handleAgentLike}
+            voteCount={blockchainVotes.speedrunner}
           />
           <AgentCard
             agentId="bloom"
@@ -163,6 +201,7 @@ function Orchestration() {
             isExpanded={expandedAgent === 'bloom'}
             onExpand={handleExpandAgent}
             onLike={handleAgentLike}
+            voteCount={blockchainVotes.bloom}
           />
           <AgentCard
             agentId="solver"
@@ -170,6 +209,7 @@ function Orchestration() {
             isExpanded={expandedAgent === 'solver'}
             onExpand={handleExpandAgent}
             onLike={handleAgentLike}
+            voteCount={blockchainVotes.solver}
           />
           <AgentCard
             agentId="loader"
@@ -177,6 +217,7 @@ function Orchestration() {
             isExpanded={expandedAgent === 'loader'}
             onExpand={handleExpandAgent}
             onLike={handleAgentLike}
+            voteCount={blockchainVotes.loader}
           />
 
           {/* Commentator */}

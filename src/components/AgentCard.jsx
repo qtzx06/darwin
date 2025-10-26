@@ -220,7 +220,7 @@ async function loadResources() {
 </async_loader>`
 };
 
-function AgentCard({ agentId, agentName, isExpanded, onExpand, onLike }) {
+function AgentCard({ agentId, agentName, isExpanded, onExpand, onLike, voteCount = 0 }) {
   const cardRef = useRef(null);
   const [currentMessageIndex, setCurrentMessageIndex] = useState(0);
   const [visibleMessages, setVisibleMessages] = useState([0]); // Track which messages are visible
@@ -293,7 +293,7 @@ function AgentCard({ agentId, agentName, isExpanded, onExpand, onLike }) {
   const handleThumbsUp = (e) => {
     e.stopPropagation(); // Prevent backdrop click
     console.log('Thumbs up:', agentId);
-    onLike(agentName); // Send like message to chat
+    onLike(agentName, agentId); // Send like message to chat with agentId
     onExpand(null); // Close the expanded card
   };
 
@@ -336,6 +336,7 @@ function AgentCard({ agentId, agentName, isExpanded, onExpand, onLike }) {
             {isExpanded && (
               <button onClick={handleThumbsUp} className="agent-thumbs">
                 <i className="fas fa-thumbs-up"></i>
+                <span className="vote-count">{voteCount}</span>
               </button>
             )}
           </div>
