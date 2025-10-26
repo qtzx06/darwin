@@ -6,6 +6,7 @@ import AgentCard from './AgentCard';
 import Commentator from './Commentator';
 import TranscriptPanel from './TranscriptPanel';
 import ChatInput from './ChatInput';
+import HeaderDither from './HeaderDither';
 
 function Orchestration() {
   const [query, setQuery] = useState('');
@@ -72,9 +73,14 @@ function Orchestration() {
 
       {/* Bento Box Layout */}
       <div className="bento-container">
-        {/* Header Space */}
+        {/* Header with Dither Animation */}
         <div className="header-space">
-          {/* Header content will go here */}
+          <HeaderDither />
+          <div className="header-content">
+            <img src="/favicon.png" alt="Darwin Logo" className="header-logo" />
+            <span className="header-title">DARWIN</span>
+            <span className="header-subtitle">evolve your agents</span>
+          </div>
         </div>
 
         <div ref={bentoGridRef} className="bento-grid">

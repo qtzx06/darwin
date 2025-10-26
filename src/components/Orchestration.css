@@ -15,6 +15,7 @@
   position: absolute;
   inset: 0;
   padding: 20px;
+  padding-top: 80px;
   z-index: 110;
   display: flex;
   flex-direction: column;
@@ -23,10 +24,53 @@
 
 /* Header Space */
 .orchestration-container .header-space {
-  height: 60px;
-  border-radius: 12px;
-  background: rgba(0, 0, 0, 0.3);
-  /* Placeholder for header */
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 30%;
+  height: 80px;
+  z-index: 120;
+  overflow: visible;
+}
+
+/* Header Content */
+.orchestration-container .header-content {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  z-index: 10;
+  pointer-events: auto;
+}
+
+.orchestration-container .header-logo {
+  width: 24px;
+  height: 24px;
+  object-fit: contain;
+}
+
+.orchestration-container .header-title {
+  font-family: 'BBH Sans Bartle', sans-serif;
+  font-size: 1.1rem;
+  color: white;
+  font-weight: 400;
+  text-transform: lowercase;
+  letter-spacing: 0.15em;
+  text-shadow: 0 0 20px rgba(255, 255, 255, 0.4);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.orchestration-container .header-subtitle {
+  font-family: 'Geist Mono', monospace;
+  font-size: 0.75rem;
+  color: white;
+  font-weight: 400;
+  letter-spacing: 0.02em;
+  text-shadow: 0 0 15px rgba(255, 255, 255, 0.3);
+  opacity: 0.9;
 }
 
 /* Bento Grid Layout */
@@ -137,6 +181,31 @@
 @media (max-width: 1200px) {
   .orchestration-container .bento-container {
     padding: 24px;
+    padding-top: 70px;
+  }
+
+  .orchestration-container .header-space {
+    height: 70px;
+    right: 25%;
+  }
+
+  .orchestration-container .header-content {
+    top: 18px;
+    left: 18px;
+    gap: 8px;
+  }
+
+  .orchestration-container .header-logo {
+    width: 22px;
+    height: 22px;
+  }
+
+  .orchestration-container .header-title {
+    font-size: 1rem;
+  }
+
+  .orchestration-container .header-subtitle {
+    font-size: 0.7rem;
   }
 
   .orchestration-container .bento-grid {
@@ -147,10 +216,31 @@
 @media (max-width: 768px) {
   .orchestration-container .bento-container {
     padding: 16px;
+    padding-top: 60px;
   }
 
   .orchestration-container .header-space {
     height: 60px;
+    right: 30%;
+  }
+
+  .orchestration-container .header-content {
+    top: 14px;
+    left: 14px;
+    gap: 6px;
+  }
+
+  .orchestration-container .header-logo {
+    width: 20px;
+    height: 20px;
+  }
+
+  .orchestration-container .header-title {
+    font-size: 0.9rem;
+  }
+
+  .orchestration-container .header-subtitle {
+    font-size: 0.65rem;
   }
 
   .orchestration-container .bento-grid {
