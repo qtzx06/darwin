@@ -6,12 +6,24 @@ import GlassSearchBar from './components/GlassSearchBar';
 import DecryptedText from './components/DecryptedText';
 import Cubes from './components/Cubes';
 import Dither from './components/Dither';
+import LogoLoop from './components/LogoLoop';
+import { SiOpenai, SiGoogle, SiMeta, SiAmazon, SiApple, SiNvidia } from 'react-icons/si';
 
 function App() {
   const [isLoading, setIsLoading] = useState(true);
   const [isZooming, setIsZooming] = useState(false);
   const [showOverlay, setShowOverlay] = useState(false);
   const wispIframeRef = useRef(null);
+
+  // Logo Loop data
+  const logos = [
+    { node: <SiOpenai style={{ color: 'white' }} />, title: 'OpenAI' },
+    { node: <SiGoogle style={{ color: 'white' }} />, title: 'Google' },
+    { node: <SiMeta style={{ color: 'white' }} />, title: 'Meta' },
+    { node: <SiAmazon style={{ color: 'white' }} />, title: 'Amazon' },
+    { node: <SiApple style={{ color: 'white' }} />, title: 'Apple' },
+    { node: <SiNvidia style={{ color: 'white' }} />, title: 'Nvidia' },
+  ];
 
   useEffect(() => {
     // Show loading screen for 1.5 seconds
@@ -179,6 +191,7 @@ function App() {
                 speed={150}
               />
             </h1>
+            <p className="subheader">evolve your agents.</p>
           </motion.div>
           <motion.div
             className="glass-wrapper"
@@ -186,6 +199,24 @@ function App() {
             transition={{ duration: 0.8, ease: "easeOut" }}
           >
             <GlassSearchBar onSubmit={handleSearchSubmit} />
+          </motion.div>
+          <motion.div
+            className="logo-loop-wrapper"
+            animate={{ opacity: isZooming ? 0 : 1 }}
+            transition={{ duration: 0.8, ease: "easeOut" }}
+          >
+            <p className="built-with-label">built with:</p>
+            <LogoLoop
+              logos={logos}
+              speed={30}
+              direction="left"
+              logoHeight={32}
+              gap={60}
+              pauseOnHover={false}
+              scaleOnHover={false}
+              fadeOut={true}
+              ariaLabel="AI Companies"
+            />
           </motion.div>
         </div>
       )}
