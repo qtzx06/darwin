@@ -4,6 +4,7 @@ import './App.css';
 import Loading from './components/Loading';
 import GlassSearchBar from './components/GlassSearchBar';
 import DecryptedText from './components/DecryptedText';
+import Cubes from './components/Cubes';
 
 function App() {
   const [isLoading, setIsLoading] = useState(true);
@@ -97,13 +98,41 @@ function App() {
             initial={{ opacity: 0, x: -50 }}
             animate={{ opacity: isZooming ? 0 : 1, x: isZooming ? -50 : 0 }}
             transition={{ duration: 0.8, ease: "easeOut" }}
-          />
+          >
+            <div className="cubes-wrapper">
+              <Cubes
+                gridSize={6}
+                maxAngle={60}
+                radius={4}
+                borderStyle="2px dashed #1B1B1B"
+                faceColor="#000000"
+                rippleColor="#ffffff"
+                rippleSpeed={1.5}
+                autoAnimate={true}
+                rippleOnClick={true}
+              />
+            </div>
+          </motion.div>
           <motion.div
             className="side-card side-card-right"
             initial={{ opacity: 0, x: 50 }}
             animate={{ opacity: isZooming ? 0 : 1, x: isZooming ? 50 : 0 }}
             transition={{ duration: 0.8, ease: "easeOut" }}
-          />
+          >
+            <div className="cubes-wrapper">
+              <Cubes
+                gridSize={6}
+                maxAngle={60}
+                radius={4}
+                borderStyle="2px dashed #1B1B1B"
+                faceColor="#000000"
+                rippleColor="#ffffff"
+                rippleSpeed={1.5}
+                autoAnimate={true}
+                rippleOnClick={true}
+              />
+            </div>
+          </motion.div>
         </>
       )}
 
