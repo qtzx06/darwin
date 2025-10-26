@@ -11,7 +11,7 @@ import HeaderDither from './HeaderDither';
 function Orchestration() {
   const [query, setQuery] = useState('');
   const [expandedAgent, setExpandedAgent] = useState(null);
-  const bentoGridRef = useRef(null);
+  const containerRef = useRef(null);
 
   useEffect(() => {
     // Extract query from URL hash
@@ -25,19 +25,19 @@ function Orchestration() {
 
   // Spotlight effect mouse tracking
   useEffect(() => {
-    const bentoGrid = bentoGridRef.current;
-    if (!bentoGrid) return;
+    const container = containerRef.current;
+    if (!container) return;
 
     const handleMouseMove = (e) => {
-      const rect = bentoGrid.getBoundingClientRect();
+      const rect = container.getBoundingClientRect();
       const x = ((e.clientX - rect.left) / rect.width) * 100;
       const y = ((e.clientY - rect.top) / rect.height) * 100;
-      bentoGrid.style.setProperty('--mouse-x', `${x}%`);
-      bentoGrid.style.setProperty('--mouse-y', `${y}%`);
+      container.style.setProperty('--mouse-x', `${x}%`);
+      container.style.setProperty('--mouse-y', `${y}%`);
     };
 
-    bentoGrid.addEventListener('mousemove', handleMouseMove);
-    return () => bentoGrid.removeEventListener('mousemove', handleMouseMove);
+    container.addEventListener('mousemove', handleMouseMove);
+    return () => container.removeEventListener('mousemove', handleMouseMove);
   }, []);
 
   const handleExpandAgent = (agentId) => {
@@ -58,6 +58,7 @@ function Orchestration() {
 
   return (
     <motion.div
+      ref={containerRef}
       className="orchestration-container"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
@@ -83,7 +84,7 @@ function Orchestration() {
           </div>
         </div>
 
-        <div ref={bentoGridRef} className="bento-grid">
+        <div className="bento-grid">
           {/* Agent Cards */}
           <AgentCard
             agentId="speedrunner"

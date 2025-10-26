@@ -10,12 +10,31 @@
   font-family: 'Geist Mono', monospace;
 }
 
+/* Global spotlight effect */
+.orchestration-container::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 115;
+  background: radial-gradient(circle 500px at var(--mouse-x, 50%) var(--mouse-y, 50%), rgba(255, 255, 255, 0.08) 0%, transparent 100%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.orchestration-container:hover::before {
+  opacity: 1;
+}
+
 /* Bento Box Container */
 .orchestration-container .bento-container {
   position: absolute;
   inset: 0;
   padding: 20px;
-  padding-top: 80px;
+  padding-top: 90px;
   z-index: 110;
   display: flex;
   flex-direction: column;
@@ -28,7 +47,7 @@
   top: 0;
   left: 0;
   right: 30%;
-  height: 80px;
+  height: 90px;
   z-index: 120;
   overflow: visible;
 }
@@ -158,34 +177,15 @@
   pointer-events: none;
 }
 
-/* Spotlight effect */
-.orchestration-container .bento-grid::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  pointer-events: none;
-  z-index: 100;
-  background: radial-gradient(circle 500px at var(--mouse-x, 50%) var(--mouse-y, 50%), rgba(255, 255, 255, 0.08) 0%, transparent 100%);
-  opacity: 0;
-  transition: opacity 0.3s ease;
-}
-
-.orchestration-container .bento-grid:hover::before {
-  opacity: 1;
-}
-
 /* Mobile responsiveness */
 @media (max-width: 1200px) {
   .orchestration-container .bento-container {
     padding: 24px;
-    padding-top: 70px;
+    padding-top: 80px;
   }
 
   .orchestration-container .header-space {
-    height: 70px;
+    height: 80px;
     right: 25%;
   }
 
@@ -216,11 +216,11 @@
 @media (max-width: 768px) {
   .orchestration-container .bento-container {
     padding: 16px;
-    padding-top: 60px;
+    padding-top: 70px;
   }
 
   .orchestration-container .header-space {
-    height: 60px;
+    height: 70px;
     right: 30%;
   }
 
