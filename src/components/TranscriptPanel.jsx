@@ -1,16 +1,16 @@
 import { useState } from 'react';
 import './TranscriptPanel.css';
 
-function TranscriptPanel({ geminiLiveRef }) {
+function TranscriptPanel({ elevenLabsRef, transcripts = [] }) {
   const [isMicMuted, setIsMicMuted] = useState(true); // Start with mic muted
 
   const handleMicToggle = async () => {
     const newMuted = !isMicMuted;
     setIsMicMuted(newMuted);
 
-    // Toggle microphone via Gemini Live
-    if (geminiLiveRef?.current) {
-      await geminiLiveRef.current.setMicMuted(newMuted);
+    // Toggle microphone via ElevenLabs
+    if (elevenLabsRef?.current) {
+      await elevenLabsRef.current.setMicMuted(newMuted);
       console.log(`[TranscriptPanel] Microphone ${newMuted ? 'muted' : 'unmuted'}`);
     }
   };
@@ -35,7 +35,20 @@ function TranscriptPanel({ geminiLiveRef }) {
           <div className="glass-overlay"></div>
           <div className="glass-specular"></div>
           <div className="transcript-text">
-            Live commentary stream will appear here...
+            {transcripts.length === 0 ? (
+              <div style={{ opacity: 0.5 }}>
+                {isMicMuted ? 'Click mic button to start...' : 'Listening...'}
+              </div>
+            ) : (
+              transcripts.map((t, i) => (
+                <div key={i} style={{ marginBottom: '8px' }}>
+                  <span style={{ color: '#f0b0d0', fontWeight: 'bold' }}>
+                    [{t.speaker === 'user' ? 'YOU' : 'COMPOSER'}]
+                  </span>{' '}
+                  {t.text}
+                </div>
+              ))
+            )}
           </div>
         </div>
       </div>

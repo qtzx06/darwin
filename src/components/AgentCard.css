@@ -248,10 +248,245 @@
   font-weight: 600;
 }
 
-.orchestration-container .agent-thumbs:hover {
+.orchestration-container .agent-thumbs:hover:not(:disabled) {
   background: rgba(255, 255, 255, 0.2);
   border-color: rgba(255, 255, 255, 0.3);
   transform: scale(1.05);
+}
+
+.orchestration-container .agent-thumbs:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Agent vote section with tip options */
+.orchestration-container .agent-vote-section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  align-items: flex-end;
+  z-index: 500;
+  position: relative;
+}
+
+.orchestration-container .agent-stats {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.orchestration-container .stat-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.5);
+  font-family: 'Geist Mono', monospace;
+  background: rgba(255, 255, 255, 0.03);
+  padding: 4px 8px;
+  border-radius: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(10px);
+}
+
+.orchestration-container .stat-item.earnings {
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.orchestration-container .stat-value {
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.orchestration-container .vote-and-wallet-row {
+  display: flex;
+  gap: 8px;
+  width: 100%;
+  align-items: center;
+}
+
+.orchestration-container .agent-thumbs.free-vote {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 5px;
+  padding: 6px 12px;
+  color: rgba(255, 255, 255, 0.85);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 9px;
+  font-family: 'Geist Mono', monospace;
+  font-weight: 500;
+  backdrop-filter: blur(10px);
+  white-space: nowrap;
+}
+
+.orchestration-container .agent-thumbs.free-vote:hover {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.35);
+  transform: scale(1.02);
+}
+
+.orchestration-container .agent-thumbs.tip-vote {
+  flex: 1;
+  background: rgba(255, 215, 0, 0.08);
+  border: 1px solid rgba(255, 215, 0, 0.25);
+  border-radius: 6px;
+  padding: 8px 12px;
+  color: rgba(255, 215, 0, 0.9);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 10px;
+  font-family: 'Geist Mono', monospace;
+  font-weight: 500;
+  backdrop-filter: blur(10px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.orchestration-container .agent-thumbs.tip-vote:hover:not(:disabled) {
+  background: rgba(255, 215, 0, 0.15);
+  border-color: rgba(255, 215, 0, 0.4);
+  transform: scale(1.03);
+}
+
+.orchestration-container .agent-thumbs.tip-vote:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  color: rgba(255, 255, 255, 0.3);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+/* Agent wallet address inline */
+.orchestration-container .wallet-address-inline {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 5px;
+  padding: 6px 10px;
+  backdrop-filter: blur(10px);
+  flex: 1;
+}
+
+.orchestration-container .wallet-address-text {
+  font-family: 'Geist Mono', monospace;
+  font-size: 8px;
+  color: rgba(255, 255, 255, 0.6);
+  background: none;
+  padding: 0;
+  border: none;
+  flex: 1;
+  letter-spacing: 0.3px;
+}
+
+.orchestration-container .copy-address-btn {
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.5);
+  padding: 0;
+  cursor: pointer;
+  font-size: 11px;
+  transition: all 0.2s ease;
+  line-height: 1;
+}
+
+.orchestration-container .copy-address-btn:hover {
+  color: rgba(255, 255, 255, 0.9);
+  transform: scale(1.1);
+}
+
+.orchestration-container .tip-options {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  background: rgba(0, 0, 0, 0.6);
+  padding: 14px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 215, 0, 0.2);
+  backdrop-filter: blur(20px);
+  width: 100%;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+}
+
+.orchestration-container .tip-presets {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.orchestration-container .tip-btn {
+  background: rgba(255, 215, 0, 0.1);
+  border: 1px solid rgba(255, 215, 0, 0.3);
+  color: rgba(255, 215, 0, 0.95);
+  padding: 8px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 10px;
+  font-weight: 500;
+  font-family: 'Geist Mono', monospace;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(10px);
+}
+
+.orchestration-container .tip-btn:hover:not(:disabled) {
+  background: rgba(255, 215, 0, 0.2);
+  border-color: rgba(255, 215, 0, 0.5);
+  transform: scale(1.03);
+}
+
+.orchestration-container .tip-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.orchestration-container .tip-custom {
+  display: flex;
+  gap: 8px;
+}
+
+.orchestration-container .tip-input {
+  flex: 1;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: #fff;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 10px;
+  font-family: 'Geist Mono', monospace;
+  backdrop-filter: blur(10px);
+  transition: border-color 0.3s ease;
+}
+
+.orchestration-container .tip-input:focus {
+  outline: none;
+  border-color: rgba(255, 215, 0, 0.5);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.orchestration-container .tip-input::placeholder {
+  color: rgba(255, 255, 255, 0.3);
+}
+
+.orchestration-container .tip-cancel {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: rgba(255, 255, 255, 0.7);
+  padding: 6px 0;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 9px;
+  font-family: 'Geist Mono', monospace;
+  transition: all 0.3s ease;
+  text-align: center;
+  margin-top: 4px;
+}
+
+.orchestration-container .tip-cancel:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.25);
 }
 
 /* Agent live transcript boxes */

@@ -1,37 +1,34 @@
-import { useState } from 'react';
-import { ConnectButton, useCurrentAccount } from '@mysten/dapp-kit';
+import { useCurrentAccount, useConnectWallet, useDisconnectWallet } from '@mysten/dapp-kit';
 import './WalletButton.css';
 
-export default function WalletButton() {
+function WalletButton() {
   const currentAccount = useCurrentAccount();
-  const [showAddress, setShowAddress] = useState(false);
+  const { mutate: connect } = useConnectWallet();
+  const { mutate: disconnect } = useDisconnectWallet();
 
   const formatAddress = (address) => {
     if (!address) return '';
     return `${address.slice(0, 6)}...${address.slice(-4)}`;
   };
 
-  return (
-    <div className="wallet-button-container">
-      <ConnectButton
-        connectText="Connect Wallet"
-        connectedText={formatAddress(currentAccount?.address)}
-        className="wallet-connect-btn"
-      />
-      {currentAccount && (
-        <button
-          className="wallet-info-btn"
-          onClick={() => setShowAddress(!showAddress)}
-          title="Toggle address display"
-        >
-          ⓘ
-        </button>
-      )}
-      {showAddress && currentAccount && (
-        <div className="wallet-address-display">
-          {currentAccount.address}
+  if (currentAccount) {
+    return (
+      <button className="wallet-button connected" onClick={() => disconnect()}>
+        <div className="wallet-status">
+          <span className="wallet-indicator"></span>
+          <span className="wallet-address">{formatAddress(currentAccount.address)}</span>
         </div>
-      )}
-    </div>
+      </button>
+    );
+  }
+
+  return (
+    <button className="wallet-button" onClick={() => connect({ wallet: null })}>
+      <span className="wallet-icon">🔐</span>
+      <span>Connect Wallet</span>
+    </button>
   );
 }
+
+export default WalletButton;
+

@@ -1,19 +1,21 @@
-import { StrictMode } from 'react'
-import { createRoot } from 'react-dom/client'
-import { SuiClientProvider, WalletProvider } from '@mysten/dapp-kit'
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { getFullnodeUrl } from '@mysten/sui/client'
-import '@mysten/dapp-kit/dist/index.css'
-import './index.css'
-import App from './App.jsx'
+import { StrictMode } from 'react';
+import { createRoot } from 'react-dom/client';
+import './index.css';
+import App from './App.jsx';
+import { SuiClientProvider, WalletProvider } from '@mysten/dapp-kit';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { getFullnodeUrl } from '@mysten/sui/client';
+import '@mysten/dapp-kit/dist/index.css';
 
-// Setup Sui network
+// Setup QueryClient for React Query
+const queryClient = new QueryClient();
+
+// Configure Sui network
 const networks = {
+  devnet: { url: getFullnodeUrl('devnet') },
   testnet: { url: getFullnodeUrl('testnet') },
   mainnet: { url: getFullnodeUrl('mainnet') },
-}
-
-const queryClient = new QueryClient()
+};
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
@@ -25,4 +27,4 @@ createRoot(document.getElementById('root')).render(
       </SuiClientProvider>
     </QueryClientProvider>
   </StrictMode>,
-)
+);

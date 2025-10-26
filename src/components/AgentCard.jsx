@@ -7,7 +7,7 @@ import SolverOrb from './SolverOrb';
 import LoaderOrb from './LoaderOrb';
 import DecryptedText from './DecryptedText';
 import CodeRenderer from './CodeRenderer';
-import { voteForAgent } from '../utils/suiClient';
+import { voteForAgent, getAgentWalletAddress } from '../utils/suiClient';
 
 const PERSONALITIES = {
   speedrunner: 'fast, competitive, efficiency-obsessed',
@@ -544,10 +544,11 @@ class ResourceLoader {
 </async_loader>`
 };
 
-function AgentCard({ agentId, agentName, isExpanded, onExpand, onLike, onPreview, voteCount = 0, generatedCode = null, statusMessage = '' }) {
+function AgentCard({ agentId, agentName, isExpanded, onExpand, onLike, onPreview, voteCount = 0, agentBalance = 0, generatedCode = null, statusMessage = '' }) {
   const cardRef = useRef(null);
   const [currentMessageIndex, setCurrentMessageIndex] = useState(0);
   const [visibleMessages, setVisibleMessages] = useState([0]); // Track which messages are visible
+  const [copiedAddress, setCopiedAddress] = useState(false);
   // No typing animation, just show code immediately
   useEffect(() => {
     // Code appears instantly when generated
@@ -638,6 +639,19 @@ function AgentCard({ agentId, agentName, isExpanded, onExpand, onLike, onPreview
     }
   };
 
+  const handleCopyAddress = async () => {
+    const address = getAgentWalletAddress(agentId);
+    if (address) {
+      try {
+        await navigator.clipboard.writeText(address);
+        setCopiedAddress(true);
+        setTimeout(() => setCopiedAddress(false), 2000);
+      } catch (err) {
+        console.error('Failed to copy:', err);
+      }
+    }
+  };
+
   return (
     <div
       ref={cardRef}
@@ -675,10 +689,39 @@ function AgentCard({ agentId, agentName, isExpanded, onExpand, onLike, onPreview
               </div>
             </div>
             {isExpanded && (
-              <button onClick={handleThumbsUp} className="agent-thumbs">
-                <i className="fas fa-thumbs-up"></i>
-                <span className="vote-count">{voteCount}</span>
-              </button>
+              <div className="agent-vote-section">
+                <div className="agent-stats">
+                  <div className="stat-item">
+                    <i className="fas fa-thumbs-up"></i>
+                    <span className="stat-value">{voteCount}</span>
+                  </div>
+                  {agentBalance > 0 && (
+                    <div className="stat-item earnings">
+                      <i className="fas fa-coins"></i>
+                      <span className="stat-value">{agentBalance.toFixed(2)} SUI</span>
+                    </div>
+                  )}
+                </div>
+                
+                <div className="vote-and-wallet-row">
+                  <button onClick={handleThumbsUp} className="agent-thumbs free-vote">
+                    Vote Free
+                  </button>
+                  
+                  <div className="wallet-address-inline">
+                    <code className="wallet-address-text">
+                      {getAgentWalletAddress(agentId)?.slice(0, 6)}...{getAgentWalletAddress(agentId)?.slice(-4)}
+                    </code>
+                    <button 
+                      onClick={(e) => { e.stopPropagation(); handleCopyAddress(); }}
+                      className="copy-address-btn"
+                      title="Copy tip address"
+                    >
+                      {copiedAddress ? '✓' : '💎'}
+                    </button>
+                  </div>
+                </div>
+              </div>
             )}
           </div>
           <div className="agent-transcript">

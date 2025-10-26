@@ -1,88 +1,69 @@
-.wallet-button-container {
-  position: fixed;
-  top: 2rem;
-  right: 2rem;
-  z-index: 1000;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.wallet-connect-btn {
-  font-family: 'Geist Mono', monospace;
-  background: rgba(240, 176, 208, 0.2);
-  border: 1px solid rgba(240, 176, 208, 0.4);
-  color: #f0b0d0;
-  padding: 0.75rem 1.5rem;
-  border-radius: 12px;
-  cursor: pointer;
-  font-size: 0.9rem;
-  font-weight: 600;
-  transition: all 0.3s ease;
-  backdrop-filter: blur(10px);
-}
-
-.wallet-connect-btn:hover {
-  background: rgba(240, 176, 208, 0.3);
-  border-color: #f0b0d0;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(240, 176, 208, 0.3);
-}
-
-.wallet-info-btn {
-  font-family: 'Geist Mono', monospace;
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  color: white;
-  width: 2rem;
-  height: 2rem;
-  border-radius: 50%;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.3s ease;
-  backdrop-filter: blur(10px);
-}
-
-.wallet-info-btn:hover {
-  background: rgba(255, 255, 255, 0.2);
-  border-color: rgba(255, 255, 255, 0.4);
-}
-
-.wallet-address-display {
-  position: absolute;
-  top: 100%;
-  right: 0;
-  margin-top: 0.5rem;
-  background: rgba(0, 0, 0, 0.9);
-  border: 1px solid rgba(240, 176, 208, 0.3);
+.wallet-button {
+  position: relative;
+  padding: 8px 16px;
+  background: rgba(0, 0, 0, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.15);
   border-radius: 8px;
-  padding: 0.75rem 1rem;
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+  backdrop-filter: blur(20px);
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 6px;
   font-family: 'Geist Mono', monospace;
-  font-size: 0.75rem;
-  color: #f0b0d0;
-  white-space: nowrap;
-  backdrop-filter: blur(10px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
 }
 
-/* Mobile responsive */
-@media (max-width: 640px) {
-  .wallet-button-container {
-    top: 1rem;
-    right: 1rem;
-  }
+.wallet-button:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.3);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+}
 
-  .wallet-connect-btn {
-    padding: 0.6rem 1rem;
-    font-size: 0.8rem;
-  }
+.wallet-button.connected {
+  background: rgba(76, 175, 80, 0.15);
+  border-color: rgba(76, 175, 80, 0.3);
+}
 
-  .wallet-address-display {
-    font-size: 0.65rem;
-    max-width: calc(100vw - 2rem);
-    overflow: hidden;
-    text-overflow: ellipsis;
+.wallet-button.connected:hover {
+  background: rgba(76, 175, 80, 0.25);
+  border-color: rgba(76, 175, 80, 0.4);
+}
+
+.wallet-icon {
+  font-size: 12px;
+}
+
+.wallet-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.wallet-indicator {
+  width: 8px;
+  height: 8px;
+  background: #4caf50;
+  border-radius: 50%;
+  animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
   }
 }
+
+.wallet-address {
+  font-family: 'Geist Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.3px;
+}
+

@@ -15,7 +15,7 @@ import { FaReact, FaPython } from 'react-icons/fa';
 import { RiClaudeFill, RiGeminiFill } from 'react-icons/ri';
 import { SiTypescript, SiLangchain } from 'react-icons/si';
 import livekitLogo from '../assets/livekit-text.svg';
-import { getVoteCounts } from '../utils/suiClient';
+import { getVoteCounts, getAgentWalletBalances } from '../utils/suiClient';
 import { startCompetitiveBattle } from '../services/geminiService';
 
 function Orchestration() {
@@ -41,6 +41,12 @@ function Orchestration() {
     solver: 0,
     loader: 0
   });
+  const [agentBalances, setAgentBalances] = useState({
+    speedrunner: 0,
+    bloom: 0,
+    solver: 0,
+    loader: 0
+  });
   const [isBattleRunning, setIsBattleRunning] = useState(false);
   const [agentsReady, setAgentsReady] = useState(false);
   const [cachedProjectId, setCachedProjectId] = useState(null);
@@ -57,8 +63,9 @@ function Orchestration() {
     loader: ''
   });
   const [previewCode, setPreviewCode] = useState(null);
+  const [transcripts, setTranscripts] = useState([]); // Voice transcripts
   const banterIntervalRef = useRef(null);
-  const geminiLiveRef = useRef(null); // Store Gemini Live ref from Commentator
+  const elevenLabsRef = useRef(null); // Store ElevenLabs ref from Commentator
 
   // Debug: Log when previewCode changes
   useEffect(() => {
@@ -194,6 +201,10 @@ function Orchestration() {
       try {
         const counts = await getVoteCounts();
         setBlockchainVotes(counts);
+        
+        // Also fetch agent wallet balances
+        const balances = await getAgentWalletBalances();
+        setAgentBalances(balances);
       } catch (error) {
         console.error('Failed to fetch blockchain votes:', error);
       }
@@ -771,6 +782,7 @@ function Orchestration() {
             onExpand={handleExpandAgent}
             onLike={handleAgentLike}
             voteCount={blockchainVotes.speedrunner}
+            agentBalance={agentBalances.speedrunner}
             generatedCode={agentCode.speedrunner}
             statusMessage={agentStatus.speedrunner}
           />
@@ -782,6 +794,7 @@ function Orchestration() {
             onLike={handleAgentLike}
             onPreview={(code) => setPreviewCode(code)}
             voteCount={blockchainVotes.bloom}
+            agentBalance={agentBalances.bloom}
             generatedCode={agentCode.bloom}
             statusMessage={agentStatus.bloom}
           />
@@ -792,6 +805,7 @@ function Orchestration() {
             onExpand={handleExpandAgent}
             onLike={handleAgentLike}
             voteCount={blockchainVotes.solver}
+            agentBalance={agentBalances.solver}
             generatedCode={agentCode.solver}
             statusMessage={agentStatus.solver}
           />
@@ -802,6 +816,7 @@ function Orchestration() {
             onExpand={handleExpandAgent}
             onLike={handleAgentLike}
             voteCount={blockchainVotes.loader}
+            agentBalance={agentBalances.loader}
             generatedCode={agentCode.loader}
             statusMessage={agentStatus.loader}
           />
@@ -813,17 +828,20 @@ function Orchestration() {
             isRunning={isBattleRunning}
             agentsReady={agentsReady}
             chatMessages={chatMessages}
-            onComposerMessage={(message) => {
-              setChatMessages(prev => [...prev, {
-                text: `[COMPOSER] ${message}`,
-                type: 'agent',
-                timestamp: Date.now()
-              }]);
-            }}
-            onUserMessage={handleUserMessage}
-            onGeminiLiveReady={(ref) => {
-              geminiLiveRef.current = ref.current;
-              console.log('[Orchestration] Gemini Live ref received');
+            onElevenLabsReady={(ref) => {
+              elevenLabsRef.current = ref.current;
+              console.log('[Orchestration] ElevenLabs ref received');
+
+              // Set up user transcript callback
+              if (ref.current) {
+                ref.current.onUserTranscript = (text) => {
+                  console.log('[Orchestration] User transcript:', text);
+                  setTranscripts(prev => [...prev, { speaker: 'user', text, timestamp: Date.now() }]);
+
+                  // Also send user speech to agents as a message
+                  handleUserMessage(text);
+                };
+              }
             }}
           />
 
@@ -831,7 +849,7 @@ function Orchestration() {
           <ChatInput externalMessages={chatMessages} onUserMessage={handleUserMessage} />
 
           {/* Transcript */}
-          <TranscriptPanel geminiLiveRef={geminiLiveRef} />
+          <TranscriptPanel elevenLabsRef={elevenLabsRef} transcripts={transcripts} />
         </div>
       </div>
     </motion.div>

@@ -1,5 +1,37 @@
+# Dependencies
+node_modules/
+venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# Build outputs
+dist/
+dist-ssr/
+build/
+*.egg-info/
+
+# Environment variables (CRITICAL - contains private keys!)
+.env
+.env.local
+.env.*.local
+*.env
+
+# Sui wallet private keys (NEVER commit these!)
+ai-agents/config/agent_wallets.env
+*.priv
+*.key
+
+# Note: agent_wallets.json contains PUBLIC addresses only and is safe to commit
+
+# Sui CLI
+.sui/
+sui.keystore
+
 # Logs
-logs
+logs/
 *.log
 npm-debug.log*
 yarn-debug.log*
@@ -7,19 +39,43 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
-node_modules
-dist
-dist-ssr
-*.local
-.env
+# Vercel
+.vercel/
+.vercel
 
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
-.idea
+!.vscode/settings.json
+.idea/
 .DS_Store
 *.suo
 *.ntvs*
 *.njsproj
 *.sln
 *.sw?
+*.swp
+*~
+
+# OS files
+Thumbs.db
+.AppleDouble
+.LSOverride
+
+# Temporary files
+*.tmp
+*.temp
+.cache/
+.parcel-cache/
+
+# Test coverage
+coverage/
+.nyc_output/
+
+# Local development
+*.local
+.eslintcache
+
+# Move build artifacts
+move/**/build/
+move/**/Move.lock

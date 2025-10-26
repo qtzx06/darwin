@@ -3,6 +3,7 @@ Configuration for Letta AI agents.
 Defines agent personalities, tools, and shared memory blocks.
 """
 import os
+import json
 from typing import Dict, List, Any
 from dotenv import load_dotenv
 from letta_client import Letta
@@ -10,15 +11,34 @@ from letta_client import Letta
 # Load environment variables
 load_dotenv()
 
+# Load agent wallet addresses
+def load_agent_wallets():
+    """Load agent wallet addresses from config file."""
+    wallet_path = os.path.join(os.path.dirname(__file__), 'agent_wallets.json')
+    try:
+        with open(wallet_path, 'r') as f:
+            return json.load(f)
+    except FileNotFoundError:
+        print(f"Warning: agent_wallets.json not found at {wallet_path}")
+        return {
+            "speedrunner": "0x0",
+            "bloom": "0x0",
+            "solver": "0x0",
+            "loader": "0x0"
+        }
+
+AGENT_WALLETS = load_agent_wallets()
+
 
 class AgentConfig:
     """Configuration for individual agents."""
     
-    def __init__(self, agent_id: str, name: str, personality: str, tools: List[str]):
+    def __init__(self, agent_id: str, name: str, personality: str, tools: List[str], wallet_address: str = None):
         self.agent_id = agent_id
         self.name = name
         self.personality = personality
         self.tools = tools
+        self.wallet_address = wallet_address
 
 
 class LettaConfig:
@@ -56,31 +76,35 @@ class LettaConfig:
             "get_agent_status"
         ]
         
-        # Coding agents with matching frontend personalities
+        # Coding agents with matching frontend personalities and Sui wallet addresses
         self.coding_agents = [
             AgentConfig(
                 agent_id="One",
                 name="Speedrunner",
                 personality="Fast, competitive, efficiency-obsessed. Always optimizing for speed and performance. Prioritizes quick execution and minimal overhead.",
-                tools=self.shared_tools
+                tools=self.shared_tools,
+                wallet_address=AGENT_WALLETS.get("speedrunner")
             ),
             AgentConfig(
                 agent_id="Two", 
                 name="Bloom",
                 personality="Creative, scattered, pattern-seeking. Finds innovative solutions through exploration. Thinks outside the box and experiments with novel approaches.",
-                tools=self.shared_tools
+                tools=self.shared_tools,
+                wallet_address=AGENT_WALLETS.get("bloom")
             ),
             AgentConfig(
                 agent_id="Three",
                 name="Solver", 
                 personality="Logical, methodical, puzzle-driven. Approaches problems systematically. Breaks down complex challenges into manageable components.",
-                tools=self.shared_tools
+                tools=self.shared_tools,
+                wallet_address=AGENT_WALLETS.get("solver")
             ),
             AgentConfig(
                 agent_id="Four",
                 name="Loader",
                 personality="Patient, steady, process-oriented. Reliable and thorough in execution. Ensures quality and completeness in all deliverables.",
-                tools=self.shared_tools
+                tools=self.shared_tools,
+                wallet_address=AGENT_WALLETS.get("loader")
             )
         ]
         
