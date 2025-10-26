@@ -1,6 +1,10 @@
 import { useRef } from 'react';
 import './AgentCard.css';
 import LiquidChrome from './LiquidChrome';
+import AgentOrb from './AgentOrb';
+import BloomOrb from './BloomOrb';
+import SolverOrb from './SolverOrb';
+import LoaderOrb from './LoaderOrb';
 
 const PERSONALITIES = {
   speedrunner: 'fast, competitive, efficiency-obsessed',
@@ -10,10 +14,10 @@ const PERSONALITIES = {
 };
 
 const AGENT_COLORS = {
-  speedrunner: [0.10, 0.03, 0.04],  // Very dark red
-  bloom: [0.08, 0.05, 0.10],        // Very dark purple
-  solver: [0.10, 0.04, 0.08],       // Very dark magenta
-  loader: [0.10, 0.06, 0.04]        // Very dark coral/orange
+  speedrunner: [0.08, 0.02, 0.03],  // Very dark red
+  bloom: [0.06, 0.04, 0.08],        // Very dark purple
+  solver: [0.08, 0.03, 0.06],       // Very dark magenta
+  loader: [0.08, 0.05, 0.03]        // Very dark coral/orange
 };
 
 const TRANSCRIPTS = {
@@ -206,6 +210,10 @@ function AgentCard({ agentId, agentName, isExpanded, onExpand }) {
             frequencyY={3}
             interactive={false}
           />
+          {agentId === 'speedrunner' && <AgentOrb />}
+          {agentId === 'bloom' && <BloomOrb />}
+          {agentId === 'solver' && <SolverOrb />}
+          {agentId === 'loader' && <LoaderOrb />}
         </div>
         <div className="agent-info">
           <div className="agent-header">

@@ -1,7 +1,36 @@
+import { useState, useEffect, useRef } from 'react';
 import './Commentator.css';
-import LiquidChrome from './LiquidChrome';
+import NeuroShaderCanvas from './NeuroShaderCanvas';
+import CommentatorOrb from './CommentatorOrb';
 
 function Commentator() {
+  const [analyser, setAnalyser] = useState(null);
+  const [isSoundActive, setIsSoundActive] = useState(false);
+  const audioContextRef = useRef(null);
+
+  useEffect(() => {
+    // Create audio context and analyser
+    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    audioContextRef.current = audioContext;
+
+    const analyserNode = audioContext.createAnalyser();
+    analyserNode.fftSize = 512;
+
+    // Create a silent oscillator to keep the audio context active
+    const oscillator = audioContext.createOscillator();
+    oscillator.frequency.value = 0;
+    oscillator.connect(analyserNode);
+    analyserNode.connect(audioContext.destination);
+    oscillator.start();
+
+    setAnalyser(analyserNode);
+
+    return () => {
+      oscillator.stop();
+      audioContext.close();
+    };
+  }, []);
+
   return (
     <div className="glass-card commentator-card">
       <div className="glass-filter"></div>
@@ -9,14 +38,13 @@ function Commentator() {
       <div className="glass-specular"></div>
       <div className="glass-content">
         <div className="commentator-headshot">
-          <LiquidChrome
-            baseColor={[0.06, 0.04, 0.10]}
-            speed={0.25}
-            amplitude={0.5}
-            frequencyX={2.5}
-            frequencyY={2.5}
-            interactive={false}
-          />
+          <NeuroShaderCanvas />
+          {analyser && (
+            <CommentatorOrb
+              analyser={analyser}
+              onSoundActiveChange={setIsSoundActive}
+            />
+          )}
         </div>
       </div>
     </div>
