@@ -71,12 +71,12 @@ Keep responses under 15 words. Make every word count. Be entertaining!`;
         return null;
       }
 
-      // Get the last few messages for context
-      const recentMessages = chatMessages.slice(-8);
+      // Get just the NEW message(s) since last time
+      const newMessages = chatMessages.slice(this.lastProcessedMessageCount);
       this.lastProcessedMessageCount = chatMessages.length;
 
       // Filter out system messages, only get agent updates
-      const agentUpdates = recentMessages
+      const agentUpdates = newMessages
         .filter(msg => msg.type === 'agent' || msg.sender !== 'user')
         .map(msg => msg.text)
         .join('\n');
@@ -87,32 +87,47 @@ Keep responses under 15 words. Make every word count. Be entertaining!`;
 
       console.log('[Commentator Gemini] Generating commentary for:', agentUpdates);
 
+      // Get recent context for beef detection (last 8 messages)
+      const recentContext = chatMessages.slice(-8);
+
       // Check if there's beef/competition happening
-      const hasMultipleAgents = recentMessages.filter(m => m.type === 'agent').length > 1;
+      const hasMultipleAgents = recentContext.filter(m => m.type === 'agent').length > 1;
       const hasBanter = agentUpdates.toLowerCase().includes('ngl') ||
                         agentUpdates.toLowerCase().includes('bro') ||
                         agentUpdates.toLowerCase().includes('trash') ||
                         agentUpdates.toLowerCase().includes('better');
 
+      // Add recent context
+      const contextMessages = recentContext
+        .filter(msg => msg.type === 'agent' || msg.sender !== 'user')
+        .map(msg => msg.text)
+        .join('\n');
+
       let prompt;
       if (hasMultipleAgents && hasBanter) {
-        prompt = `The agents are beefing! React to this drama with SHORT hype commentary (max 12 words):
+        prompt = `Recent context:
+${contextMessages}
 
+NEW UPDATE:
 ${agentUpdates}
 
-Call out the beef, who's winning, make it exciting:`;
+The agents are beefing! React to the NEW UPDATE with SHORT hype commentary (max 12 words). Call out the beef:`;
       } else if (hasMultipleAgents) {
-        prompt = `Multiple agents working! React to their progress with SHORT commentary (max 12 words):
+        prompt = `Recent context:
+${contextMessages}
 
+NEW UPDATE:
 ${agentUpdates}
 
-Compare their approaches, who's ahead:`;
+React to the NEW UPDATE with SHORT commentary (max 12 words). Compare agents, who's ahead:`;
       } else {
-        prompt = `React to this agent update with SHORT commentary (max 12 words):
+        prompt = `Recent context:
+${contextMessages}
 
+NEW UPDATE:
 ${agentUpdates}
 
-Make it hyped and natural:`;
+React to the NEW UPDATE with SHORT commentary (max 12 words). Make it hyped:`;
       }
 
       const response = await ai.models.generateContent({

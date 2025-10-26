@@ -10,7 +10,7 @@ function Commentator({ query, onBattleStart, isRunning, agentsReady, chatMessage
   const [isSoundActive, setIsSoundActive] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
   const [loadingMessageIndex, setLoadingMessageIndex] = useState(0);
-  const [isOutputMuted, setIsOutputMuted] = useState(false); // Voice output (start unmuted)
+  const [isOutputMuted, setIsOutputMuted] = useState(true); // Voice output (start muted, user must enable)
   const [elevenLabsReady, setElevenLabsReady] = useState(false);
   const [hasSpokenIntro, setHasSpokenIntro] = useState(false);
   const elevenLabsRef = useRef(null);
@@ -102,9 +102,9 @@ function Commentator({ query, onBattleStart, isRunning, agentsReady, chatMessage
     }
   }, [isRunning, hasSpokenIntro, elevenLabsReady, query]);
 
-  // Generate and speak commentary from EVERY chat update
+  // Generate and speak commentary from EVERY chat update (ONLY after battle is complete)
   useEffect(() => {
-    if (!elevenLabsReady || !elevenLabsRef.current || !commentatorGeminiRef.current || !isRunning) {
+    if (!elevenLabsReady || !elevenLabsRef.current || !commentatorGeminiRef.current) {
       return;
     }
 
@@ -113,31 +113,55 @@ function Commentator({ query, onBattleStart, isRunning, agentsReady, chatMessage
       return;
     }
 
+    // Check if battle is complete (look for "Battle complete!" in chat)
+    const battleComplete = chatMessages.some(msg =>
+      msg.text && msg.text.toLowerCase().includes('battle complete')
+    );
+
+    // Don't start commentary until battle is complete
+    if (!battleComplete) {
+      console.log('[Commentator] Waiting for battle to complete before starting commentary...');
+      lastMessageCountRef.current = chatMessages.length;
+      return;
+    }
+
     const generateAndSpeak = async () => {
       try {
+        // Get only NEW messages since last check
+        const newMessages = chatMessages.slice(lastMessageCountRef.current);
+
+        // Filter to only agent messages (not user messages, not system messages)
+        const newAgentMessages = newMessages.filter(msg =>
+          msg.type === 'agent' &&
+          !msg.text.includes('Battle complete') &&
+          !msg.text.includes('[COMPOSER]')
+        );
+
+        if (newAgentMessages.length === 0) {
+          lastMessageCountRef.current = chatMessages.length;
+          return;
+        }
+
+        console.log('[Commentator] New agent messages:', newAgentMessages.map(m => m.text));
+
         // Generate natural commentary from recent messages
         const commentary = await commentatorGeminiRef.current.generateCommentary(chatMessages);
 
         if (commentary) {
           console.log('[Commentator] Speaking commentary:', commentary);
-
-          // Speak immediately, even if already speaking (queue it)
-          if (elevenLabsRef.current.isSpeaking()) {
-            console.log('[Commentator] Already speaking, will queue this one');
-          }
-
           elevenLabsRef.current.speak(commentary);
         }
 
         lastMessageCountRef.current = chatMessages.length;
       } catch (error) {
         console.error('[Commentator] Failed to generate commentary:', error);
+        lastMessageCountRef.current = chatMessages.length;
       }
     };
 
     // Generate commentary immediately for every new message
     generateAndSpeak();
-  }, [chatMessages, elevenLabsReady, isRunning]);
+  }, [chatMessages, elevenLabsReady]);
 
   // Cycle loading messages
   useEffect(() => {
@@ -161,6 +185,12 @@ function Commentator({ query, onBattleStart, isRunning, agentsReady, chatMessage
 
     // Toggle ElevenLabs voice output
     if (elevenLabsRef.current) {
+      // If unmuting for the first time, resume AudioContext (requires user gesture)
+      if (!newMuted && elevenLabsRef.current.audioContext && elevenLabsRef.current.audioContext.state === 'suspended') {
+        await elevenLabsRef.current.audioContext.resume();
+        console.log('[Commentator] AudioContext resumed after user gesture');
+      }
+
       elevenLabsRef.current.setMuted(newMuted);
       console.log(`[Commentator] ElevenLabs voice ${newMuted ? 'muted' : 'unmuted'}`);
     }
