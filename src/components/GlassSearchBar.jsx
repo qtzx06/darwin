@@ -8,7 +8,7 @@ const queries = [
   "design a 'coming soon' page",
 ].map(q => q.toLowerCase());
 
-const GlassSearchBar = () => {
+const GlassSearchBar = ({ onSubmit }) => {
   const [inputValue, setInputValue] = useState('');
   const [showSuggestions, setShowSuggestions] = useState(false);
   const glassRef = useRef(null);
@@ -37,8 +37,12 @@ const GlassSearchBar = () => {
     if (inputValue.trim() !== '') {
       console.log('Search submitted:', inputValue.trim());
       inputRef.current?.blur();
-      setInputValue('');
       setShowSuggestions(false);
+      // Trigger zoom animation
+      if (onSubmit) {
+        onSubmit(inputValue.trim());
+      }
+      setInputValue('');
     }
   };
 

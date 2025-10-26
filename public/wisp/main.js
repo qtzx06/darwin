@@ -55,10 +55,26 @@ let mouseY = 0;
 let targetRotationX = 0;
 let targetRotationY = 0;
 
+// Zoom animation state
+let isZoomingIn = false;
+let zoomStartTime = 0;
+const zoomDuration = 1000; // 1 second
+const startCameraPos = { x: 5, y: 5, z: 5 };
+const endCameraPos = { x: 0.05, y: 0.05, z: 0.05 }; // Zoom extremely close to center
+
 window.addEventListener('mousemove', (event) => {
   // Normalize mouse position to -1 to 1
   mouseX = (event.clientX / window.innerWidth) * 2 - 1;
   mouseY = -(event.clientY / window.innerHeight) * 2 + 1;
+});
+
+// Listen for zoom message from parent window
+window.addEventListener('message', (event) => {
+  if (event.data && event.data.type === 'ZOOM_IN') {
+    console.log('Received zoom command');
+    isZoomingIn = true;
+    zoomStartTime = performance.now();
+  }
 });
 
 function render() {
@@ -66,17 +82,41 @@ function render() {
   const dt = t - prevTime;
   prevTime = t;
 
-  if (running || invalidate) {
+  // Handle zoom animation
+  if (isZoomingIn) {
+    const elapsed = t - zoomStartTime;
+    const progress = Math.min(elapsed / zoomDuration, 1);
+
+    // Ease-in-out function for smooth animation
+    const easeProgress = progress < 0.5
+      ? 2 * progress * progress
+      : 1 - Math.pow(-2 * progress + 2, 2) / 2;
+
+    // Interpolate camera position
+    camera.position.x = startCameraPos.x + (endCameraPos.x - startCameraPos.x) * easeProgress;
+    camera.position.y = startCameraPos.y + (endCameraPos.y - startCameraPos.y) * easeProgress;
+    camera.position.z = startCameraPos.z + (endCameraPos.z - startCameraPos.z) * easeProgress;
+    camera.lookAt(scene.position);
+
+    // Stop zooming after duration
+    if (progress >= 1) {
+      isZoomingIn = false;
+    }
+  }
+
+  if (running || invalidate || isZoomingIn) {
     if (!invalidate) {
       time += dt * 0.1; // Slow down time by 90%
 
-      // Mouse-based rotation
-      targetRotationX = mouseY * 0.3; // Even more subtle effect
-      targetRotationY = -mouseX * 0.3;
+      // Mouse-based rotation (disabled during zoom)
+      if (!isZoomingIn) {
+        targetRotationX = mouseY * 0.3; // Even more subtle effect
+        targetRotationY = -mouseX * 0.3;
 
-      // Smooth lerp to target rotation
-      group.rotation.x += (targetRotationX - group.rotation.x) * 0.03;
-      group.rotation.y += (targetRotationY - group.rotation.y) * 0.03;
+        // Smooth lerp to target rotation
+        group.rotation.x += (targetRotationX - group.rotation.x) * 0.03;
+        group.rotation.y += (targetRotationY - group.rotation.y) * 0.03;
+      }
     }
     step(renderer, time / 1000, dt / 16);
 
