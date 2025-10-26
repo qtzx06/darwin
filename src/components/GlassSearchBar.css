@@ -1,6 +1,7 @@
 .glass-search-container {
   position: relative;
-  width: 500px;
+  width: 100%;
+  max-width: 500px;
   height: auto;
   display: flex;
   justify-content: center;
@@ -252,6 +253,30 @@
 
 @media (max-width: 768px) {
   .glass-search-container {
-    width: 90%;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+
+  .search-container {
+    padding: 15px;
+  }
+
+  .search-input {
+    padding: 12px 40px;
+    font-size: 14px;
+  }
+
+  .search-button {
+    left: 20px;
+  }
+
+  .search-clear {
+    right: 20px;
+  }
+
+  .placeholder {
+    left: 50px;
+    font-size: 14px;
   }
 }
