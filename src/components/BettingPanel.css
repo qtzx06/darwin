@@ -1,0 +1,245 @@
+.betting-panel {
+  width: 100%;
+  max-width: 500px;
+  margin: 2rem auto;
+  padding: 0 1rem;
+}
+
+.betting-glass {
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 24px;
+  padding: 2rem;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+}
+
+.betting-title {
+  font-family: 'Geist Mono', monospace;
+  font-size: 1.5rem;
+  color: #f0b0d0;
+  text-align: center;
+  margin: 0 0 2rem 0;
+  font-weight: 600;
+}
+
+.section-label {
+  display: block;
+  font-family: 'Geist Mono', monospace;
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.7);
+  margin-bottom: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* Amount Section */
+.amount-section {
+  margin-bottom: 2rem;
+}
+
+.amount-buttons {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.amount-btn {
+  font-family: 'Geist Mono', monospace;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: white;
+  padding: 0.75rem;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 0.95rem;
+}
+
+.amount-btn:hover:not(:disabled) {
+  background: rgba(240, 176, 208, 0.1);
+  border-color: rgba(240, 176, 208, 0.3);
+}
+
+.amount-btn.active {
+  background: rgba(240, 176, 208, 0.2);
+  border-color: #f0b0d0;
+  color: #f0b0d0;
+}
+
+.amount-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.custom-amount-input {
+  width: 100%;
+  font-family: 'Geist Mono', monospace;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: white;
+  padding: 0.75rem;
+  border-radius: 12px;
+  font-size: 0.95rem;
+  transition: all 0.3s ease;
+}
+
+.custom-amount-input:focus {
+  outline: none;
+  border-color: #f0b0d0;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.custom-amount-input::placeholder {
+  color: rgba(255, 255, 255, 0.3);
+}
+
+.custom-amount-input:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Choice Section */
+.choice-section {
+  margin-bottom: 2rem;
+}
+
+.choice-buttons {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
+}
+
+.choice-btn {
+  font-family: 'Geist Mono', monospace;
+  font-size: 3rem;
+  font-weight: 700;
+  padding: 2rem 1rem;
+  border-radius: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.choice-btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05));
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.choice-btn:hover:not(:disabled)::before {
+  opacity: 1;
+}
+
+.choice-zero {
+  background: rgba(138, 43, 226, 0.2);
+  color: #c4a0e0;
+}
+
+.choice-zero:hover:not(:disabled) {
+  background: rgba(138, 43, 226, 0.3);
+  border-color: #c4a0e0;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(138, 43, 226, 0.3);
+}
+
+.choice-one {
+  background: rgba(240, 176, 208, 0.2);
+  color: #f0b0d0;
+}
+
+.choice-one:hover:not(:disabled) {
+  background: rgba(240, 176, 208, 0.3);
+  border-color: #f0b0d0;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(240, 176, 208, 0.3);
+}
+
+.choice-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Result Display */
+.result-display {
+  padding: 1.5rem;
+  border-radius: 16px;
+  text-align: center;
+  margin-top: 1rem;
+}
+
+.result-display.won {
+  background: rgba(76, 175, 80, 0.2);
+  border: 1px solid rgba(76, 175, 80, 0.4);
+}
+
+.result-display.lost {
+  background: rgba(244, 67, 54, 0.2);
+  border: 1px solid rgba(244, 67, 54, 0.4);
+}
+
+.result-icon {
+  font-size: 3rem;
+  margin-bottom: 0.5rem;
+}
+
+.result-text {
+  font-family: 'Geist Mono', monospace;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: white;
+  margin-bottom: 0.5rem;
+}
+
+.result-details {
+  font-family: 'Geist Mono', monospace;
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.7);
+  margin-bottom: 0.5rem;
+}
+
+.result-payout {
+  font-family: 'Geist Mono', monospace;
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: #4caf50;
+}
+
+/* Connect Prompt */
+.connect-prompt {
+  font-family: 'Geist Mono', monospace;
+  text-align: center;
+  color: rgba(255, 255, 255, 0.5);
+  padding: 1rem;
+  font-size: 0.9rem;
+}
+
+/* Mobile Responsive */
+@media (max-width: 640px) {
+  .betting-glass {
+    padding: 1.5rem;
+  }
+
+  .betting-title {
+    font-size: 1.25rem;
+  }
+
+  .choice-btn {
+    font-size: 2.5rem;
+    padding: 1.5rem 1rem;
+  }
+
+  .amount-buttons {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}

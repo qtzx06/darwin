@@ -1,0 +1,161 @@
+.code-renderer-inline {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  width: 100%;
+  min-height: 0;
+  font-family: 'Geist Mono', monospace;
+  overflow: hidden;
+}
+
+.code-renderer-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 0 12px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  flex-shrink: 0;
+}
+
+.code-renderer-header h3 {
+  color: rgba(255, 255, 255, 0.9);
+  margin: 0;
+  font-family: 'BBH Sans Bartle', sans-serif;
+  font-size: 1rem;
+  text-transform: lowercase;
+  letter-spacing: 0.1em;
+  font-weight: 400;
+}
+
+.code-renderer-close {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 6px;
+  padding: 8px 12px;
+  color: rgba(255, 255, 255, 0.8);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 14px;
+}
+
+.code-renderer-close:hover {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.code-renderer-content {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 0;
+}
+
+.code-renderer-content::-webkit-scrollbar {
+  display: none;
+}
+
+.code-renderer-content {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.rendered-component-wrapper {
+  min-height: 200px;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+/* Style the rendered component to look nice */
+.rendered-component-wrapper * {
+  font-family: 'Geist Mono', monospace;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.rendered-component-wrapper input[type="text"],
+.rendered-component-wrapper input[type="email"],
+.rendered-component-wrapper input[type="password"],
+.rendered-component-wrapper textarea {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 6px;
+  padding: 8px 12px;
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 14px;
+  outline: none;
+  transition: all 0.3s ease;
+}
+
+.rendered-component-wrapper input:focus,
+.rendered-component-wrapper textarea:focus {
+  border-color: #f0b0d0;
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.rendered-component-wrapper button {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 6px;
+  padding: 8px 16px;
+  color: rgba(255, 255, 255, 0.9);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 14px;
+}
+
+.rendered-component-wrapper button:hover {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.rendered-component-wrapper ul {
+  list-style: none;
+  padding: 0;
+  margin: 16px 0;
+}
+
+.rendered-component-wrapper li {
+  padding: 8px 12px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.code-renderer-error {
+  padding: 20px;
+  background: rgba(255, 107, 107, 0.1);
+  border: 1px solid rgba(255, 107, 107, 0.3);
+  border-radius: 8px;
+}
+
+.error-title {
+  font-weight: 700;
+  color: #ff6b6b;
+  margin-bottom: 8px;
+  font-size: 14px;
+}
+
+.error-message {
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 12px;
+  font-family: 'Monaco', 'Menlo', monospace;
+  white-space: pre-wrap;
+}
+
+.code-renderer-loading {
+  color: rgba(255, 255, 255, 0.5);
+  text-align: center;
+  padding: 40px;
+  font-size: 12px;
+  font-family: 'Geist Mono', monospace;
+}
+
+.code-renderer-empty {
+  color: rgba(255, 255, 255, 0.3);
+  text-align: center;
+  padding: 40px;
+  font-size: 12px;
+  font-family: 'Geist Mono', monospace;
+}

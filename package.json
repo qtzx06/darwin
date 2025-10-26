@@ -11,7 +11,10 @@
     "server": "node server/index.js"
   },
   "dependencies": {
+    "@babel/standalone": "^7.28.5",
     "@fontsource/geist-mono": "^5.2.7",
+    "@google/genai": "^1.27.0",
+    "@livekit/components-react": "^2.9.15",
     "@mysten/sui": "^1.43.1",
     "@react-three/fiber": "^9.4.0",
     "@react-three/postprocessing": "^3.0.4",
@@ -21,6 +24,8 @@
     "fiber": "^1.0.4",
     "framer-motion": "^12.23.24",
     "gsap": "^3.13.0",
+    "livekit-client": "^2.15.13",
+    "livekit-server-sdk": "^2.14.0",
     "motion": "^12.23.24",
     "ogl": "^1.0.11",
     "postprocessing": "^6.37.8",

@@ -1,21 +1,27 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import './ChatInput.css';
 
-function ChatInput({ externalMessages = [] }) {
+function ChatInput({ externalMessages = [], onUserMessage }) {
   const [inputValue, setInputValue] = useState('');
   const [messages, setMessages] = useState([]);
+  const messagesEndRef = useRef(null);
+
+  // Auto-scroll to bottom when new messages arrive
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages]);
 
   useEffect(() => {
     if (externalMessages.length > 0) {
-      setMessages(prev => [...prev, ...externalMessages.slice(prev.length - externalMessages.length)]);
+      setMessages(externalMessages);
     }
   }, [externalMessages]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (inputValue.trim()) {
-      const newMessage = { text: inputValue, timestamp: Date.now() };
-      setMessages(prev => [...prev, newMessage]);
+    if (inputValue.trim() && onUserMessage) {
+      // Send message to parent
+      onUserMessage(inputValue.trim());
       setInputValue('');
     }
   };
@@ -41,11 +47,21 @@ function ChatInput({ externalMessages = [] }) {
           <div className="glass-specular"></div>
           <div className="chat-content-wrapper">
             <div className="chat-messages">
-              {messages.map((msg) => (
-                <div key={msg.timestamp} className="chat-message">
-                  {msg.text}
-                </div>
-              ))}
+              {messages.map((msg, idx) => {
+                // Extract [PREFIX] from message text
+                const match = msg.text.match(/^\[([^\]]+)\]\s*(.*)/);
+                const prefix = match ? match[1] : '';
+                const content = match ? match[2] : msg.text;
+
+                return (
+                  <div key={`${msg.timestamp}-${idx}`} className={`chat-message chat-message-${msg.type || 'server'}`}>
+                    {prefix && <span className="chat-prefix">[{prefix}]</span>}
+                    {prefix && ' '}
+                    {content}
+                  </div>
+                );
+              })}
+              <div ref={messagesEndRef} />
             </div>
             <form onSubmit={handleSubmit} className="chat-form">
               <input

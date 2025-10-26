@@ -46,6 +46,7 @@
   border-radius: 16px;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   transform: none !important;
+  overflow: hidden;
 }
 
 .orchestration-container .glass-card .glass-filter,
@@ -93,6 +94,7 @@
   justify-content: flex-start;
   width: 100%;
   height: 100%;
+  min-height: 0;
   gap: 12px;
 }
 
@@ -126,6 +128,7 @@
   flex-direction: column;
   gap: 10px;
   min-width: 0;
+  min-height: 0;
   position: relative;
   z-index: 5;
 }
@@ -186,6 +189,39 @@
   font-size: 0.7rem;
 }
 
+/* Agent actions container */
+.orchestration-container .agent-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+/* Agent preview button */
+.orchestration-container .agent-preview {
+  position: relative;
+  z-index: 500;
+  background: rgba(240, 176, 208, 0.15);
+  border: 1px solid rgba(240, 176, 208, 0.3);
+  border-radius: 6px;
+  padding: 8px 12px;
+  color: #f0b0d0;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 10px;
+  pointer-events: auto;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.orchestration-container .agent-preview:hover {
+  background: rgba(240, 176, 208, 0.25);
+  border-color: rgba(240, 176, 208, 0.5);
+  transform: scale(1.05);
+}
+
 /* Agent thumbs up button */
 .orchestration-container .agent-thumbs {
   position: relative;
@@ -226,6 +262,7 @@
   position: relative;
   width: 100%;
   flex: 1;
+  min-height: 0;
   border-radius: 8px;
   overflow: hidden;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
@@ -248,7 +285,8 @@
   color: rgba(255, 255, 255, 0.7);
   font-size: 9px;
   line-height: 1.4;
-  height: 100%;
+  flex: 1;
+  min-height: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   display: -webkit-box;
@@ -262,6 +300,7 @@
   line-height: 1.5;
   -webkit-line-clamp: unset;
   overflow-y: auto;
+  overflow-x: hidden;
   display: block;
   padding: 16px;
   font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
@@ -300,6 +339,125 @@
   }
   50% {
     opacity: 1;
+  }
+}
+
+/* Transcript message */
+.orchestration-container .transcript-message {
+  display: block;
+  margin-bottom: 8px;
+  line-height: 1.5;
+  width: 100%;
+}
+
+/* Agent status message */
+.orchestration-container .agent-status-message {
+  margin-top: 8px;
+  color: #f0b0d0;
+  font-size: 9px;
+  font-family: 'Geist Mono', monospace;
+  font-weight: 500;
+}
+
+/* Generated code display */
+.orchestration-container .agent-generated-code {
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  font-size: 0.7rem;
+  line-height: 1.6;
+  color: rgba(255, 255, 255, 0.9);
+  background: transparent;
+  padding: 0;
+  border-radius: 0;
+  overflow: visible;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  margin: 0;
+  border: none;
+  box-sizing: border-box;
+}
+
+.orchestration-container .glass-card.expanded .agent-generated-code {
+  font-size: 0.75rem;
+  padding: 0;
+}
+
+/* Hide scrollbar completely */
+.orchestration-container .agent-transcript-content::-webkit-scrollbar {
+  display: none;
+}
+
+.orchestration-container .agent-transcript-content {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Split view for code + preview */
+.orchestration-container .agent-split-view {
+  position: relative;
+  z-index: 4;
+  display: flex;
+  flex-direction: row;
+  gap: 16px;
+  height: 100%;
+  width: 100%;
+  padding: 16px;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.orchestration-container .agent-code-side {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  overflow-y: auto;
+  scrollbar-width: none;
+  box-sizing: border-box;
+}
+
+.orchestration-container .agent-code-side::-webkit-scrollbar {
+  display: none;
+}
+
+.orchestration-container .agent-preview-side {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  max-width: 50%;
+  display: flex;
+  flex-direction: column;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 8px;
+  padding: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+.orchestration-container .preview-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: rgba(255, 255, 255, 0.3);
+  font-family: 'Geist Mono', monospace;
+  font-size: 0.7rem;
+  text-align: center;
+}
+
+/* Typing cursor animation */
+.orchestration-container .typing-cursor {
+  animation: blink 1s step-end infinite;
+  color: #f0b0d0;
+  font-weight: bold;
+  margin-left: 2px;
+}
+
+@keyframes blink {
+  0%, 50% {
+    opacity: 1;
+  }
+  51%, 100% {
+    opacity: 0;
   }
 }
 

@@ -130,6 +130,27 @@
   flex-shrink: 0;
 }
 
+.orchestration-container .chat-prefix {
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.orchestration-container .chat-message-user .chat-prefix {
+  color: #f0b0d0;
+}
+
+.orchestration-container .chat-message-error .chat-prefix {
+  color: #ff6b6b;
+}
+
+.orchestration-container .chat-message-server .chat-prefix {
+  color: #7dd3fc;
+}
+
+.orchestration-container .chat-message-agent .chat-prefix {
+  color: #a78bfa;
+}
+
 .orchestration-container .chat-form {
   flex-shrink: 0;
 }
