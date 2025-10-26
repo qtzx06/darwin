@@ -58,9 +58,9 @@ let targetRotationY = 0;
 // Zoom animation state
 let isZoomingIn = false;
 let zoomStartTime = 0;
-const zoomDuration = 1000; // 1 second
+const zoomDuration = 1500; // 1.5 seconds
 const startCameraPos = { x: 5, y: 5, z: 5 };
-const endCameraPos = { x: 0.05, y: 0.05, z: 0.05 }; // Zoom extremely close to center
+const endCameraPos = { x: 0.1, y: 0.1, z: 0.1 }; // Zoom deep but not too close to avoid blackout
 
 window.addEventListener('mousemove', (event) => {
   // Normalize mouse position to -1 to 1
@@ -87,10 +87,8 @@ function render() {
     const elapsed = t - zoomStartTime;
     const progress = Math.min(elapsed / zoomDuration, 1);
 
-    // Ease-in-out function for smooth animation
-    const easeProgress = progress < 0.5
-      ? 2 * progress * progress
-      : 1 - Math.pow(-2 * progress + 2, 2) / 2;
+    // Ease-in cubic function for smooth acceleration (starts slow, accelerates)
+    const easeProgress = progress * progress * progress;
 
     // Interpolate camera position
     camera.position.x = startCameraPos.x + (endCameraPos.x - startCameraPos.x) * easeProgress;

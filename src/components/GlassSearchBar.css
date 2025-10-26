@@ -40,7 +40,6 @@
   z-index: 1;
   backdrop-filter: blur(4px);
   filter: url(#glass-distortion) saturate(120%) brightness(1.15);
-  will-change: filter;
 }
 
 .glass-overlay {

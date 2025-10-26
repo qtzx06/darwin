@@ -47,20 +47,18 @@
 }
 
 .title {
-  font-size: 6.9rem;
+  font-size: 3rem;
   color: white;
   text-align: center;
   margin: 0;
   line-height: 1;
-  font-weight: 100;
+  font-weight: 400;
   text-shadow: 0 0 35px rgba(255, 255, 255, 0.5);
-  font-family: 'Geist Mono', monospace;
+  font-family: "BBH Sans Bartle", sans-serif;
   text-transform: lowercase;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   letter-spacing: 0.15em;
-  -webkit-text-stroke: 0.2px rgba(255, 255, 255, 0.6);
-  font-variation-settings: 'wght' 100;
   opacity: 0.95;
 }
 
@@ -70,6 +68,24 @@
   width: 90%;
 }
 
+.side-card {
+  position: fixed;
+  top: 0;
+  width: 300px;
+  height: 100vh;
+  background: white;
+  z-index: 3;
+  pointer-events: auto;
+}
+
+.side-card-left {
+  left: 0;
+}
+
+.side-card-right {
+  right: 0;
+}
+
 @media (max-width: 768px) {
   .title {
     font-size: 4rem;
@@ -77,5 +93,9 @@
 
   .page-header {
     margin-bottom: 2rem;
+  }
+
+  .side-card {
+    display: none;
   }
 }

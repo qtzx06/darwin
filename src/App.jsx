@@ -24,18 +24,20 @@ function App() {
     console.log('Starting zoom animation with query:', query);
     setIsZooming(true);
 
-    // Start fade to black
-    setShowOverlay(true);
-
     // Send zoom message to wisp iframe
     if (wispIframeRef.current && wispIframeRef.current.contentWindow) {
       wispIframeRef.current.contentWindow.postMessage({ type: 'ZOOM_IN' }, '*');
     }
 
-    // Navigate after animation completes (1.5 seconds for zoom + fade)
+    // Start fade to black after 0.8 seconds to cover the deep zoom
+    setTimeout(() => {
+      setShowOverlay(true);
+    }, 800);
+
+    // Navigate after animation completes (0.8s delay + 1.5s fade = 2.3 total)
     setTimeout(() => {
       window.location.hash = `#orchestration?q=${encodeURIComponent(query)}`;
-    }, 1500);
+    }, 2300);
   };
 
   return (
@@ -72,14 +74,14 @@ function App() {
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            transition={{ duration: 1 }}
+            transition={{ duration: 1.5 }}
             style={{
               position: 'fixed',
               top: 0,
               left: 0,
               width: '100%',
               height: '100%',
-              backgroundColor: '#FFFFFF',
+              backgroundColor: '#000000',
               zIndex: 10,
               pointerEvents: 'none'
             }}
@@ -87,10 +89,32 @@ function App() {
         )}
       </AnimatePresence>
 
+      {/* Side Cards */}
+      {!isLoading && (
+        <>
+          <motion.div
+            className="side-card side-card-left"
+            initial={{ opacity: 0, x: -50 }}
+            animate={{ opacity: isZooming ? 0 : 1, x: isZooming ? -50 : 0 }}
+            transition={{ duration: 0.8, ease: "easeOut" }}
+          />
+          <motion.div
+            className="side-card side-card-right"
+            initial={{ opacity: 0, x: 50 }}
+            animate={{ opacity: isZooming ? 0 : 1, x: isZooming ? 50 : 0 }}
+            transition={{ duration: 0.8, ease: "easeOut" }}
+          />
+        </>
+      )}
+
       {/* Foreground Layer: Title and Glass Search Bar */}
       {!isLoading && (
         <div className="content-container">
-          <div className="page-header">
+          <motion.div
+            className="page-header"
+            animate={{ opacity: isZooming ? 0 : 1 }}
+            transition={{ duration: 0.8, ease: "easeOut" }}
+          >
             <h1 className="title">
               <DecryptedText
                 text="darwin"
@@ -99,10 +123,14 @@ function App() {
                 speed={150}
               />
             </h1>
-          </div>
-          <div className="glass-wrapper">
+          </motion.div>
+          <motion.div
+            className="glass-wrapper"
+            animate={{ opacity: isZooming ? 0 : 1 }}
+            transition={{ duration: 0.8, ease: "easeOut" }}
+          >
             <GlassSearchBar onSubmit={handleSearchSubmit} />
-          </div>
+          </motion.div>
         </div>
       )}
     </div>
