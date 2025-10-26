@@ -1,0 +1,82 @@
+.wallet-button {
+  position: fixed;
+  top: 2rem;
+  right: 2rem;
+  z-index: 1000;
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  padding: 0.5rem 1rem;
+  color: #fff;
+  font-family: 'Geist Mono', monospace;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  text-transform: lowercase;
+}
+
+.wallet-button:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.4);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(255, 255, 255, 0.1);
+}
+
+.wallet-button.connected {
+  background: rgba(100, 200, 255, 0.1);
+  border-color: rgba(100, 200, 255, 0.4);
+}
+
+.wallet-button.connected:hover {
+  background: rgba(100, 200, 255, 0.15);
+  border-color: rgba(100, 200, 255, 0.6);
+}
+
+.wallet-status {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.wallet-indicator {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #00ff88;
+  box-shadow: 0 0 8px #00ff88;
+  animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.wallet-address {
+  font-family: 'Geist Mono', monospace;
+  font-size: 0.85rem;
+}
+
+.wallet-icon {
+  font-size: 1rem;
+}
+
+/* Mobile responsive */
+@media (max-width: 768px) {
+  .wallet-button {
+    padding: 0.4rem 0.8rem;
+    font-size: 0.75rem;
+  }
+  
+  .wallet-address {
+    font-size: 0.75rem;
+  }
+}

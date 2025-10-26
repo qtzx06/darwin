@@ -8,6 +8,7 @@ import Dither from './components/Dither';
 import LogoLoop from './components/LogoLoop';
 import DevpostCard from './components/DevpostCard';
 import Orchestration from './components/Orchestration';
+import SuiWalletButton from './components/SuiWalletButton';
 import { TbBrandThreejs } from 'react-icons/tb';
 import { FaReact, FaPython } from 'react-icons/fa';
 import { RiClaudeFill, RiGeminiFill } from 'react-icons/ri';
@@ -87,6 +88,9 @@ function App() {
 
   return (
     <div className="app-container">
+      {/* Wallet Button - Only on homepage, fades with loading */}
+      {!isLoading && currentPage !== 'orchestration' && <SuiWalletButton />}
+      
       {/* Render Orchestration page if on #orchestration route */}
       {currentPage === 'orchestration' ? (
         <Orchestration />

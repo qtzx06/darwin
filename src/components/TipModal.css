@@ -21,9 +21,9 @@
 .tip-modal {
   background: rgba(27, 27, 27, 0.95);
   border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 16px;
-  padding: 2rem;
-  max-width: 500px;
+  border-radius: 12px;
+  padding: 1.25rem;
+  max-width: 380px;
   width: 90%;
   position: relative;
   animation: slideUp 0.3s ease;
@@ -63,35 +63,35 @@
 }
 
 .tip-modal-title {
-  font-size: 1.8rem;
+  font-size: 1.3rem;
   font-weight: 600;
-  margin: 0 0 0.5rem 0;
+  margin: 0 0 0.25rem 0;
   color: #fff;
   font-family: 'Geist Mono', monospace;
   text-transform: lowercase;
 }
 
 .tip-modal-subtitle {
-  font-size: 0.9rem;
+  font-size: 0.75rem;
   color: rgba(255, 255, 255, 0.6);
-  margin: 0 0 2rem 0;
+  margin: 0 0 1.25rem 0;
 }
 
 .tip-amounts {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 0.75rem;
-  margin-bottom: 1.5rem;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
 }
 
 .tip-amount-btn {
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 8px;
-  padding: 1rem;
+  border-radius: 6px;
+  padding: 0.65rem;
   color: #fff;
   font-family: 'Geist Mono', monospace;
-  font-size: 1rem;
+  font-size: 0.85rem;
   cursor: pointer;
   transition: all 0.2s;
   text-transform: lowercase;
@@ -116,15 +116,15 @@
 .tip-custom {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
-  margin-bottom: 1.5rem;
-  padding: 1rem;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  padding: 0.65rem;
   background: rgba(255, 255, 255, 0.03);
-  border-radius: 8px;
+  border-radius: 6px;
 }
 
 .tip-custom label {
-  font-size: 0.9rem;
+  font-size: 0.75rem;
   color: rgba(255, 255, 255, 0.7);
   flex-shrink: 0;
 }
@@ -133,11 +133,11 @@
   flex: 1;
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 6px;
-  padding: 0.5rem 0.75rem;
+  border-radius: 4px;
+  padding: 0.4rem 0.6rem;
   color: #fff;
   font-family: 'Geist Mono', monospace;
-  font-size: 1rem;
+  font-size: 0.85rem;
 }
 
 .tip-custom-input:focus {
@@ -153,36 +153,36 @@
 .tip-wallet-info {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
-  padding: 1rem;
+  gap: 0.5rem;
+  padding: 0.65rem;
   background: rgba(255, 255, 255, 0.03);
-  border-radius: 8px;
-  margin-bottom: 1.5rem;
+  border-radius: 6px;
+  margin-bottom: 1rem;
 }
 
 .tip-wallet-label {
-  font-size: 0.9rem;
+  font-size: 0.75rem;
   color: rgba(255, 255, 255, 0.6);
 }
 
 .tip-wallet-address {
   flex: 1;
   font-family: 'Geist Mono', monospace;
-  font-size: 0.85rem;
+  font-size: 0.75rem;
   color: rgba(100, 200, 255, 0.9);
   background: rgba(100, 200, 255, 0.1);
-  padding: 0.5rem;
+  padding: 0.4rem;
   border-radius: 4px;
 }
 
 .tip-status {
-  padding: 1rem;
-  border-radius: 8px;
-  margin-bottom: 1.5rem;
-  font-size: 0.9rem;
+  padding: 0.65rem;
+  border-radius: 6px;
+  margin-bottom: 1rem;
+  font-size: 0.75rem;
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: 0.35rem;
 }
 
 .tip-status-pending {
@@ -222,10 +222,10 @@
 .tip-cancel-btn,
 .tip-send-btn {
   flex: 1;
-  padding: 0.875rem 1.5rem;
-  border-radius: 8px;
+  padding: 0.65rem 1rem;
+  border-radius: 6px;
   font-family: 'Geist Mono', monospace;
-  font-size: 1rem;
+  font-size: 0.85rem;
   cursor: pointer;
   transition: all 0.2s;
   text-transform: lowercase;

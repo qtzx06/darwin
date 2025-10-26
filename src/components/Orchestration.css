@@ -99,14 +99,19 @@
   margin-bottom: 2px;
 }
 
+.orchestration-container .header-wallet {
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
 .orchestration-container .header-query {
   display: flex;
   align-items: baseline;
   gap: 8px;
+  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.8);
   font-family: 'Geist Mono', monospace;
-  font-size: 0.75rem;
-  color: white;
-  flex-shrink: 1;
+  flex: 1;
   min-width: 0;
 }
 

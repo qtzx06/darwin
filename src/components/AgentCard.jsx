@@ -7,6 +7,7 @@ import SolverOrb from './SolverOrb';
 import LoaderOrb from './LoaderOrb';
 import DecryptedText from './DecryptedText';
 import CodeRenderer from './CodeRenderer';
+import TipModal from './TipModal';
 import { voteForAgent, getAgentWalletAddress } from '../utils/suiClient';
 
 const PERSONALITIES = {
@@ -549,6 +550,7 @@ function AgentCard({ agentId, agentName, isExpanded, onExpand, onLike, onPreview
   const [currentMessageIndex, setCurrentMessageIndex] = useState(0);
   const [visibleMessages, setVisibleMessages] = useState([0]); // Track which messages are visible
   const [copiedAddress, setCopiedAddress] = useState(false);
+  const [showTipModal, setShowTipModal] = useState(false);
   // No typing animation, just show code immediately
   useEffect(() => {
     // Code appears instantly when generated
@@ -652,6 +654,11 @@ function AgentCard({ agentId, agentName, isExpanded, onExpand, onLike, onPreview
     }
   };
 
+  const handleTipClick = (e) => {
+    e.stopPropagation();
+    setShowTipModal(true);
+  };
+
   return (
     <div
       ref={cardRef}
@@ -708,7 +715,7 @@ function AgentCard({ agentId, agentName, isExpanded, onExpand, onLike, onPreview
                     Vote Free
                   </button>
                   
-                  <div className="wallet-address-inline">
+                  <div className="wallet-address-inline" onClick={handleTipClick} style={{ cursor: 'pointer' }} title="Click to tip">
                     <code className="wallet-address-text">
                       {getAgentWalletAddress(agentId)?.slice(0, 6)}...{getAgentWalletAddress(agentId)?.slice(-4)}
                     </code>
@@ -765,6 +772,14 @@ function AgentCard({ agentId, agentName, isExpanded, onExpand, onLike, onPreview
           </div>
         </div>
       </div>
+      
+      {showTipModal && (
+        <TipModal
+          agentName={agentName}
+          agentWalletAddress={getAgentWalletAddress(agentId)}
+          onClose={() => setShowTipModal(false)}
+        />
+      )}
     </div>
   );
 }
