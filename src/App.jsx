@@ -6,6 +6,7 @@ import GlassSearchBar from './components/GlassSearchBar';
 import DecryptedText from './components/DecryptedText';
 import Dither from './components/Dither';
 import LogoLoop from './components/LogoLoop';
+import DevpostCard from './components/DevpostCard';
 import { TbBrandThreejs } from 'react-icons/tb';
 import { FaReact, FaPython } from 'react-icons/fa';
 import { RiClaudeFill, RiGeminiFill } from 'react-icons/ri';
@@ -199,6 +200,17 @@ function App() {
             />
           </motion.div>
         </div>
+      )}
+
+      {/* Devpost Card - Fixed to Bottom */}
+      {!isLoading && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: isZooming ? 0 : 1 }}
+          transition={{ duration: 0.8, ease: "easeOut" }}
+        >
+          <DevpostCard />
+        </motion.div>
       )}
     </div>
   );
