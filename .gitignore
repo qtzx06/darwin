@@ -24,6 +24,8 @@ ai-agents/config/agent_wallets.env
 *.priv
 *.key
 
+# Note: agent_wallets.json contains PUBLIC addresses only and is safe to commit
+
 # Sui CLI
 .sui/
 sui.keystore
@@ -73,3 +75,7 @@ coverage/
 # Local development
 *.local
 .eslintcache
+
+# Move build artifacts
+move/**/build/
+move/**/Move.lock
