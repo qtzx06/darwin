@@ -928,6 +928,256 @@ Return ONLY the JSON array, no other text.
             "message": f"Project {project_id} status retrieved"
         }
 
+    async def agent_chat_direct(self, from_agent: str, to_agent: str, message: str, project_id: str) -> Dict[str, Any]:
+        """Direct 1-on-1 conversation between two agents using Letta's multi-agent messaging."""
+        try:
+            # Get agent IDs from environment
+            import os
+            agent_ids = {
+                "One": os.getenv('LETTA_AGENT_ONE'),
+                "Two": os.getenv('LETTA_AGENT_TWO'),
+                "Three": os.getenv('LETTA_AGENT_THREE'),
+                "Four": os.getenv('LETTA_AGENT_FOUR'),
+                "Commentator": os.getenv('LETTA_AGENT_COMMENTATOR'),
+                "Orchestrator": os.getenv('LETTA_AGENT_ORCHESTRATOR')
+            }
+
+            from_agent_id = agent_ids.get(from_agent)
+            to_agent_id = agent_ids.get(to_agent)
+
+            if not from_agent_id or not to_agent_id:
+                return {
+                    "success": False,
+                    "error": f"Agent IDs not found for {from_agent} or {to_agent}"
+                }
+
+            print(f"💬 Direct chat: {from_agent} -> {to_agent}")
+            print(f"📝 Message: {message}")
+
+            # Create context-aware message for the sending agent
+            chat_prompt = f"""
+You are {from_agent}, a competitive coding agent. You want to send a direct message to {to_agent}.
+
+Project context: {project_id}
+Your message to send: "{message}"
+
+Respond in character with your personality. Keep it conversational and reflect your unique coding style and attitude.
+Then use the send_message_to_agent_and_wait_for_reply tool to send your message to {to_agent}.
+"""
+
+            # Send message from source agent to target agent
+            response = self.simulator.client.agents.messages.create(
+                agent_id=from_agent_id,
+                messages=[{"role": "user", "content": chat_prompt}]
+            )
+
+            # Extract the conversation thread
+            conversation = []
+            for msg in response.messages:
+                if hasattr(msg, 'content') and msg.content:
+                    conversation.append({
+                        "speaker": from_agent,
+                        "content": msg.content,
+                        "timestamp": time.time()
+                    })
+
+            # Try to get the response from the target agent
+            # The Letta multi-agent messaging should have triggered a response
+            try:
+                # Get recent messages from target agent to see the response
+                target_messages = self.simulator.client.agents.messages.list(to_agent_id, limit=5)
+
+                for msg in target_messages.messages[-2:]:  # Check last 2 messages
+                    if hasattr(msg, 'content') and msg.content and from_agent.lower() in msg.content.lower():
+                        conversation.append({
+                            "speaker": to_agent,
+                            "content": msg.content,
+                            "timestamp": time.time()
+                        })
+                        break
+            except Exception as e:
+                print(f"⚠️ Could not get response from {to_agent}: {e}")
+
+            return {
+                "success": True,
+                "project_id": project_id,
+                "from_agent": from_agent,
+                "to_agent": to_agent,
+                "conversation": conversation,
+                "message": f"Direct chat initiated between {from_agent} and {to_agent}"
+            }
+
+        except Exception as e:
+            print(f"❌ Direct chat error: {e}")
+            return {
+                "success": False,
+                "error": str(e),
+                "message": "Failed to initiate direct chat"
+            }
+
+    async def agent_chat_group(self, agent_names: List[str], topic: str, project_id: str) -> Dict[str, Any]:
+        """Group discussion between multiple agents."""
+        try:
+            # Get agent IDs from environment
+            import os
+            agent_ids = {
+                "One": os.getenv('LETTA_AGENT_ONE'),
+                "Two": os.getenv('LETTA_AGENT_TWO'),
+                "Three": os.getenv('LETTA_AGENT_THREE'),
+                "Four": os.getenv('LETTA_AGENT_FOUR'),
+                "Commentator": os.getenv('LETTA_AGENT_COMMENTATOR'),
+                "Orchestrator": os.getenv('LETTA_AGENT_ORCHESTRATOR')
+            }
+
+            print(f"👥 Group chat: {', '.join(agent_names)}")
+            print(f"💭 Topic: {topic}")
+
+            conversation = []
+
+            # Start the discussion with the first agent
+            for i, agent_name in enumerate(agent_names):
+                agent_id = agent_ids.get(agent_name)
+                if not agent_id:
+                    continue
+
+                if i == 0:
+                    # First agent starts the discussion
+                    discussion_prompt = f"""
+You are {agent_name}, a competitive coding agent. You're in a group discussion with {', '.join([a for a in agent_names if a != agent_name])}.
+
+Topic for discussion: "{topic}"
+Project context: {project_id}
+
+Start the discussion by sharing your thoughts on this topic. Be true to your personality and coding philosophy.
+Keep your response conversational and engaging for the group.
+"""
+                else:
+                    # Subsequent agents respond to the ongoing discussion
+                    previous_messages = "\n".join([f"{msg['speaker']}: {msg['content']}" for msg in conversation[-2:]])
+                    discussion_prompt = f"""
+You are {agent_name}, a competitive coding agent. You're in a group discussion about "{topic}".
+
+Previous discussion:
+{previous_messages}
+
+Respond to the ongoing discussion. Share your perspective, agree/disagree with others, and keep the conversation engaging.
+Be true to your personality and coding style.
+"""
+
+                response = self.simulator.client.agents.messages.create(
+                    agent_id=agent_id,
+                    messages=[{"role": "user", "content": discussion_prompt}]
+                )
+
+                # Extract agent's contribution
+                for msg in response.messages:
+                    if hasattr(msg, 'content') and msg.content:
+                        conversation.append({
+                            "speaker": agent_name,
+                            "content": msg.content,
+                            "timestamp": time.time()
+                        })
+                        break
+
+            return {
+                "success": True,
+                "project_id": project_id,
+                "topic": topic,
+                "participants": agent_names,
+                "conversation": conversation,
+                "message": f"Group discussion completed with {len(agent_names)} agents"
+            }
+
+        except Exception as e:
+            print(f"❌ Group chat error: {e}")
+            return {
+                "success": False,
+                "error": str(e),
+                "message": "Failed to initiate group discussion"
+            }
+
+    async def agent_battle_talk(self, project_id: str, battle_context: Dict[str, Any], trigger_event: str = "battle_start") -> Dict[str, Any]:
+        """Generate trash talk and competitive banter between agents."""
+        try:
+            # Get agent IDs from environment
+            import os
+            agent_ids = {
+                "One": os.getenv('LETTA_AGENT_ONE'),
+                "Two": os.getenv('LETTA_AGENT_TWO'),
+                "Three": os.getenv('LETTA_AGENT_THREE'),
+                "Four": os.getenv('LETTA_AGENT_FOUR')
+            }
+
+            print(f"🔥 Battle trash talk - Event: {trigger_event}")
+            print(f"⚔️ Context: {battle_context}")
+
+            trash_talk = []
+
+            for agent_name in ["One", "Two", "Three", "Four"]:
+                agent_id = agent_ids.get(agent_name)
+                if not agent_id:
+                    continue
+
+                # Create competitive banter prompt based on event and context
+                context_info = ""
+                if battle_context.get("current_leader"):
+                    context_info += f"Current leader: {battle_context['current_leader']}. "
+                if battle_context.get("round_number"):
+                    context_info += f"Round {battle_context['round_number']}. "
+                if battle_context.get("task_difficulty"):
+                    context_info += f"Task difficulty: {battle_context['task_difficulty']}. "
+
+                banter_prompt = f"""
+You are {agent_name}, a competitive coding agent in a high-stakes coding battle.
+
+Event: {trigger_event}
+Battle context: {context_info}
+Project: {project_id}
+
+Generate some competitive trash talk or battle banter. Be confident, a bit cocky, but keep it fun and related to coding.
+Show your personality and competitive spirit. Keep it short and punchy - one or two sentences max.
+Examples of your style:
+- Confident predictions about your performance
+- Playful jabs at other agents' approaches
+- Boasts about your coding skills
+- Reactions to the current battle situation
+
+Make it entertaining for spectators!
+"""
+
+                response = self.simulator.client.agents.messages.create(
+                    agent_id=agent_id,
+                    messages=[{"role": "user", "content": banter_prompt}]
+                )
+
+                # Extract trash talk
+                for msg in response.messages:
+                    if hasattr(msg, 'content') and msg.content:
+                        trash_talk.append({
+                            "agent": agent_name,
+                            "message": msg.content.strip(),
+                            "timestamp": time.time(),
+                            "event": trigger_event
+                        })
+                        break
+
+            return {
+                "success": True,
+                "project_id": project_id,
+                "trigger_event": trigger_event,
+                "battle_context": battle_context,
+                "trash_talk": trash_talk,
+                "message": f"Generated battle trash talk for {trigger_event}"
+            }
+
+        except Exception as e:
+            print(f"❌ Battle talk error: {e}")
+            return {
+                "success": False,
+                "error": str(e),
+                "message": "Failed to generate battle trash talk"
+            }
+
 # Example usage for frontend
 async def main():
     """Example of how to use the API wrapper."""

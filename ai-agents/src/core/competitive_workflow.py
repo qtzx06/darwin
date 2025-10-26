@@ -49,6 +49,11 @@ class CompetitiveWorkflow:
         self.current_project_id = None
         self.current_round = 0
         self.agent_stats = {}  # Track wins per agent
+        
+        # LiveKit voice commentary components
+        self.battle_context = None
+        self.voice_commentator = None
+        self.livekit_enabled = False
     
     async def start_competitive_project(self, project_name: str, main_task: str, 
                                       agents: List[Any], commentator, orchestrator) -> str:
@@ -56,6 +61,9 @@ class CompetitiveWorkflow:
         # Generate project ID
         project_id = f"project_{int(time.time())}"
         self.current_project_id = project_id
+        
+        # Initialize battle context for voice commentary
+        await self._initialize_voice_commentary(project_name, main_task, agents, commentator)
         
         # Create project workspace
         await self.artifact_manager.create_project_workspace(project_id, project_name)
@@ -78,6 +86,11 @@ class CompetitiveWorkflow:
         
         print(f"🚀 Started competitive project: {project_name} ({project_id})")
         
+        # Announce battle start with voice commentary
+        if self.voice_commentator:
+            await self.voice_commentator.speak_commentary("battle_start", 
+                f"Welcome to the AI coding battle! We're building: {project_name}")
+        
         # Use orchestrator to break down the main task
         subtasks = await orchestrator.orchestrate_project(main_task, agents)
         
@@ -90,6 +103,59 @@ class CompetitiveWorkflow:
         
         return project_id
     
+    async def _initialize_voice_commentary(self, project_name: str, main_task: str, 
+                                         agents: List[Any], commentator):
+        """Initialize voice commentary components if LiveKit is available"""
+        try:
+            # Import LiveKit components
+            from src.livekit.battle_context import BattleContextManager
+            from src.livekit.room_manager import room_manager
+            from src.livekit.voice_commentator import VoiceCommentator
+            
+            # Check if LiveKit is available
+            if not room_manager.is_available():
+                print("⚠️ LiveKit not configured - voice commentary disabled")
+                return
+            
+            # Create battle context manager
+            self.battle_context = BattleContextManager()
+            await self.battle_context.initialize_battle(
+                self.current_project_id, 
+                project_name, 
+                total_rounds=4
+            )
+            
+            # Create LiveKit room
+            room_result = await room_manager.create_battle_room(self.current_project_id)
+            if not room_result["success"]:
+                print(f"❌ Failed to create LiveKit room: {room_result['error']}")
+                return
+            
+            # TODO: Create actual LiveKit room connection
+            # For now, we'll use a mock room object
+            class MockRoom:
+                def __init__(self): pass
+                class local_participant:
+                    def publish_track(self, track): pass
+            
+            mock_room = MockRoom()
+            
+            # Create voice commentator
+            self.voice_commentator = VoiceCommentator(
+                letta_commentator=commentator,
+                battle_context=self.battle_context,
+                room=mock_room
+            )
+            
+            self.livekit_enabled = True
+            print("🎙️ Voice commentary initialized successfully!")
+            
+        except ImportError as e:
+            print(f"⚠️ LiveKit components not available: {e}")
+            print("   Voice commentary disabled")
+        except Exception as e:
+            print(f"❌ Failed to initialize voice commentary: {e}")
+    
     async def _execute_competitive_round(self, subtask: Subtask, agents: List[Any], 
                                        commentator, orchestrator) -> AgentWorkResult:
         """Execute a competitive round for a subtask."""
@@ -98,6 +164,17 @@ class CompetitiveWorkflow:
         print(f"{'='*60}")
         
         self.current_round = subtask.round_num
+        
+        # Update battle context and announce round start
+        if self.battle_context:
+            await self.battle_context.update_round_start(
+                subtask.title, 
+                subtask.description, 
+                subtask.round_num
+            )
+        
+        if self.voice_commentator:
+            await self.voice_commentator.announce_round_start(subtask.title, subtask.round_num)
         
         # Step 1: All agents work on the same subtask
         print(f"\n🔨 PHASE 1: All agents working on '{subtask.title}'...")
@@ -110,6 +187,13 @@ class CompetitiveWorkflow:
         # Step 3: Process winner and learning
         print(f"\n🧠 PHASE 3: Processing winner...")
         await self._process_winner(winner, work_results, agents, commentator)
+        
+        # Announce winner with voice commentary
+        if self.voice_commentator and hasattr(winner, 'agent_name'):
+            await self.voice_commentator.announce_winner(
+                winner.agent_name, 
+                "User selected this approach!"
+            )
         
         return winner
     
@@ -232,6 +316,13 @@ class CompetitiveWorkflow:
             # Show the progress message
             print(f"\n🔥 {event['agent']} PROGRESS UPDATE:")
             print(f"   {event['step']}. {event['message']}")
+            
+            # Update battle context and announce progress with voice commentary
+            if self.battle_context:
+                await self.battle_context.update_agent_progress(event['agent'], event['message'])
+            
+            if self.voice_commentator:
+                await self.voice_commentator.announce_agent_progress(event['agent'], event['message'])
             
             # Check if any tasks are done
             done_tasks = [task for task in tasks if task.done()]
@@ -1293,6 +1384,10 @@ Don't copy their code - enhance YOURS with their techniques!
         shared_context = await self.shared_memory.read("project_context") or {}
         shared_context["completed"] = True
         await self.shared_memory.write("project_context", shared_context)
+        
+        # Announce battle completion with voice commentary
+        if self.voice_commentator:
+            await self.voice_commentator.announce_battle_end(self.agent_stats)
     
     # REMOVED: _broadcast_progress method - now using smart batch commentary
     
