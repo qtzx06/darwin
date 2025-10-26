@@ -97,30 +97,26 @@ function Orchestration() {
         <div className="header-space">
           <HeaderDither />
           <div className="header-content">
-            <div className="header-left">
-              <div className="header-text">
-                <span className="header-title">DARWIN // </span>
-                <span className="header-subtitle">evolve your agents.</span>
-              </div>
-              <div className="header-logo-loop">
-                <LogoLoop
-                  logos={logos}
-                  speed={60}
-                  direction="left"
-                  logoHeight={20}
-                  gap={24}
-                  pauseOnHover={false}
-                  fadeOut={true}
-                />
-              </div>
+            <div className="header-text">
+              <span className="header-title">DARWIN // </span>
+              <span className="header-subtitle">evolve your agents.</span>
             </div>
-            <div className="header-right">
-              {query && (
-                <div className="header-query">
-                  <span className="header-query-label">Query:</span>
-                  <span className="header-query-text">{query}</span>
-                </div>
-              )}
+            {query && (
+              <div className="header-query">
+                <span className="header-query-label">Query:</span>
+                <span className="header-query-text">{query}</span>
+              </div>
+            )}
+            <div className="header-logo-loop">
+              <LogoLoop
+                logos={logos}
+                speed={60}
+                direction="left"
+                logoHeight={20}
+                gap={24}
+                pauseOnHover={false}
+                fadeOut={true}
+              />
             </div>
           </div>
         </div>

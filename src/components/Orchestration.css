@@ -66,14 +66,6 @@
   pointer-events: auto;
 }
 
-.orchestration-container .header-left {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  flex-shrink: 1;
-  min-width: 0;
-}
-
 .orchestration-container .header-text {
   display: flex;
   align-items: flex-end;
@@ -104,19 +96,6 @@
   margin-bottom: 2px;
 }
 
-.orchestration-container .header-logo-loop {
-  max-width: 300px;
-  flex-shrink: 1;
-  min-width: 0;
-}
-
-.orchestration-container .header-right {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  flex-shrink: 0;
-}
-
 .orchestration-container .header-query {
   display: flex;
   align-items: baseline;
@@ -124,11 +103,14 @@
   font-family: 'Geist Mono', monospace;
   font-size: 0.75rem;
   color: white;
+  flex-shrink: 1;
+  min-width: 0;
 }
 
 .orchestration-container .header-query-label {
   font-weight: 600;
   opacity: 0.7;
+  flex-shrink: 0;
 }
 
 .orchestration-container .header-query-text {
@@ -138,6 +120,11 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.orchestration-container .header-logo-loop {
+  max-width: 400px;
+  flex-shrink: 0;
 }
 
 /* Bento Grid Layout */
@@ -243,10 +230,6 @@
     gap: 16px;
   }
 
-  .orchestration-container .header-left {
-    gap: 12px;
-  }
-
   .orchestration-container .header-text {
     gap: 8px;
   }
@@ -260,15 +243,15 @@
     margin-bottom: 1.5px;
   }
 
-  .orchestration-container .header-logo-loop {
-    max-width: 250px;
-  }
-
   .orchestration-container .header-query {
     font-size: 0.7rem;
   }
 
   .orchestration-container .header-query-text {
+    max-width: 200px;
+  }
+
+  .orchestration-container .header-logo-loop {
     max-width: 250px;
   }
 
@@ -295,34 +278,24 @@
     flex-wrap: wrap;
   }
 
-  .orchestration-container .header-left {
-    gap: 10px;
-    flex-wrap: wrap;
+  .orchestration-container .header-content {
+    justify-content: center;
   }
 
   .orchestration-container .header-text {
-    gap: 6px;
-  }
-
-  .orchestration-container .header-title {
-    font-size: 0.9rem;
-  }
-
-  .orchestration-container .header-subtitle {
-    font-size: 0.65rem;
-    margin-bottom: 1px;
+    display: none;
   }
 
   .orchestration-container .header-logo-loop {
-    max-width: 180px;
+    display: none;
   }
 
   .orchestration-container .header-query {
-    font-size: 0.65rem;
+    font-size: 0.7rem;
   }
 
   .orchestration-container .header-query-text {
-    max-width: 150px;
+    max-width: 200px;
   }
 
   .orchestration-container .bento-grid {
