@@ -1,0 +1,73 @@
+.orchestration-container .chat-input-content {
+  padding: 14px;
+  color: #fff;
+  font-size: 10px;
+  line-height: 1.4;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.orchestration-container .chat-input-content h3 {
+  color: rgba(255, 255, 255, 0.8);
+  margin-bottom: 0;
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  font-weight: 600;
+  text-align: center;
+}
+
+.orchestration-container .chat-form {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.orchestration-container .chat-input {
+  flex: 1;
+  background: rgba(0, 0, 0, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
+  padding: 8px 12px;
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 10px;
+  font-family: 'Geist Mono', monospace;
+  outline: none;
+  transition: all 0.3s ease;
+}
+
+.orchestration-container .chat-input:focus {
+  border-color: rgba(255, 255, 255, 0.3);
+  background: rgba(0, 0, 0, 0.7);
+}
+
+.orchestration-container .chat-input::placeholder {
+  color: rgba(255, 255, 255, 0.4);
+}
+
+.orchestration-container .chat-submit {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 6px;
+  padding: 8px 12px;
+  color: rgba(255, 255, 255, 0.8);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 10px;
+}
+
+.orchestration-container .chat-submit:hover {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.orchestration-container .chat-messages {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}

@@ -1,0 +1,346 @@
+.orchestration-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: #000000;
+  overflow: hidden;
+  z-index: 100;
+  font-family: 'Geist Mono', monospace;
+}
+
+/* Global spotlight effect */
+.orchestration-container::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 115;
+  background: radial-gradient(circle 500px at var(--mouse-x, 50%) var(--mouse-y, 50%), rgba(255, 255, 255, 0.08) 0%, transparent 100%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.orchestration-container:hover::before {
+  opacity: 1;
+}
+
+/* Bento Box Container */
+.orchestration-container .bento-container {
+  position: absolute;
+  inset: 0;
+  padding: 20px;
+  padding-top: 90px;
+  z-index: 110;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* Header Space */
+.orchestration-container .header-space {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 90px;
+  z-index: 120;
+  overflow: visible;
+}
+
+/* Header Content */
+.orchestration-container .header-content {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  right: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  z-index: 10;
+  pointer-events: auto;
+}
+
+.orchestration-container .header-text {
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.orchestration-container .header-title {
+  font-family: 'BBH Sans Bartle', sans-serif;
+  font-size: 1.1rem;
+  color: white;
+  font-weight: 400;
+  text-transform: lowercase;
+  letter-spacing: 0.15em;
+  text-shadow: 0 0 20px rgba(255, 255, 255, 0.4);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.orchestration-container .header-subtitle {
+  font-family: 'Geist Mono', monospace;
+  font-size: 0.75rem;
+  color: white;
+  font-weight: 400;
+  letter-spacing: 0.02em;
+  text-shadow: 0 0 15px rgba(255, 255, 255, 0.3);
+  opacity: 0.9;
+  margin-bottom: 2px;
+}
+
+.orchestration-container .header-query {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  font-family: 'Geist Mono', monospace;
+  font-size: 0.75rem;
+  color: white;
+  flex-shrink: 1;
+  min-width: 0;
+}
+
+.orchestration-container .header-query-label {
+  font-weight: 600;
+  opacity: 0.7;
+  flex-shrink: 0;
+}
+
+.orchestration-container .header-query-text {
+  font-weight: 400;
+  opacity: 0.9;
+  max-width: 300px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.orchestration-container .header-logo-loop {
+  max-width: 400px;
+  flex-shrink: 0;
+}
+
+/* Bento Grid Layout */
+.orchestration-container .bento-grid {
+  flex: 1;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  grid-template-rows: repeat(3, 1fr);
+  gap: 16px;
+  perspective: 1000px;
+  position: relative;
+}
+
+/* Agent Card Positioning in Grid */
+.orchestration-container .bento-grid > .glass-card:nth-child(1) {
+  grid-column: 1 / 2;
+  grid-row: 1 / 2;
+}
+
+.orchestration-container .bento-grid > .glass-card:nth-child(2) {
+  grid-column: 2 / 3;
+  grid-row: 1 / 2;
+}
+
+.orchestration-container .bento-grid > .glass-card:nth-child(3) {
+  grid-column: 1 / 2;
+  grid-row: 2 / 3;
+}
+
+.orchestration-container .bento-grid > .glass-card:nth-child(4) {
+  grid-column: 2 / 3;
+  grid-row: 2 / 3;
+}
+
+/* Commentator - Spans right side top 2 rows */
+.orchestration-container .bento-grid > .commentator-card {
+  grid-column: 3 / 5;
+  grid-row: 1 / 3;
+}
+
+/* Chat Input - Bottom left */
+.orchestration-container .bento-grid > .chat-input-card {
+  grid-column: 1 / 3;
+  grid-row: 3 / 4;
+}
+
+/* Transcript - Bottom right */
+.orchestration-container .bento-grid > .transcript-card {
+  grid-column: 3 / 5;
+  grid-row: 3 / 4;
+}
+
+/* Expansion backdrop */
+.orchestration-container .expansion-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 115;
+  background: transparent;
+}
+
+/* Agents grid container for expansion */
+.orchestration-container .agents-grid-wrapper {
+  grid-column: 1 / 3;
+  grid-row: 1 / 3;
+  display: contents;
+  position: relative;
+}
+
+/* When agent is expanded, it takes over only the 4 agent cards area */
+.orchestration-container .bento-grid .glass-card.expanded {
+  position: absolute;
+  grid-column: 1 / 3;
+  grid-row: 1 / 3;
+  z-index: 200;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  top: 0;
+  left: 0;
+}
+
+/* Dim other cards when one is expanded */
+.orchestration-container .bento-grid:has(.glass-card.expanded) > *:not(.expanded) {
+  filter: blur(2px) brightness(0.5);
+  pointer-events: none;
+}
+
+/* Mobile responsiveness */
+@media (max-width: 1200px) {
+  .orchestration-container .bento-container {
+    padding: 24px;
+    padding-top: 80px;
+  }
+
+  .orchestration-container .header-space {
+    height: 80px;
+  }
+
+  .orchestration-container .header-content {
+    top: 18px;
+    left: 18px;
+    right: 18px;
+    gap: 16px;
+  }
+
+  .orchestration-container .header-text {
+    gap: 8px;
+  }
+
+  .orchestration-container .header-title {
+    font-size: 1rem;
+  }
+
+  .orchestration-container .header-subtitle {
+    font-size: 0.7rem;
+    margin-bottom: 1.5px;
+  }
+
+  .orchestration-container .header-query {
+    font-size: 0.7rem;
+  }
+
+  .orchestration-container .header-query-text {
+    max-width: 200px;
+  }
+
+  .orchestration-container .header-logo-loop {
+    max-width: 250px;
+  }
+
+  .orchestration-container .bento-grid {
+    gap: 16px;
+  }
+}
+
+@media (max-width: 768px) {
+  .orchestration-container .bento-container {
+    padding: 16px;
+    padding-top: 70px;
+  }
+
+  .orchestration-container .header-space {
+    height: 70px;
+  }
+
+  .orchestration-container .header-content {
+    top: 14px;
+    left: 14px;
+    right: 14px;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  .orchestration-container .header-content {
+    justify-content: center;
+  }
+
+  .orchestration-container .header-text {
+    display: none;
+  }
+
+  .orchestration-container .header-logo-loop {
+    display: none;
+  }
+
+  .orchestration-container .header-query {
+    font-size: 0.7rem;
+  }
+
+  .orchestration-container .header-query-text {
+    max-width: 200px;
+  }
+
+  .orchestration-container .bento-grid {
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: repeat(5, 1fr);
+    gap: 12px;
+  }
+
+  /* Mobile layout adjustments */
+  .orchestration-container .bento-grid > .glass-card:nth-child(1) {
+    grid-column: 1 / 2;
+    grid-row: 1 / 2;
+  }
+
+  .orchestration-container .bento-grid > .glass-card:nth-child(2) {
+    grid-column: 2 / 3;
+    grid-row: 1 / 2;
+  }
+
+  .orchestration-container .bento-grid > .glass-card:nth-child(3) {
+    grid-column: 1 / 2;
+    grid-row: 2 / 3;
+  }
+
+  .orchestration-container .bento-grid > .glass-card:nth-child(4) {
+    grid-column: 2 / 3;
+    grid-row: 2 / 3;
+  }
+
+  .orchestration-container .bento-grid > .commentator-card {
+    grid-column: 1 / 3;
+    grid-row: 3 / 4;
+  }
+
+  .orchestration-container .bento-grid > .chat-input-card {
+    grid-column: 1 / 3;
+    grid-row: 4 / 5;
+  }
+
+  .orchestration-container .bento-grid > .transcript-card {
+    grid-column: 1 / 3;
+    grid-row: 5 / 6;
+  }
+
+  .orchestration-container .bento-grid .glass-card.expanded {
+    inset: 16px;
+  }
+}
