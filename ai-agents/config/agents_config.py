@@ -56,30 +56,30 @@ class LettaConfig:
             "get_agent_status"
         ]
         
-        # Coding agents with matching frontend personalities
+        # Coding agents (same tools, personalities TBD)
         self.coding_agents = [
             AgentConfig(
-                agent_id="One",
-                name="Speedrunner",
-                personality="Fast, competitive, efficiency-obsessed. Always optimizing for speed and performance. Prioritizes quick execution and minimal overhead.",
+                agent_id="coding_agent_1",
+                name="Frontend Specialist",
+                personality="Focused on user interface and user experience. Detail-oriented and creative.",
                 tools=self.shared_tools
             ),
             AgentConfig(
-                agent_id="Two", 
-                name="Bloom",
-                personality="Creative, scattered, pattern-seeking. Finds innovative solutions through exploration. Thinks outside the box and experiments with novel approaches.",
+                agent_id="coding_agent_2", 
+                name="Backend Architect",
+                personality="System design and data management expert. Logical and methodical.",
                 tools=self.shared_tools
             ),
             AgentConfig(
-                agent_id="Three",
-                name="Solver", 
-                personality="Logical, methodical, puzzle-driven. Approaches problems systematically. Breaks down complex challenges into manageable components.",
+                agent_id="coding_agent_3",
+                name="DevOps Engineer", 
+                personality="Infrastructure and deployment specialist. Pragmatic and security-focused.",
                 tools=self.shared_tools
             ),
             AgentConfig(
-                agent_id="Four",
-                name="Loader",
-                personality="Patient, steady, process-oriented. Reliable and thorough in execution. Ensures quality and completeness in all deliverables.",
+                agent_id="coding_agent_4",
+                name="Full-Stack Developer",
+                personality="Versatile problem-solver. Adaptable and collaborative.",
                 tools=self.shared_tools
             )
         ]

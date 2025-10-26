@@ -41,8 +41,11 @@ env/
 
 # Logs
 *.log
-logs/
+ai-agents/logs/
 *.log.*
+
+# Generated artifacts
+artifacts/
 
 # OS
 .DS_Store
@@ -57,10 +60,21 @@ artifacts/
 *.tmp
 *.bak
 *.cache
+*.backup
+
+# Test and debug files
+test_*.py
+debug_*.py
+demo_*.py
 
 # API Keys (extra safety)
 **/LETTA_API_TOKEN*
 **/CLAUDE_API_KEY*
+
+# Audio test files
+*.mp3
+*.wav
+*.ogg
 
 # Vercel deployment
 .vercel

@@ -8,13 +8,21 @@ import os
 import json
 import time
 from dotenv import load_dotenv
-load_dotenv()  # Load environment variables from .env file
+
+# Load .env from parent directory (root of project)
+env_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), '.env')
+load_dotenv(env_path)
+
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 
 # Add current directory to path
 sys.path.append('.')
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+
+# Add parent directory to path for chat imports
+parent_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.append(parent_dir)
 
 try:
     from api_wrapper import CompetitiveAPI
@@ -31,7 +39,18 @@ except ImportError as e:
     print("   Using simulated mode instead")
     LETTA_AVAILABLE = False
     LIVEKIT_AVAILABLE = False
-    # Mock classes for simulated mode
+
+# Import Claude chat simulator
+try:
+    from chat.chat_manager import ClaudeManager
+    from chat.chat_config import get_system_prompt
+    CLAUDE_CHAT_AVAILABLE = True
+except ImportError as e:
+    print(f"⚠️ Warning: Claude chat simulator not available: {e}")
+    CLAUDE_CHAT_AVAILABLE = False
+
+# Mock classes for simulated mode
+if not LETTA_AVAILABLE:
     class MockLetta:
         def __init__(self, token=None): pass
         class Agents:
@@ -83,6 +102,16 @@ app = Flask(__name__)
 CORS(app)
 
 api_instance = CompetitiveAPI()
+
+# Initialize Claude chat manager for frontend chat
+claude_chat_manager = None
+if CLAUDE_CHAT_AVAILABLE:
+    try:
+        claude_chat_manager = ClaudeManager(system_prompt=get_system_prompt())
+        print("✅ Claude chat manager initialized")
+    except Exception as e:
+        print(f"⚠️ Failed to initialize Claude chat manager: {e}")
+        CLAUDE_CHAT_AVAILABLE = False
 
 # Global transcript storage for voice commentary
 room_transcripts = {}
@@ -301,6 +330,16 @@ def orchestrate_project():
     # Run async function synchronously
     import asyncio
     result = asyncio.run(api_instance.orchestrate_project(project_description))
+    
+    # Add detailed logging
+    print(f"\n📦 Orchestration result type: {type(result)}")
+    print(f"📦 Orchestration result: {result}")
+    if isinstance(result, dict):
+        print(f"📦 Result keys: {result.keys()}")
+        if 'subtasks' in result:
+            print(f"📦 Subtasks count: {len(result['subtasks'])}")
+            print(f"📦 Subtasks: {result['subtasks']}")
+    
     return jsonify(result), 200
 
 # LiveKit Voice Commentary Endpoints
@@ -859,6 +898,140 @@ def agent_battle_talk():
         print(f"❌ Battle talk error: {e}")
         return jsonify({"success": False, "error": str(e)}), 500
 
+# Claude Chat Simulator Endpoints
+@app.route('/api/chat/send-message', methods=['POST'])
+def chat_send_message():
+    """Send a user message to the Claude chat simulator and get agent responses with timing."""
+    try:
+        if not CLAUDE_CHAT_AVAILABLE or not claude_chat_manager:
+            return jsonify({
+                "success": False,
+                "error": "Claude chat simulator not available"
+            }), 503
+        
+        data = request.get_json()
+        user_message = data.get('message', '').strip()
+        
+        if not user_message:
+            return jsonify({"success": False, "error": "Message cannot be empty"}), 400
+        
+        print(f"💬 User message: {user_message}")
+        
+        # Add user message to Claude's conversation history
+        claude_chat_manager.add_user_message(user_message, is_boss=True)
+        
+        # Get response from Claude asynchronously
+        import asyncio
+        import random
+        
+        async def get_responses():
+            # Get Claude's response with context about who should respond
+            trigger_context = f"Boss just said: '{user_message}'. Generate 2-4 short agent responses (one per line, format: 'AgentName: message')."
+            response = await claude_chat_manager.get_chat_response(trigger_context)
+            return response
+        
+        # Run async function
+        response_text = asyncio.run(get_responses())
+        
+        if not response_text:
+            return jsonify({
+                "success": False,
+                "error": "Failed to get response from Claude"
+            }), 500
+        
+        # Parse the response to extract individual agent messages with delays
+        # Claude returns messages in format: "AgentName: message"
+        messages = []
+        base_time = time.time() * 1000  # Current time in milliseconds
+        
+        for i, line in enumerate(response_text.split('\n')):
+            line = line.strip()
+            if ':' in line and line:
+                parts = line.split(':', 1)
+                agent_name = parts[0].strip()
+                message = parts[1].strip()
+                
+                # Add randomized delay between messages (1-3 seconds)
+                delay_ms = random.randint(1000, 3000)
+                timestamp = base_time + (i * delay_ms)
+                
+                messages.append({
+                    "agent": agent_name,
+                    "message": message,
+                    "timestamp": timestamp,
+                    "delay": delay_ms  # How long to wait before showing this message
+                })
+        
+        print(f"✅ Generated {len(messages)} agent responses with timing")
+        
+        return jsonify({
+            "success": True,
+            "messages": messages,
+            "raw_response": response_text
+        }), 200
+        
+    except Exception as e:
+        print(f"❌ Chat error: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({"success": False, "error": str(e)}), 500
+
+@app.route('/api/chat/random-message', methods=['GET'])
+def chat_random_message():
+    """Generate a random agent message (for background chatter)."""
+    try:
+        if not CLAUDE_CHAT_AVAILABLE or not claude_chat_manager:
+            return jsonify({
+                "success": False,
+                "error": "Claude chat simulator not available"
+            }), 503
+        
+        import asyncio
+        import random
+        from chat.chat_config import AGENT_PERSONAS
+        
+        async def get_random_message():
+            # Pick random agents
+            agent_names = list(AGENT_PERSONAS.keys())
+            speaker = random.choice(agent_names)
+            
+            # Create context for random chatter
+            trigger_context = f"[Random moment: {speaker} wants to say something brief about coding/the project. One short message only, format: '{speaker}: message']"
+            response = await claude_chat_manager.get_chat_response(trigger_context)
+            return response, speaker
+        
+        # Run async function
+        response_text, expected_speaker = asyncio.run(get_random_message())
+        
+        if not response_text:
+            return jsonify({
+                "success": False,
+                "error": "Failed to get response"
+            }), 500
+        
+        # Parse response
+        line = response_text.strip().split('\n')[0]
+        if ':' in line:
+            parts = line.split(':', 1)
+            agent_name = parts[0].strip()
+            message = parts[1].strip()
+        else:
+            agent_name = expected_speaker
+            message = response_text.strip()
+        
+        return jsonify({
+            "success": True,
+            "message": {
+                "agent": agent_name,
+                "message": message,
+                "timestamp": time.time() * 1000
+            }
+        }), 200
+        
+    except Exception as e:
+        print(f"❌ Random message error: {e}")
+        return jsonify({"success": False, "error": str(e)}), 500
+
 if __name__ == '__main__':
     print("🔥 Starting REAL Flask API server...")
     print("📡 Available endpoints:")
@@ -896,7 +1069,12 @@ if __name__ == '__main__':
     print("   POST /api/agents/chat/direct")
     print("   POST /api/agents/chat/group")
     print("   POST /api/agents/chat/battle-talk")
+    print("")
+    print("🤖 Claude Chat Simulator:")
+    print("   POST /api/chat/send-message")
+    print("   GET  /api/chat/random-message")
     print(f"🤖 Letta Available: {LETTA_AVAILABLE}")
     print(f"🎙️ LiveKit Available: {LIVEKIT_AVAILABLE}")
+    print(f"💬 Claude Chat Available: {CLAUDE_CHAT_AVAILABLE}")
     print("🌐 Server running on http://localhost:5003")
     app.run(host='0.0.0.0', port=5003, debug=True)

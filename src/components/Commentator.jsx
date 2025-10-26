@@ -9,25 +9,55 @@ function Commentator() {
   const audioContextRef = useRef(null);
 
   useEffect(() => {
-    // Create audio context and analyser
-    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-    audioContextRef.current = audioContext;
+    // Create audio context lazily after user interaction to avoid autoplay warnings
+    const initAudioContext = () => {
+      if (audioContextRef.current) return;
+      
+      try {
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        
+        // Resume context if suspended (required by browsers)
+        if (audioContext.state === 'suspended') {
+          audioContext.resume();
+        }
+        
+        audioContextRef.current = audioContext;
 
-    const analyserNode = audioContext.createAnalyser();
-    analyserNode.fftSize = 512;
+        const analyserNode = audioContext.createAnalyser();
+        analyserNode.fftSize = 512;
 
-    // Create a silent oscillator to keep the audio context active
-    const oscillator = audioContext.createOscillator();
-    oscillator.frequency.value = 0;
-    oscillator.connect(analyserNode);
-    analyserNode.connect(audioContext.destination);
-    oscillator.start();
+        // Create a silent oscillator to keep the audio context active
+        const oscillator = audioContext.createOscillator();
+        oscillator.frequency.value = 0;
+        oscillator.connect(analyserNode);
+        analyserNode.connect(audioContext.destination);
+        oscillator.start();
 
-    setAnalyser(analyserNode);
+        setAnalyser(analyserNode);
+      } catch (error) {
+        // Silently fail - audio context not critical for app functionality
+      }
+    };
+
+    // Initialize on first user interaction
+    const handleUserInteraction = () => {
+      initAudioContext();
+      document.removeEventListener('click', handleUserInteraction);
+      document.removeEventListener('keydown', handleUserInteraction);
+      document.removeEventListener('touchstart', handleUserInteraction);
+    };
+
+    document.addEventListener('click', handleUserInteraction);
+    document.addEventListener('keydown', handleUserInteraction);
+    document.addEventListener('touchstart', handleUserInteraction);
 
     return () => {
-      oscillator.stop();
-      audioContext.close();
+      document.removeEventListener('click', handleUserInteraction);
+      document.removeEventListener('keydown', handleUserInteraction);
+      document.removeEventListener('touchstart', handleUserInteraction);
+      if (audioContextRef.current) {
+        audioContextRef.current.close();
+      }
     };
   }, []);
 

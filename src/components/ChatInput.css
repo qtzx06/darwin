@@ -184,3 +184,46 @@
 .orchestration-container .chat-input::placeholder {
   color: rgba(255, 255, 255, 0.4);
 }
+
+.orchestration-container .chat-send:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.orchestration-container .typing-indicator {
+  opacity: 0.7;
+}
+
+.orchestration-container .typing-dots {
+  display: inline-flex;
+  gap: 2px;
+}
+
+.orchestration-container .typing-dots span {
+  animation: typing-bounce 1.4s infinite;
+}
+
+.orchestration-container .typing-dots span:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.orchestration-container .typing-dots span:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+@keyframes typing-bounce {
+  0%, 60%, 100% {
+    transform: translateY(0);
+  }
+  30% {
+    transform: translateY(-4px);
+  }
+}
+
+.orchestration-container .user-message .message-speaker {
+  color: rgba(255, 215, 0, 0.9);
+}
+
+.orchestration-container .agent-message .message-speaker {
+  color: rgba(100, 200, 255, 0.9);
+}

@@ -29,6 +29,7 @@ function Orchestration() {
   const [roomName, setRoomName] = useState(null);
   const [isWorkflowRunning, setIsWorkflowRunning] = useState(false);
   const [workflowStarted, setWorkflowStarted] = useState(false);
+  const [isOrchestrating, setIsOrchestrating] = useState(false);
   const [agentData, setAgentData] = useState({
     speedrunner: { code: '', isWorking: false, wins: 0 },
     bloom: { code: '', isWorking: false, wins: 0 },
@@ -78,7 +79,8 @@ function Orchestration() {
         const response = await livekitApi.createBattleRoom(projectId);
         setRoomName(response.room_name);
       } catch (error) {
-        console.error('Error creating battle room:', error);
+        // LiveKit is optional - just log and continue without voice features
+        console.log('ℹ️ LiveKit voice features not available (optional)');
       }
     };
 
@@ -90,13 +92,37 @@ function Orchestration() {
     if (!projectId || !query || subtasks.length > 0) return;
 
     const orchestrateOnly = async () => {
+      setIsOrchestrating(true);
       try {
         console.log('🎯 Orchestrating project:', query);
         const orchestrationResult = await competitiveApi.orchestrateProject(query);
-        setSubtasks(orchestrationResult.subtasks);
-        console.log('✅ Subtasks created:', orchestrationResult.subtasks);
+        console.log('📦 Orchestration response:', orchestrationResult);
+        
+        if (orchestrationResult && orchestrationResult.subtasks) {
+          setSubtasks(orchestrationResult.subtasks);
+          console.log('✅ Subtasks created:', orchestrationResult.subtasks);
+        } else {
+          console.warn('⚠️ No subtasks returned from orchestration. Response:', orchestrationResult);
+          // Use fallback subtasks based on the query
+          const fallbackSubtasks = [
+            { id: 1, title: "Create Main Component", description: `Build the main component for ${query}` },
+            { id: 2, title: "Add Styling", description: "Style the component with CSS" },
+            { id: 3, title: "Add Functionality", description: "Add interactive features" }
+          ];
+          setSubtasks(fallbackSubtasks);
+        }
       } catch (error) {
         console.error('❌ Error orchestrating project:', error);
+        // Use fallback subtasks on error
+        const fallbackSubtasks = [
+          { id: 1, title: "Create Main Component", description: `Build the main component for ${query}` },
+          { id: 2, title: "Add Styling", description: "Style the component with CSS" },
+          { id: 3, title: "Add Functionality", description: "Add interactive features" }
+        ];
+        setSubtasks(fallbackSubtasks);
+      } finally {
+        console.log('🏁 Orchestration complete, setting isOrchestrating to false');
+        setIsOrchestrating(false);
       }
     };
 
@@ -343,12 +369,27 @@ function Orchestration() {
   }, []);
 
   useEffect(() => {
-    // Fade out the black overlay after component mounts
-    const timer = setTimeout(() => {
-      setShowFadeOverlay(false);
-    }, 100); // Small delay to ensure it renders first
-    return () => clearTimeout(timer);
-  }, []);
+    // Fade out the black overlay after orchestration completes
+    // We check for subtasks because orchestration always sets them (either from API or fallback)
+    if (!isOrchestrating && subtasks.length > 0) {
+      console.log('✅ Orchestration complete, fading out overlay');
+      const timer = setTimeout(() => {
+        setShowFadeOverlay(false);
+      }, 300); // Slightly longer delay for smoother transition
+      return () => clearTimeout(timer);
+    }
+  }, [isOrchestrating, subtasks.length]);
+
+  // Fallback: Always fade out after 5 seconds regardless of orchestration state
+  useEffect(() => {
+    const fallbackTimer = setTimeout(() => {
+      if (showFadeOverlay) {
+        console.warn('⏰ Fallback: Forcing overlay fadeout after 5 seconds');
+        setShowFadeOverlay(false);
+      }
+    }, 5000);
+    return () => clearTimeout(fallbackTimer);
+  }, [showFadeOverlay]);
 
   return (
     <motion.div
@@ -368,7 +409,28 @@ function Orchestration() {
         animate={{ opacity: showFadeOverlay ? 1 : 0 }}
         transition={{ duration: 1.5, ease: "easeOut" }}
         style={{ pointerEvents: showFadeOverlay ? 'auto' : 'none' }}
-      />
+      >
+        {isOrchestrating && (
+          <div style={{
+            position: 'absolute',
+            top: '50%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)',
+            color: 'white',
+            fontSize: '24px',
+            textAlign: 'center',
+            zIndex: 10
+          }}>
+            <div style={{ marginBottom: '20px' }}>
+              <i className="fas fa-spinner fa-spin" style={{ fontSize: '48px' }}></i>
+            </div>
+            <div>Orchestrating project...</div>
+            <div style={{ fontSize: '16px', opacity: 0.7, marginTop: '10px' }}>
+              Breaking down tasks for the agents
+            </div>
+          </div>
+        )}
+      </motion.div>
 
       {/* Backdrop for clicking outside */}
       {expandedAgent && (

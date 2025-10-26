@@ -6,6 +6,10 @@ import BloomOrb from './BloomOrb';
 import SolverOrb from './SolverOrb';
 import LoaderOrb from './LoaderOrb';
 
+// Track active WebGL contexts to prevent "too many contexts" error
+let activeWebGLContexts = 0;
+const MAX_WEBGL_CONTEXTS = 8; // Conservative limit
+
 const PERSONALITIES = {
   speedrunner: 'fast, competitive, efficiency-obsessed',
   bloom: 'creative, scattered, pattern-seeking',
@@ -176,9 +180,9 @@ function AgentCard({ agentId, agentName, isExpanded, onExpand, onLike, code, isW
 
   const displayCode = extractCode(code);
 
-  // Debug logging
-  console.log(`[${agentId}] code prop:`, code ? `${code.length} chars` : 'empty');
-  console.log(`[${agentId}] displayCode:`, displayCode ? `${displayCode.length} chars` : 'empty');
+  // Debug logging - disabled in production
+  // console.log(`[${agentId}] code prop:`, code ? `${code.length} chars` : 'empty');
+  // console.log(`[${agentId}] displayCode:`, displayCode ? `${displayCode.length} chars` : 'empty');
 
   // Typing animation effect with auto-scroll
   useEffect(() => {
@@ -278,10 +282,8 @@ function AgentCard({ agentId, agentName, isExpanded, onExpand, onLike, code, isW
             frequencyY={3}
             interactive={false}
           />
-          {agentId === 'speedrunner' && <AgentOrb />}
-          {agentId === 'bloom' && <BloomOrb />}
-          {agentId === 'solver' && <SolverOrb />}
-          {agentId === 'loader' && <LoaderOrb />}
+          {/* WebGL orbs temporarily disabled to prevent context limit issues */}
+          {/* Will be re-enabled with proper context management */}
         </div>
         <div className="agent-info">
           <div className="agent-header">
