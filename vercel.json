@@ -8,8 +8,5 @@
       "source": "/(.*)",
       "destination": "/"
     }
-  ],
-  "env": {
-    "SPONSOR_MNEMONIC": "@sponsor_mnemonic"
-  }
+  ]
 }
