@@ -62,8 +62,13 @@ void main() {
     d += sin(uv.y * i + a);
   }
   d += uTime * 0.5 * uSpeed;
-  vec3 col = vec3(cos(uv * vec2(d, a)) * 0.6 + 0.4, cos(a + d) * 0.5 + 0.5);
-  col = cos(col * cos(vec3(d, a, 2.5)) * 0.5 + 0.5) * uColor;
+
+  // Create grayscale pattern
+  float pattern = cos(length(uv * vec2(d, a))) * 0.5 + 0.5;
+  pattern = cos(pattern * 3.14159 * 2.0) * 0.5 + 0.5;
+
+  // Apply to all channels equally for true black and white
+  vec3 col = vec3(pattern) * uColor;
   gl_FragColor = vec4(col, 1.0);
 }
 `;
@@ -106,10 +111,10 @@ void main() {
       uSpeed: gl.getUniformLocation(program, 'uSpeed'),
     };
 
-    gl.uniform3f(uniformsRef.current.uColor, 0.6, 0.6, 0.6);
+    gl.uniform3f(uniformsRef.current.uColor, 0.15, 0.15, 0.15);
     gl.uniform2f(uniformsRef.current.uMouse, 0.5, 0.5);
     gl.uniform1f(uniformsRef.current.uAmplitude, 0.1);
-    gl.uniform1f(uniformsRef.current.uSpeed, 1.0);
+    gl.uniform1f(uniformsRef.current.uSpeed, 0.5);
 
     function resize() {
       if (!canvas || !containerRef.current) return;
