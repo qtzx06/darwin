@@ -120,7 +120,7 @@ ${contextMessages}
 NEW USER INPUT:
 ${newUpdates}
 
-The user just gave feedback/command! React with SHORT hype (max 10 words). Say "NEW PROMPT!" or announce what they want:`;
+USER SAYS SOMETHING IMPORTANT!!! React with SHORT hype (max 10 words). Start with "USER SAYS!!!" or "NEW PROMPT!!!" and announce what they want:`;
       } else if (hasMultipleAgents && hasBanter) {
         prompt = `Recent context:
 ${contextMessages}

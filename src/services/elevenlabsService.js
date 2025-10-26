@@ -21,11 +21,12 @@ export class ElevenLabsVoiceManager {
     // Voice ID - using a fun energetic voice for the composer
     this.voiceId = 'Anr9GtYh2VRXxiPplzxM'; // Custom voice from library
 
-    // Speech recognition state
-    this.recognition = null;
+    // Recording state
+    this.mediaRecorder = null;
+    this.mediaStream = null;
+    this.audioChunks = [];
     this.isRecording = false;
     this.isMicMuted = true;
-    this.collectedTranscript = ''; // Collect all speech until mic is muted
   }
 
   /**
@@ -181,119 +182,102 @@ export class ElevenLabsVoiceManager {
   }
 
   /**
-   * Start recording microphone for STT using browser's SpeechRecognition
+   * Start recording microphone for STT using MediaRecorder
    */
   async startRecording() {
     if (this.isRecording) return;
 
     try {
-      console.log('[ElevenLabs] Starting speech recognition...');
+      console.log('[ElevenLabs] Requesting microphone access...');
 
-      // Use browser's native SpeechRecognition API
-      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      // Get microphone access
+      this.mediaStream = await navigator.mediaDevices.getUserMedia({
+        audio: {
+          channelCount: 1,
+          sampleRate: 16000,
+          echoCancellation: true,
+          noiseSuppression: true
+        }
+      });
 
-      if (!SpeechRecognition) {
-        throw new Error('SpeechRecognition not supported in this browser');
-      }
+      // Create MediaRecorder to capture audio
+      this.mediaRecorder = new MediaRecorder(this.mediaStream, {
+        mimeType: 'audio/webm;codecs=opus'
+      });
 
-      this.recognition = new SpeechRecognition();
-      this.recognition.continuous = true; // Keep listening
-      this.recognition.interimResults = false; // Only final results
-      this.recognition.lang = 'en-US';
+      this.audioChunks = [];
 
-      this.recognition.onstart = () => {
-        console.log('[ElevenLabs] Speech recognition started');
-        this.isRecording = true;
-        this.isMicMuted = false;
-        this.collectedTranscript = ''; // Reset when starting
-      };
-
-      this.recognition.onresult = (event) => {
-        const lastResult = event.results[event.results.length - 1];
-        if (lastResult.isFinal) {
-          const transcript = lastResult[0].transcript.trim();
-          console.log('[ElevenLabs] Heard:', transcript);
-
-          // Collect all transcripts (don't send yet)
-          if (this.collectedTranscript) {
-            this.collectedTranscript += ' ' + transcript;
-          } else {
-            this.collectedTranscript = transcript;
-          }
-
-          console.log('[ElevenLabs] Collected so far:', this.collectedTranscript);
+      this.mediaRecorder.ondataavailable = (event) => {
+        if (event.data.size > 0) {
+          this.audioChunks.push(event.data);
+          console.log('[ElevenLabs] Audio chunk received:', event.data.size);
         }
       };
 
-      this.recognition.onerror = (event) => {
-        console.error('[ElevenLabs] Speech recognition error:', event.error);
-        if (event.error === 'no-speech') {
-          console.log('[ElevenLabs] No speech detected, continuing...');
-        }
+      this.mediaRecorder.onstop = async () => {
+        console.log('[ElevenLabs] Recording stopped, transcribing...');
+        const audioBlob = new Blob(this.audioChunks, { type: 'audio/webm' });
+        await this.transcribeAudio(audioBlob);
+        this.audioChunks = [];
       };
 
-      this.recognition.onend = () => {
-        console.log('[ElevenLabs] Speech recognition ended');
-        // Auto-restart if still supposed to be recording
-        if (!this.isMicMuted && this.isRecording) {
-          console.log('[ElevenLabs] Restarting recognition...');
-          try {
-            this.recognition.start();
-          } catch (error) {
-            console.error('[ElevenLabs] Failed to restart recognition:', error);
-          }
-        }
-      };
-
-      this.recognition.start();
-      console.log('[ElevenLabs] Speech recognition initialized');
+      this.mediaRecorder.start();
+      this.isRecording = true;
+      this.isMicMuted = false;
+      console.log('[ElevenLabs] Recording started');
     } catch (error) {
-      console.error('[ElevenLabs] Failed to start speech recognition:', error);
+      console.error('[ElevenLabs] Failed to start recording:', error);
       throw error;
     }
   }
 
   /**
-   * Stop recording and send collected transcript
+   * Stop recording
    */
   stopRecording() {
-    if (!this.isRecording || !this.recognition) return;
+    if (!this.isRecording || !this.mediaRecorder) return;
 
     try {
-      this.recognition.stop();
+      this.mediaRecorder.stop();
+      this.mediaStream.getTracks().forEach(track => track.stop());
       this.isRecording = false;
       this.isMicMuted = true;
-      console.log('[ElevenLabs] Speech recognition stopped');
-
-      // Send the full collected transcript when mic is muted
-      if (this.collectedTranscript && this.onUserTranscript) {
-        console.log('[ElevenLabs] Sending full transcript:', this.collectedTranscript);
-        this.onUserTranscript(this.collectedTranscript);
-        this.collectedTranscript = ''; // Clear after sending
-      }
+      console.log('[ElevenLabs] Recording stopped');
     } catch (error) {
-      console.error('[ElevenLabs] Failed to stop recognition:', error);
+      console.error('[ElevenLabs] Failed to stop recording:', error);
     }
   }
 
   /**
-   * Transcribe audio using ElevenLabs STT
-   * NOTE: STT API might not be available in current SDK version
+   * Transcribe audio using ElevenLabs STT API
    */
   async transcribeAudio(audioBlob) {
     try {
-      console.log('[ElevenLabs] Transcription not yet implemented - SDK may not support STT');
+      console.log('[ElevenLabs] Transcribing audio blob of size:', audioBlob.size);
 
-      // TODO: Implement when ElevenLabs SDK supports STT transcription
-      // For now, just log that we received audio
-      console.log('[ElevenLabs] Received audio blob of size:', audioBlob.size);
+      // Use the SDK's speechToText.convert method
+      // Create a File object from the Blob
+      const audioFile = new File([audioBlob], 'recording.webm', { type: 'audio/webm' });
 
-      // Could use browser's native SpeechRecognition API as fallback
-      if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
-        console.log('[ElevenLabs] Could use browser SpeechRecognition as fallback');
+      const response = await this.client.speechToText.convert({
+        audio: audioFile,
+        model: 'scribe_v1'
+      });
+
+      console.log('[ElevenLabs] Transcription response:', response);
+
+      // Extract text from response
+      const transcript = response.text;
+
+      if (transcript && this.onUserTranscript) {
+        console.log('[ElevenLabs] Transcript:', transcript);
+        this.onUserTranscript(transcript);
+      } else {
+        console.log('[ElevenLabs] No transcript received');
       }
     } catch (error) {
       console.error('[ElevenLabs] Failed to transcribe:', error);
+      console.error('[ElevenLabs] Error details:', error.message);
     }
   }
 

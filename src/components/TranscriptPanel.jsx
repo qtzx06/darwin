@@ -42,7 +42,7 @@ function TranscriptPanel({ elevenLabsRef, transcripts = [] }) {
             ) : (
               transcripts.map((t, i) => (
                 <div key={i} style={{ marginBottom: '8px' }}>
-                  <span style={{ color: t.speaker === 'user' ? '#64ffda' : '#f0b0d0', fontWeight: 'bold' }}>
+                  <span style={{ color: '#f0b0d0', fontWeight: 'bold' }}>
                     [{t.speaker === 'user' ? 'YOU' : 'COMPOSER'}]
                   </span>{' '}
                   {t.text}
