@@ -352,13 +352,28 @@ function Orchestration() {
     addChatMessage('[SERVER] AI battle started, agents generating code in parallel...');
 
     const agentProgress = {
-      speedrunner: { done: false, code: '' },
-      bloom: { done: false, code: '' },
-      solver: { done: false, code: '' },
-      loader: { done: false, code: '' }
+      speedrunner: { done: false, code: '', chunkCount: 0 },
+      bloom: { done: false, code: '', chunkCount: 0 },
+      solver: { done: false, code: '', chunkCount: 0 },
+      loader: { done: false, code: '', chunkCount: 0 }
     };
 
     try {
+      // Set initial "working on it" status for all agents
+      const workingMessages = {
+        speedrunner: 'optimizing rn',
+        bloom: 'manifesting...',
+        solver: 'computing...',
+        loader: 'initializing...'
+      };
+
+      Object.keys(workingMessages).forEach(agentId => {
+        setAgentStatus(prev => ({
+          ...prev,
+          [agentId]: workingMessages[agentId]
+        }));
+      });
+
       // Start competitive battle with all 4 agents
       await startCompetitiveBattle(
         query,
@@ -371,24 +386,52 @@ function Orchestration() {
             loader: 'LOADER'
           };
 
-          // Update the agent's transcript with streaming text
-          setAgentCode(prev => ({
-            ...prev,
-            [agentId]: fullText
-          }));
-
+          // Update progress tracker
           agentProgress[agentId].code = fullText;
+          agentProgress[agentId].chunkCount++;
+
+          // Only update agentCode every 6-7 chunks to avoid spamming Babel
+          if (agentProgress[agentId].chunkCount % 7 === 0) {
+            setAgentCode(prev => ({
+              ...prev,
+              [agentId]: fullText
+            }));
+          }
         },
         // onAgentComplete - called when an agent finishes
         (agentId, fullText) => {
           agentProgress[agentId].done = true;
           agentProgress[agentId].code = fullText;
 
-          // Set final code (no chat message)
+          // Set final code
           setAgentCode(prev => ({
             ...prev,
             [agentId]: fullText
           }));
+
+          // Show completion status with personality-based messages
+          const completionMessages = {
+            speedrunner: ['done. ez.', 'finished first obv', 'already done fr', 'BOOM done'],
+            bloom: ['manifested it ✨', 'vibes complete', 'done spreading layers', 'bloomed fr'],
+            solver: ['computed. done.', 'solution verified.', 'analysis complete.', 'solved it.'],
+            loader: ['fully loaded.', 'pipeline complete.', 'all systems go.', 'buffered & ready.']
+          };
+
+          const messages = completionMessages[agentId] || ['done.'];
+          const randomMsg = messages[Math.floor(Math.random() * messages.length)];
+
+          setAgentStatus(prev => ({
+            ...prev,
+            [agentId]: randomMsg
+          }));
+
+          // Clear status after 3s
+          setTimeout(() => {
+            setAgentStatus(prev => ({
+              ...prev,
+              [agentId]: ''
+            }));
+          }, 3000);
         },
         // onBattleComplete - called when all agents finish
         async (results) => {
@@ -435,6 +478,22 @@ function Orchestration() {
           }
 
           addChatMessage('[SERVER] battle complete!');
+        },
+        // onAgentError - called when an agent hits an error
+        (agentId, errorMsg) => {
+          console.error(`❌ ${agentId} error:`, errorMsg);
+          setAgentStatus(prev => ({
+            ...prev,
+            [agentId]: '💀 failed'
+          }));
+
+          // Clear error status after 5s
+          setTimeout(() => {
+            setAgentStatus(prev => ({
+              ...prev,
+              [agentId]: ''
+            }));
+          }, 5000);
         }
       );
     } catch (error) {

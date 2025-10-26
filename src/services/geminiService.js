@@ -154,7 +154,7 @@ export async function generateCodeWithAgent(agentId, userPrompt, chatHistory, on
       parts: [{ text: userPrompt }]
     });
 
-    console.log(`[${personality.name}] Prompt:`, userPrompt);
+    console.log(`[${personality.name}] Sending request to Gemini...`);
 
     const response = await ai.models.generateContentStream({
       model: 'gemini-2.5-flash-preview-09-2025',
@@ -166,18 +166,26 @@ export async function generateCodeWithAgent(agentId, userPrompt, chatHistory, on
       }
     });
 
+    console.log(`[${personality.name}] Response received, starting streaming...`);
+
     let fullText = '';
+    let chunkCount = 0;
 
     for await (const chunk of response) {
       const chunkText = chunk.text;
       fullText += chunkText;
+      chunkCount++;
+
+      if (chunkCount % 10 === 0) {
+        console.log(`[${personality.name}] Received chunk ${chunkCount}, total length: ${fullText.length}`);
+      }
 
       if (onChunk) {
         onChunk(chunkText, fullText);
       }
     }
 
-    console.log(`[${personality.name}] Final generated code length:`, fullText.length);
+    console.log(`[${personality.name}] ✅ COMPLETE - Total chunks: ${chunkCount}, Final length: ${fullText.length}`);
     console.log(`[${personality.name}] First 200 chars:`, fullText.substring(0, 200));
 
     if (onComplete) {
@@ -186,7 +194,8 @@ export async function generateCodeWithAgent(agentId, userPrompt, chatHistory, on
 
     return fullText;
   } catch (error) {
-    console.error(`Error generating with ${personality.name}:`, error);
+    console.error(`❌ [${personality.name}] ERROR:`, error);
+    console.error(`❌ [${personality.name}] Error details:`, error.message, error.stack);
     throw error;
   }
 }
@@ -576,12 +585,14 @@ export async function shouldAgentsSpontaneouslyBanter(chatHistory, agentCodes) {
   }
 }
 
-export async function startCompetitiveBattle(userPrompt, onAgentChunk, onAgentComplete, onBattleComplete) {
+export async function startCompetitiveBattle(userPrompt, onAgentChunk, onAgentComplete, onBattleComplete, onAgentError) {
   const agents = ['speedrunner', 'bloom', 'solver', 'loader'];
 
   // Start all agents in parallel
   const promises = agents.map(async (agentId) => {
     try {
+      console.log(`🚀 Starting ${agentId}...`);
+
       const code = await generateCodeWithAgent(
         agentId,
         `Generate a standalone React component for: ${userPrompt}
@@ -602,18 +613,32 @@ const MyComponent = () => {
 
 NOW generate the component:`,
         [],
-        (chunk, fullText) => onAgentChunk(agentId, chunk, fullText),
-        (fullText) => onAgentComplete(agentId, fullText)
+        (chunk, fullText) => {
+          console.log(`📦 ${agentId} chunk received, length: ${fullText.length}`);
+          onAgentChunk(agentId, chunk, fullText);
+        },
+        (fullText) => {
+          console.log(`✅ ${agentId} COMPLETE with ${fullText.length} chars`);
+          onAgentComplete(agentId, fullText);
+        }
       );
 
+      console.log(`🎉 ${agentId} finished successfully`);
       return { agentId, code };
     } catch (error) {
-      console.error(`Agent ${agentId} failed:`, error);
+      console.error(`❌ Agent ${agentId} FAILED:`, error);
+
+      // Call error callback if provided
+      if (onAgentError) {
+        onAgentError(agentId, error.message);
+      }
+
       return { agentId, code: null, error: error.message };
     }
   });
 
   const results = await Promise.all(promises);
+  console.log('🏁 All agents finished:', results.map(r => ({ id: r.agentId, success: !!r.code })));
 
   if (onBattleComplete) {
     onBattleComplete(results);
