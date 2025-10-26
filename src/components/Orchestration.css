@@ -177,6 +177,14 @@
   grid-row: 3 / 4;
 }
 
+/* Black fade overlay */
+.orchestration-container .fade-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  background: black;
+}
+
 /* Expansion backdrop */
 .orchestration-container .expansion-backdrop {
   position: fixed;

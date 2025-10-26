@@ -17,6 +17,7 @@ import livekitLogo from '../assets/livekit-text.svg';
 function Orchestration() {
   const [query, setQuery] = useState('');
   const [expandedAgent, setExpandedAgent] = useState(null);
+  const [showFadeOverlay, setShowFadeOverlay] = useState(true);
   const containerRef = useRef(null);
 
   // Logo Loop data
@@ -75,16 +76,33 @@ function Orchestration() {
     return () => window.removeEventListener('keydown', handleEscape);
   }, []);
 
+  useEffect(() => {
+    // Fade out the black overlay after component mounts
+    const timer = setTimeout(() => {
+      setShowFadeOverlay(false);
+    }, 100); // Small delay to ensure it renders first
+    return () => clearTimeout(timer);
+  }, []);
+
   return (
     <motion.div
       ref={containerRef}
       className="orchestration-container"
-      initial={{ opacity: 0 }}
+      initial={{ opacity: 1 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       transition={{ duration: 0.5 }}
     >
       <IridescenceBackground />
+
+      {/* Black fade overlay */}
+      <motion.div
+        className="fade-overlay"
+        initial={{ opacity: 1 }}
+        animate={{ opacity: showFadeOverlay ? 1 : 0 }}
+        transition={{ duration: 1.5, ease: "easeOut" }}
+        style={{ pointerEvents: showFadeOverlay ? 'auto' : 'none' }}
+      />
 
       {/* Backdrop for clicking outside */}
       {expandedAgent && (
