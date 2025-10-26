@@ -75,27 +75,36 @@ Keep responses under 15 words. Make every word count. Be entertaining!`;
       const newMessages = chatMessages.slice(this.lastProcessedMessageCount);
       this.lastProcessedMessageCount = chatMessages.length;
 
-      // Filter out system messages, only get agent updates
-      const agentUpdates = newMessages
-        .filter(msg => msg.type === 'agent' || msg.sender !== 'user')
+      // Get ALL updates (agent updates AND user messages)
+      const newUpdates = newMessages
+        .filter(msg => {
+          // Include agent messages
+          if (msg.type === 'agent') return true;
+          // Include user messages
+          if (msg.sender === 'user' || msg.text?.includes('[YOU]')) return true;
+          return false;
+        })
         .map(msg => msg.text)
         .join('\n');
 
-      if (!agentUpdates) {
+      if (!newUpdates) {
         return null;
       }
 
-      console.log('[Commentator Gemini] Generating commentary for:', agentUpdates);
+      console.log('[Commentator Gemini] Generating commentary for:', newUpdates);
 
       // Get recent context for beef detection (last 8 messages)
       const recentContext = chatMessages.slice(-8);
 
+      // Check if user is giving input
+      const hasUserInput = newUpdates.includes('[YOU]');
+
       // Check if there's beef/competition happening
       const hasMultipleAgents = recentContext.filter(m => m.type === 'agent').length > 1;
-      const hasBanter = agentUpdates.toLowerCase().includes('ngl') ||
-                        agentUpdates.toLowerCase().includes('bro') ||
-                        agentUpdates.toLowerCase().includes('trash') ||
-                        agentUpdates.toLowerCase().includes('better');
+      const hasBanter = newUpdates.toLowerCase().includes('ngl') ||
+                        newUpdates.toLowerCase().includes('bro') ||
+                        newUpdates.toLowerCase().includes('trash') ||
+                        newUpdates.toLowerCase().includes('better');
 
       // Add recent context
       const contextMessages = recentContext
@@ -104,12 +113,20 @@ Keep responses under 15 words. Make every word count. Be entertaining!`;
         .join('\n');
 
       let prompt;
-      if (hasMultipleAgents && hasBanter) {
+      if (hasUserInput) {
+        prompt = `Recent context:
+${contextMessages}
+
+NEW USER INPUT:
+${newUpdates}
+
+The user just gave feedback/command! React with SHORT hype (max 10 words). Say "NEW PROMPT!" or announce what they want:`;
+      } else if (hasMultipleAgents && hasBanter) {
         prompt = `Recent context:
 ${contextMessages}
 
 NEW UPDATE:
-${agentUpdates}
+${newUpdates}
 
 The agents are beefing! React to the NEW UPDATE with SHORT hype commentary (max 12 words). Call out the beef:`;
       } else if (hasMultipleAgents) {
@@ -117,7 +134,7 @@ The agents are beefing! React to the NEW UPDATE with SHORT hype commentary (max 
 ${contextMessages}
 
 NEW UPDATE:
-${agentUpdates}
+${newUpdates}
 
 React to the NEW UPDATE with SHORT commentary (max 12 words). Compare agents, who's ahead:`;
       } else {
@@ -125,7 +142,7 @@ React to the NEW UPDATE with SHORT commentary (max 12 words). Compare agents, wh
 ${contextMessages}
 
 NEW UPDATE:
-${agentUpdates}
+${newUpdates}
 
 React to the NEW UPDATE with SHORT commentary (max 12 words). Make it hyped:`;
       }
@@ -198,7 +215,7 @@ React to the NEW UPDATE with SHORT commentary (max 12 words). Make it hyped:`;
         systemInstruction: this.systemInstruction
       });
 
-      const commentary = response.text.trim();
+      const commentary = response.text.trim().toUpperCase();
 
       console.log('[Commentator Gemini] Event commentary:', commentary);
       return commentary;
@@ -232,7 +249,7 @@ Give a quick status update in under 12 words that sounds natural:`;
         systemInstruction: this.systemInstruction
       });
 
-      const commentary = response.text.trim();
+      const commentary = response.text.trim().toUpperCase();
 
       console.log('[Commentator Gemini] Periodic update:', commentary);
       return commentary;

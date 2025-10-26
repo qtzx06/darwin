@@ -25,6 +25,7 @@ export class ElevenLabsVoiceManager {
     this.recognition = null;
     this.isRecording = false;
     this.isMicMuted = true;
+    this.collectedTranscript = ''; // Collect all speech until mic is muted
   }
 
   /**
@@ -204,17 +205,23 @@ export class ElevenLabsVoiceManager {
         console.log('[ElevenLabs] Speech recognition started');
         this.isRecording = true;
         this.isMicMuted = false;
+        this.collectedTranscript = ''; // Reset when starting
       };
 
       this.recognition.onresult = (event) => {
         const lastResult = event.results[event.results.length - 1];
         if (lastResult.isFinal) {
-          const transcript = lastResult[0].transcript;
-          console.log('[ElevenLabs] User transcript:', transcript);
+          const transcript = lastResult[0].transcript.trim();
+          console.log('[ElevenLabs] Heard:', transcript);
 
-          if (this.onUserTranscript && transcript) {
-            this.onUserTranscript(transcript);
+          // Collect all transcripts (don't send yet)
+          if (this.collectedTranscript) {
+            this.collectedTranscript += ' ' + transcript;
+          } else {
+            this.collectedTranscript = transcript;
           }
+
+          console.log('[ElevenLabs] Collected so far:', this.collectedTranscript);
         }
       };
 
@@ -247,7 +254,7 @@ export class ElevenLabsVoiceManager {
   }
 
   /**
-   * Stop recording
+   * Stop recording and send collected transcript
    */
   stopRecording() {
     if (!this.isRecording || !this.recognition) return;
@@ -257,6 +264,13 @@ export class ElevenLabsVoiceManager {
       this.isRecording = false;
       this.isMicMuted = true;
       console.log('[ElevenLabs] Speech recognition stopped');
+
+      // Send the full collected transcript when mic is muted
+      if (this.collectedTranscript && this.onUserTranscript) {
+        console.log('[ElevenLabs] Sending full transcript:', this.collectedTranscript);
+        this.onUserTranscript(this.collectedTranscript);
+        this.collectedTranscript = ''; // Clear after sending
+      }
     } catch (error) {
       console.error('[ElevenLabs] Failed to stop recognition:', error);
     }

@@ -130,19 +130,25 @@ function Commentator({ query, onBattleStart, isRunning, agentsReady, chatMessage
         // Get only NEW messages since last check
         const newMessages = chatMessages.slice(lastMessageCountRef.current);
 
-        // Filter to only agent messages (not user messages, not system messages)
-        const newAgentMessages = newMessages.filter(msg =>
-          msg.type === 'agent' &&
-          !msg.text.includes('Battle complete') &&
-          !msg.text.includes('[COMPOSER]')
-        );
+        // Filter to agent messages AND user messages (commentary on everything!)
+        const newInterestingMessages = newMessages.filter(msg => {
+          // Include agent banter
+          if (msg.type === 'agent' && !msg.text.includes('Battle complete') && !msg.text.includes('[COMPOSER]')) {
+            return true;
+          }
+          // Include user messages (typed in chat or voice)
+          if (msg.sender === 'user' || msg.text?.includes('[YOU]')) {
+            return true;
+          }
+          return false;
+        });
 
-        if (newAgentMessages.length === 0) {
+        if (newInterestingMessages.length === 0) {
           lastMessageCountRef.current = chatMessages.length;
           return;
         }
 
-        console.log('[Commentator] New agent messages:', newAgentMessages.map(m => m.text));
+        console.log('[Commentator] New interesting messages:', newInterestingMessages.map(m => m.text));
 
         // Generate natural commentary from recent messages
         const commentary = await commentatorGeminiRef.current.generateCommentary(chatMessages);
