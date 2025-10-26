@@ -61,11 +61,10 @@
   position: relative;
   width: 100%;
   flex: 1;
+  min-height: 0;
   border-radius: 8px;
   overflow: hidden;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
-  display: flex;
-  flex-direction: column;
 }
 
 .orchestration-container .chat-box .glass-filter {
@@ -91,24 +90,47 @@
   z-index: 3;
 }
 
-.orchestration-container .chat-messages {
-  position: relative;
+.orchestration-container .chat-content-wrapper {
+  position: absolute;
+  inset: 0;
   z-index: 4;
+  display: flex;
+  flex-direction: column;
   padding: 10px 12px;
+}
+
+.orchestration-container .chat-messages {
+  flex: 1;
+  overflow-y: auto;
   color: rgba(255, 255, 255, 0.7);
   font-size: 9px;
   line-height: 1.4;
-  flex: 1;
-  overflow-y: auto;
   display: flex;
   flex-direction: column;
   gap: 6px;
+  margin-bottom: 10px;
+}
+
+.orchestration-container .chat-messages::-webkit-scrollbar {
+  display: none;
+}
+
+.orchestration-container .chat-messages {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.orchestration-container .chat-message {
+  padding: 6px 10px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  font-family: 'Geist Mono', monospace;
+  word-wrap: break-word;
+  flex-shrink: 0;
 }
 
 .orchestration-container .chat-form {
-  position: relative;
-  z-index: 4;
-  padding: 0 12px 10px 12px;
   flex-shrink: 0;
 }
 

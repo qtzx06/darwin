@@ -189,6 +189,12 @@ function AgentCard({ agentId, agentName, isExpanded, onExpand }) {
     onExpand(agentId);
   };
 
+  const handleThumbsUp = () => {
+    console.log('Thumbs up:', agentId);
+    // TODO: Handle thumbs up action
+    onExpand(null); // Close the expanded card
+  };
+
   return (
     <div
       ref={cardRef}
@@ -217,12 +223,19 @@ function AgentCard({ agentId, agentName, isExpanded, onExpand }) {
         </div>
         <div className="agent-info">
           <div className="agent-header">
-            <div className="agent-name" onClick={handleNameClick}>
-              {agentName}
+            <div>
+              <div className="agent-name" onClick={handleNameClick}>
+                {agentName}
+              </div>
+              <div className="agent-personality">
+                {PERSONALITIES[agentId]}
+              </div>
             </div>
-            <div className="agent-personality">
-              {PERSONALITIES[agentId]}
-            </div>
+            {isExpanded && (
+              <button onClick={handleThumbsUp} className="agent-thumbs">
+                <i className="fas fa-thumbs-up"></i>
+              </button>
+            )}
           </div>
           <div className="agent-transcript">
             <div className="glass-filter"></div>

@@ -183,6 +183,7 @@
   inset: 0;
   z-index: 115;
   background: transparent;
+  pointer-events: none;
 }
 
 /* Agents grid container for expansion */
