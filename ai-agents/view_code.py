@@ -16,7 +16,7 @@ from rich.table import Table
 console = Console()
 
 def find_latest_session():
-    """Find the most recent session file."""
+    """Find the most recent personality session file."""
     logs_dir = Path("logs")
     if not logs_dir.exists():
         return None
@@ -28,7 +28,7 @@ def find_latest_session():
     # Sort by modification time (most recent first)
     session_files.sort(key=os.path.getmtime, reverse=True)
     
-    # Try to find a personality session first
+    # ONLY look for personality sessions - ignore main.py sessions
     for session_file in session_files:
         try:
             with open(session_file, 'r') as f:
@@ -45,8 +45,8 @@ def find_latest_session():
         except:
             continue
     
-    # If no personality session found, return the most recent
-    return session_files[0]
+    # If no personality session found, return None (don't show main.py sessions)
+    return None
 
 def load_session_data(session_file):
     """Load session data from JSON file."""
@@ -226,10 +226,10 @@ def main():
         border_style="bold blue"
     ))
     
-    # Find latest session
+    # Find latest personality session
     session_file = find_latest_session()
     if not session_file:
-        console.print("[yellow]No session files found. Run the simulator first![/yellow]")
+        console.print("[yellow]No personality session files found. Run 'python3 main_personality.py' first![/yellow]")
         return
     
     console.print(f"📁 Loading session: {session_file}")
