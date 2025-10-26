@@ -5,6 +5,7 @@ import Loading from './components/Loading';
 import GlassSearchBar from './components/GlassSearchBar';
 import DecryptedText from './components/DecryptedText';
 import Cubes from './components/Cubes';
+import Dither from './components/Dither';
 
 function App() {
   const [isLoading, setIsLoading] = useState(true);
@@ -99,6 +100,19 @@ function App() {
             animate={{ opacity: isZooming ? 0 : 1, x: isZooming ? -50 : 0 }}
             transition={{ duration: 0.8, ease: "easeOut" }}
           >
+            <div className="dither-wrapper dither-wrapper-left">
+              <Dither
+                waveColor={[0.6, 0.3, 0.4]}
+                disableAnimation={false}
+                enableMouseInteraction={false}
+                colorNum={4}
+                waveAmplitude={0.06}
+                waveFrequency={4.9}
+                waveSpeed={0.04}
+                pixelSize={2}
+                mouseRadius={0.3}
+              />
+            </div>
             <div className="cubes-wrapper">
               <Cubes
                 gridSize={8}
@@ -119,6 +133,19 @@ function App() {
             animate={{ opacity: isZooming ? 0 : 1, x: isZooming ? 50 : 0 }}
             transition={{ duration: 0.8, ease: "easeOut" }}
           >
+            <div className="dither-wrapper dither-wrapper-right">
+              <Dither
+                waveColor={[0.6, 0.3, 0.4]}
+                disableAnimation={false}
+                enableMouseInteraction={false}
+                colorNum={4}
+                waveAmplitude={0.06}
+                waveFrequency={4.9}
+                waveSpeed={0.04}
+                pixelSize={2}
+                mouseRadius={0.3}
+              />
+            </div>
             <div className="cubes-wrapper">
               <Cubes
                 gridSize={8}
