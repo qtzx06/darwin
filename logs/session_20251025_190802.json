@@ -1,0 +1,46 @@
+{
+  "session_id": "session_20251025_190802",
+  "start_time": "2025-10-25T19:08:02.420322",
+  "agents": {},
+  "tasks": [],
+  "artifacts": [
+    {
+      "timestamp": "2025-10-25T19:08:35.098375",
+      "agent_id": "agent-8d983140-f00e-4f87-8dbe-896957c787fc",
+      "artifact_id": "artifacts\\subtask_1\\raw\\agent-8d983140-f00e-4f87-8dbe-896957c787fc_conversation.json",
+      "type": "conversation",
+      "description": "Subtask 1 conversation saved"
+    },
+    {
+      "timestamp": "2025-10-25T19:08:35.385307",
+      "agent_id": "agent-3a0fdec6-2815-4c15-a134-11eb2f585b08",
+      "artifact_id": "artifacts\\subtask_1\\raw\\agent-3a0fdec6-2815-4c15-a134-11eb2f585b08_conversation.json",
+      "type": "conversation",
+      "description": "Subtask 1 conversation saved"
+    },
+    {
+      "timestamp": "2025-10-25T19:08:35.529731",
+      "agent_id": "agent-71f87445-3827-4b4f-ba50-a4dee710db59",
+      "artifact_id": "artifacts\\subtask_1\\raw\\agent-71f87445-3827-4b4f-ba50-a4dee710db59_conversation.json",
+      "type": "conversation",
+      "description": "Subtask 1 conversation saved"
+    },
+    {
+      "timestamp": "2025-10-25T19:08:35.612403",
+      "agent_id": "agent-aa0cbf7d-2df1-4df4-9087-d3a6bdb9fa2f",
+      "artifact_id": "artifacts\\subtask_1\\raw\\agent-aa0cbf7d-2df1-4df4-9087-d3a6bdb9fa2f_conversation.json",
+      "type": "conversation",
+      "description": "Subtask 1 conversation saved"
+    },
+    {
+      "timestamp": "2025-10-25T19:08:45.747145",
+      "agent_id": "agent-6d89c73d-b3c7-416d-bd5b-2172c8cdf95d",
+      "artifact_id": "artifacts\\subtask_1\\commentator_narrative.md",
+      "type": "narrative",
+      "description": "Subtask 1 narrative"
+    }
+  ],
+  "messages": [],
+  "events": [],
+  "project_description": "make a 3d cube"
+}

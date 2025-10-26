@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Darwin Artifact Viewer</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: #0f0f0f;
+            color: #fff;
+            padding: 20px;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 10px;
+        }
+        
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+        
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        @media (max-width: 768px) {
+            .grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        .artifact-container {
+            background: #1a1a1a;
+            border-radius: 10px;
+            overflow: hidden;
+            border: 2px solid #333;
+            transition: transform 0.2s, border-color 0.2s;
+        }
+        
+        .artifact-container:hover {
+            transform: translateY(-5px);
+            border-color: #667eea;
+        }
+        
+        .artifact-header {
+            background: #222;
+            padding: 15px;
+            border-bottom: 2px solid #333;
+        }
+        
+        .artifact-title {
+            font-size: 1.3em;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        .artifact-meta {
+            color: #888;
+            font-size: 0.9em;
+        }
+        
+        .artifact-quality {
+            display: inline-block;
+            background: #667eea;
+            padding: 3px 10px;
+            border-radius: 5px;
+            font-weight: bold;
+            margin-left: 10px;
+        }
+        
+        .artifact-content {
+            background: white;
+            min-height: 400px;
+            position: relative;
+        }
+        
+        .artifact-iframe {
+            width: 100%;
+            height: 500px;
+            border: none;
+            background: white;
+        }
+        
+        .no-artifacts {
+            text-align: center;
+            padding: 60px 20px;
+            color: #666;
+        }
+        
+        .no-artifacts h2 {
+            font-size: 2em;
+            margin-bottom: 10px;
+        }
+        
+        .refresh-btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 1.1em;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-top: 20px;
+            transition: background 0.3s;
+        }
+        
+        .refresh-btn:hover {
+            background: #5568d3;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #888;
+        }
+        
+        .spinner {
+            border: 3px solid #333;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🎨 Darwin Artifact Viewer</h1>
+        <p>Live visual artifacts from all 4 teams</p>
+        <p style="font-size: 0.9em; margin-top: 10px; opacity: 0.7;">Auto-refreshes every 5 seconds</p>
+    </div>
+    
+    <div id="artifacts-grid" class="grid">
+        <div class="loading">
+            <div class="spinner"></div>
+            <p>Loading artifacts...</p>
+        </div>
+    </div>
+    
+    <script>
+        let currentSubtask = 1;
+        
+        async function loadArtifacts() {
+            try {
+                const response = await fetch(`/artifacts/subtask_${currentSubtask}/artifacts.json`);
+                if (!response.ok) {
+                    throw new Error('No artifacts yet');
+                }
+                
+                const artifacts = await response.json();
+                console.log('Loaded artifacts:', artifacts);
+                displayArtifacts(artifacts);
+            } catch (error) {
+                console.log('Waiting for artifacts...', error);
+                displayNoArtifacts();;
+                displayNoArtifacts();
+            }
+        }
+        
+        function displayArtifacts(artifacts) {
+            const grid = document.getElementById('artifacts-grid');
+            
+            if (!artifacts || artifacts.length === 0) {
+                displayNoArtifacts();
+                return;
+            }
+            
+            grid.innerHTML = artifacts.map(artifact => `
+                <div class="artifact-container">
+                    <div class="artifact-header">
+                        <div class="artifact-title">
+                            ${artifact.team_name}
+                            <span class="artifact-quality">⭐ ${artifact.quality_score}/10</span>
+                        </div>
+                        <div class="artifact-meta">
+                            ${artifact.type} • ${artifact.messages} messages
+                        </div>
+                    </div>
+                    <div class="artifact-content">
+                        <iframe 
+                            class="artifact-iframe" 
+                            srcdoc="${escapeHtml(artifact.html)}"
+                            sandbox="allow-scripts"
+                        ></iframe>
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        function displayNoArtifacts() {
+            const grid = document.getElementById('artifacts-grid');
+            grid.innerHTML = `
+                <div class="no-artifacts" style="grid-column: 1 / -1;">
+                    <h2>🎯 Waiting for artifacts...</h2>
+                    <p>Teams are working on creating visual deliverables</p>
+                    <button class="refresh-btn" onclick="loadArtifacts()">🔄 Refresh Now</button>
+                </div>
+            `;
+        }
+        
+        function escapeHtml(html) {
+            return html
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
+        
+        // Load artifacts immediately
+        loadArtifacts();
+        
+        // Auto-refresh every 5 seconds
+        setInterval(loadArtifacts, 5000);
+        
+        // Listen for manual refresh
+        window.addEventListener('focus', loadArtifacts);
+    </script>
+</body>
+</html>

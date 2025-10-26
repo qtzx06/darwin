@@ -47,16 +47,16 @@ class PMSimulatorLogger:
         file_handler.setLevel(logging.DEBUG)
         file_handler.setFormatter(formatter)
         
-        # Setup console handler
-        console_handler = logging.StreamHandler()
-        console_handler.setLevel(logging.INFO)
-        console_handler.setFormatter(formatter)
+        # Setup console handler - DISABLED (only commentator should print)
+        # console_handler = logging.StreamHandler()
+        # console_handler.setLevel(logging.INFO)
+        # console_handler.setFormatter(formatter)
         
         # Setup root logger
         self.logger = logging.getLogger('pm_simulator')
         self.logger.setLevel(logging.DEBUG)
         self.logger.addHandler(file_handler)
-        self.logger.addHandler(console_handler)
+        # self.logger.addHandler(console_handler)  # DISABLED - only file logging
         
         # Prevent duplicate logs
         self.logger.propagate = False
@@ -64,8 +64,8 @@ class PMSimulatorLogger:
     def log_session_start(self, project_description: str):
         """Log the start of a new simulation session."""
         self.session_data["project_description"] = project_description
-        self.logger.info(f"🚀 Starting PM Simulator Session")
-        self.logger.info(f"📋 Project: {project_description}")
+        self.logger.info(f"Starting PM Simulator Session")
+        self.logger.info(f"Project: {project_description}")
         self._save_session_data()
     
     def log_agent_initialization(self, agent_id: str, agent_name: str, agent_type: str):
@@ -116,7 +116,7 @@ class PMSimulatorLogger:
             self.session_data["agents"][agent_id]["activities"].append(activity_log)
         
         agent_name = self.session_data["agents"].get(agent_id, {}).get("name", agent_id)
-        self.logger.info(f"🎯 {agent_name}: {activity}")
+        self.logger.info(f"{agent_name}: {activity}")
         
         if details:
             for key, value in details.items():
@@ -169,7 +169,7 @@ class PMSimulatorLogger:
             self.session_data["agents"][agent_id]["artifacts_created"] += 1
         
         agent_name = self.session_data["agents"].get(agent_id, {}).get("name", agent_id)
-        self.logger.info(f"📦 {agent_name} created {artifact_type} artifact: {artifact_id}")
+        self.logger.info(f"{agent_name} created {artifact_type} artifact: {artifact_id}")
         
         if description:
             self.logger.debug(f"    Description: {description}")
@@ -179,7 +179,7 @@ class PMSimulatorLogger:
     def log_artifact_update(self, agent_id: str, artifact_id: str, update_type: str, content_preview: str = ""):
         """Log artifact updates."""
         agent_name = self.session_data["agents"].get(agent_id, {}).get("name", agent_id)
-        self.logger.info(f"📝 {agent_name} updated artifact {artifact_id}: {update_type}")
+        self.logger.info(f"{agent_name} updated artifact {artifact_id}: {update_type}")
         
         if content_preview:
             self.logger.debug(f"    Preview: {content_preview[:200]}{'...' if len(content_preview) > 200 else ''}")
@@ -195,7 +195,7 @@ class PMSimulatorLogger:
         }
         
         self.session_data["events"].append(narration_log)
-        self.logger.info(f"🎙️  Commentator: {content}")
+        self.logger.info(f"Commentator: {content}")
         self._save_session_data()
     
     def log_system_event(self, event: str, details: Dict[str, Any] = None):

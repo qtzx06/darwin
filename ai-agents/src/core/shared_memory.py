@@ -88,4 +88,16 @@ class SharedMemory:
         """Convert shared memory to JSON string."""
         async with self._lock:
             return json.dumps(self._memory, indent=2, default=str)
+    
+    def clear_all(self) -> None:
+        """Clear all shared memory (synchronous for reset)."""
+        self._memory = {
+            "current_task": None,
+            "agent_statuses": {},
+            "artifacts_metadata": {},
+            "global_context": {},
+            "created_at": datetime.now().isoformat(),
+            "last_updated": datetime.now().isoformat()
+        }
+
 
