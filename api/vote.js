@@ -39,7 +39,11 @@ export default async function handler(req, res) {
 
   try {
     if (!keypair) {
-      return res.status(500).json({ error: 'Sponsor wallet not configured' });
+      console.error('SPONSOR_MNEMONIC not set. Current env vars:', Object.keys(process.env).filter(k => k.includes('SPONSOR')));
+      return res.status(500).json({ 
+        error: 'Sponsor wallet not configured',
+        hint: 'SPONSOR_MNEMONIC environment variable is missing'
+      });
     }
 
     const { agentId } = req.body;
@@ -81,9 +85,12 @@ export default async function handler(req, res) {
 
   } catch (error) {
     console.error('Vote failed:', error);
+    console.error('Error stack:', error.stack);
     res.status(500).json({
       error: 'Failed to submit vote',
-      details: error.message
+      details: error.message,
+      type: error.constructor.name,
+      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
     });
   }
 }
