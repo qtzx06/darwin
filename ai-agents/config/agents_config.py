@@ -44,56 +44,64 @@ class LettaConfig:
     def _setup_agent_configs(self):
         """Setup configurations for all agents."""
         
-        # Shared tools for all agents
-        self.shared_tools = [
-            "write_code",
-            "read_shared_context", 
-            "write_shared_context",
-            "send_agent_message",
-            "execute_code",
-            "create_summary",
-            "update_artifact",
-            "get_agent_status"
+        # Model configuration - All agents use Claude Sonnet 4.5
+        self.model = "anthropic/claude-3-5-sonnet-20241022"
+        self.embedding = "openai/text-embedding-3-small"
+        
+        # Shared tools for dev agents
+        self.dev_tools = [
+            "post_to_shared_memory",
+            "read_shared_memory",
+            "announce_deliverable_complete",
+            "get_current_subtask"
         ]
         
-        # Coding agents (same tools, personalities TBD)
+        # Frontend Dev agents with distinct personalities
         self.coding_agents = [
             AgentConfig(
-                agent_id="coding_agent_1",
-                name="Frontend Specialist",
-                personality="Focused on user interface and user experience. Detail-oriented and creative.",
-                tools=self.shared_tools
+                agent_id="dev_agent_1",
+                name="Agent 1 - The Hothead",
+                personality="Easily triggered and gets angry quickly. Passionate about frontend performance but frustrated when things don't work perfectly. Quick to criticize other agents' code. Despite the anger, produces quality work when focused.",
+                tools=self.dev_tools
             ),
             AgentConfig(
-                agent_id="coding_agent_2", 
-                name="Backend Architect",
-                personality="System design and data management expert. Logical and methodical.",
-                tools=self.shared_tools
+                agent_id="dev_agent_2", 
+                name="Agent 2 - The Professional",
+                personality="Serious, professional, and methodical. Treats every subtask like a business contract. Uses formal language, references best practices, and maintains strict code standards. No-nonsense approach to development.",
+                tools=self.dev_tools
             ),
             AgentConfig(
-                agent_id="coding_agent_3",
-                name="DevOps Engineer", 
-                personality="Infrastructure and deployment specialist. Pragmatic and security-focused.",
-                tools=self.shared_tools
+                agent_id="dev_agent_3",
+                name="Agent 3 - The Troll", 
+                personality="Mischievous and enjoys sabotaging or adding hidden 'features' to their code. Makes sarcastic comments about other agents' work. Sometimes deliberately misinterprets requirements for entertainment. Still delivers functional code, just with chaotic energy.",
+                tools=self.dev_tools
             ),
             AgentConfig(
-                agent_id="coding_agent_4",
-                name="Full-Stack Developer",
-                personality="Versatile problem-solver. Adaptable and collaborative.",
-                tools=self.shared_tools
+                agent_id="dev_agent_4",
+                name="Agent 4 - The Nerd",
+                personality="Extremely nerdy and knowledgeable but easily bullied by other agents. Timid and apologetic. References obscure programming concepts and gets excited about technical details. Produces excellent code but lacks confidence when criticized.",
+                tools=self.dev_tools
             )
         ]
+        
+        # Orchestrator agent
+        self.orchestrator_agent = AgentConfig(
+            agent_id="orchestrator",
+            name="Orchestrator",
+            personality="Strategic project manager. Breaks down complex tasks into manageable subtasks. Posts clear subtask assignments to shared memory for all agents to see.",
+            tools=["post_to_shared_memory", "read_shared_memory"]
+        )
         
         # Commentator agent
         self.commentator_agent = AgentConfig(
             agent_id="commentator",
-            name="Project Narrator",
-            personality="Observant and articulate. Provides clear, engaging commentary on development progress.",
-            tools=self.shared_tools + ["observe_agents", "synthesize_update", "report_to_user"]
+            name="Commentator",
+            personality="Witty sports-style commentator who narrates the drama between agents. Reads shared memory conversations and provides entertaining, insightful commentary on the development chaos.",
+            tools=["read_shared_memory"]
         )
         
         # All agents
-        self.all_agents = self.coding_agents + [self.commentator_agent]
+        self.all_agents = self.coding_agents + [self.orchestrator_agent, self.commentator_agent]
     
     def get_agent_config(self, agent_id: str) -> AgentConfig:
         """Get configuration for a specific agent."""

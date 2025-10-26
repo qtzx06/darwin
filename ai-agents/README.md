@@ -1,14 +1,18 @@
-# Letta AI Agent PM Simulator
+# Darwin AI Frontend Development System
 
-A project management simulator powered by Letta AI agents that work collaboratively on tasks with shared memory and real-time commentary.
+A competitive AI development system where 4 Letta agents with distinct personalities collaborate (and clash) on frontend development tasks with live commentary.
 
 ## Architecture
 
-- **4 Coding Agents**: Work on different aspects of a project with shared tooling
-- **1 Commentator Agent**: Monitors and narrates the development process
-- **Shared Memory**: Global context accessible by all agents
-- **Message System**: Agent-to-agent communication with history
-- **Artifact Management**: Track and render each agent's work
+- **4 Frontend Dev Agents**: Independent Letta agents with unique personalities
+  - Agent 1: The Hothead (easily triggered/angry)
+  - Agent 2: The Professional (serious/formal)
+  - Agent 3: The Troll (mischievous/saboteur)
+  - Agent 4: The Nerd (smart but easily bullied)
+- **1 Orchestrator Agent**: Breaks down tasks into subtasks, coordinates workflow
+- **1 Commentator Agent**: Provides live commentary every 5 seconds
+- **Shared Memory**: Chronological conversation log for agent communication
+- **All agents use Claude Sonnet 4.5**
 
 ## Setup
 
@@ -20,43 +24,48 @@ A project management simulator powered by Letta AI agents that work collaborativ
 2. Configure Letta Cloud credentials:
    ```bash
    cp .env.example .env
-   # Edit .env with your Letta API token and project ID
+   # Edit .env with your Letta API token
    ```
 
-3. Run the simulator:
+3. Create agents (ONE-TIME SETUP):
+   ```bash
+   python setup_agents.py
+   ```
+   Copy the agent IDs to your .env file.
+
+4. Run the system:
    ```bash
    python main.py
    ```
 
 ## Usage
 
-### Quick Demo (Recommended)
-See real Letta agents working together:
-```bash
-python3 test_real_agents_demo.py
-```
+When you run `python main.py`, you'll be prompted to enter a frontend development project goal.
 
-### Full PM Simulator
-```bash
-python3 main.py
-```
-Enter a high-level task description when prompted. The system will:
-1. Distribute work across 4 coding agents
-2. Allow agents to communicate and coordinate
-3. Provide real-time commentary via the commentator agent
-4. Display artifacts and progress updates
+Examples:
+- "Create an interactive 3D solar system visualization"
+- "Build a todo list app with drag-and-drop"
+- "Design a data dashboard with charts"
 
-### Setup Real Letta Agents
-If you haven't created agents yet:
-```bash
-python3 fix_letta_integration.py
-```
+The system will:
+1. Break down your goal into 3-5 frontend subtasks
+2. All 4 dev agents work independently on each subtask
+3. Agents communicate through shared memory (with their personalities showing!)
+4. Commentator provides live commentary every 5 seconds
+5. You give feedback after each subtask
+6. Deliverables are saved to `artifacts/` directory
 
-For detailed testing instructions, see [TESTING.md](TESTING.md).
+## Deliverables
+
+Agents produce:
+- React components (preferred for open-artifacts)
+- HTML/CSS/JS files (fallback)
+
+View deliverables at: https://github.com/13point5/open-artifacts
 
 ## Future Enhancements
 
-- MCP integration for sandboxed code execution
-- LiveKit integration for voice narration
-- Web UI for artifact visualization
+- Real-time artifact viewer
+- Voice narration for commentator
 - Agent personality customization
+- Multi-agent voting system
