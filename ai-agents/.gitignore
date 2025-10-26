@@ -234,3 +234,8 @@ artifacts/
 *.json
 !package.json
 !vercel.json
+
+# API Keys and Secrets
+**/api_keys.txt
+**/secrets.txt
+**/*.key
