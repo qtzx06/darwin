@@ -1,62 +1,89 @@
-# Letta AI Agent PM Simulator
+# Competitive AI Agents API
 
-A project management simulator powered by Letta AI agents that work collaboratively on tasks with shared memory and real-time commentary.
+A Flask API for competitive AI agents that compete on coding tasks using real Letta AI integration.
 
-## Architecture
+## 🚀 Quick Start
 
-- **4 Coding Agents**: Work on different aspects of a project with shared tooling
-- **1 Commentator Agent**: Monitors and narrates the development process
-- **Shared Memory**: Global context accessible by all agents
-- **Message System**: Agent-to-agent communication with history
-- **Artifact Management**: Track and render each agent's work
-
-## Setup
-
-1. Install dependencies:
+1. **Install dependencies:**
    ```bash
    pip install -r requirements.txt
    ```
 
-2. Configure Letta Cloud credentials:
-   ```bash
-   cp .env.example .env
-   # Edit .env with your Letta API token and project ID
+2. **Set up environment variables:**
+   Create a `.env` file with:
+   ```
+   LETTA_API_TOKEN=your_token_here
+   LETTA_PROJECT_ID=your_project_id
+   LETTA_PROJECT_SLUG=your_project_slug
+   LETTA_AGENT_ONE=agent_id_1
+   LETTA_AGENT_TWO=agent_id_2
+   LETTA_AGENT_THREE=agent_id_3
+   LETTA_AGENT_FOUR=agent_id_4
+   LETTA_AGENT_COMMENTATOR=commentator_id
+   LETTA_AGENT_ORCHESTRATOR=orchestrator_id
    ```
 
-3. Run the simulator:
+3. **Start the server:**
    ```bash
-   python main.py
+   python3 flask_server_real.py
    ```
 
-## Usage
+4. **Test the API:**
+   ```bash
+   python3 test_all_endpoints.py
+   ```
 
-### Quick Demo (Recommended)
-See real Letta agents working together:
+## 📋 API Endpoints
+
+### Core Workflow
+- `POST /api/submit-project` - Submit project description
+- `POST /api/create-agents` - Reset agent contexts
+- `POST /api/start-work` - Start work phase
+- `POST /api/get-results` - Send subtasks to agents
+- `POST /api/retrieve-code` - Get actual generated code
+- `POST /api/select-winner` - Select winning agent
+- `POST /api/complete-round` - Complete round
+
+### Additional Features
+- `POST /api/get-commentary` - Get real-time commentary
+- `POST /api/get-chat-summary` - Get chat summaries
+- `POST /api/orchestrate-project` - Break down projects into subtasks
+- `GET /api/health` - Health check
+- `GET /api/agents` - Get agent information
+
+## 🎯 Agent Personalities
+
+- **One**: Sarcastic, clean code with humor
+- **Two**: Technical perfectionist, over-engineered
+- **Three**: Fast-paced, performance-focused
+- **Four**: Creative, design-focused
+
+## 🧪 Testing
+
+Run the comprehensive test suite:
 ```bash
-python3 test_real_agents_demo.py
+python3 test_all_endpoints.py
 ```
 
-### Full PM Simulator
+Run a quick demo:
 ```bash
-python3 main.py
-```
-Enter a high-level task description when prompted. The system will:
-1. Distribute work across 4 coding agents
-2. Allow agents to communicate and coordinate
-3. Provide real-time commentary via the commentator agent
-4. Display artifacts and progress updates
-
-### Setup Real Letta Agents
-If you haven't created agents yet:
-```bash
-python3 fix_letta_integration.py
+python3 demo_code_outputs.py
 ```
 
-For detailed testing instructions, see [TESTING.md](TESTING.md).
+## 📁 Project Structure
 
-## Future Enhancements
+```
+ai-agents/
+├── flask_server_real.py    # Main Flask API server
+├── api_wrapper.py          # API wrapper with all methods
+├── main_competitive.py     # Core simulator
+├── src/                    # Core modules
+├── config/                 # Agent configurations
+├── test_all_endpoints.py   # Comprehensive test suite
+├── demo_code_outputs.py    # Working demo
+└── requirements.txt       # Dependencies
+```
 
-- MCP integration for sandboxed code execution
-- LiveKit integration for voice narration
-- Web UI for artifact visualization
-- Agent personality customization
+## 🌐 Server
+
+Runs on `http://localhost:5003` by default.
