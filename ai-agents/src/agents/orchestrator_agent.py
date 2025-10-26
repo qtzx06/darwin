@@ -1,221 +1,299 @@
 """
-Orchestration Agent - Splits main tasks into specific subtasks and coordinates the team.
+Orchestrator Agent - Breaks down main tasks into subtasks for competitive workflow.
 """
 
 import asyncio
 import json
+import time
 from typing import List, Dict, Any
 from dataclasses import dataclass
 from letta_client import Letta
 
 @dataclass
 class Subtask:
-    """Represents a specific subtask for an agent."""
+    """Represents a subtask for competitive work."""
     id: str
     title: str
     description: str
-    assigned_agent: str
-    dependencies: List[str] = None
-    status: str = "pending"  # pending, in_progress, completed, blocked
-    priority: int = 1  # 1 = high, 2 = medium, 3 = low
+    round_num: int
+    status: str = "pending"  # pending, in_progress, completed
 
 class OrchestrationAgent:
-    """Orchestrates the team by breaking down tasks and coordinating work."""
+    """Orchestrator agent that breaks down tasks into subtasks."""
     
     def __init__(self, client: Letta, agent_id: str, logger):
         self.client = client
         self.agent_id = agent_id
         self.logger = logger
-        self.subtasks: List[Subtask] = []
-        self.current_phase = "planning"
-        
+        self.name = "Orchestrator"
+        self.subtasks = []
+        self.project_status = {
+            "total_subtasks": 0,
+            "completed_subtasks": 0,
+            "progress_percentage": 0.0
+        }
+    
     async def orchestrate_project(self, main_task: str, agents: List[Any]) -> List[Subtask]:
-        """Break down the main task into specific subtasks and assign them to agents."""
-        print(f"🎯 Orchestrator: Breaking down task: {main_task}")
-        
-        # Generate subtasks using Letta
-        subtasks_prompt = f"""
-You are a technical project manager. Break down this task into specific, actionable subtasks:
-
-MAIN TASK: {main_task}
-
-Available agents:
-- Alex The Hacker: Frontend/Backend, React/Node.js, loves clean code
-- Dr Sarah The Nerd: Backend/Architecture, TypeScript, loves documentation  
-- Jake The Speed Demon: Frontend/Performance, React/Next.js, loves optimization
-- Maya The Artist: Frontend/UI, React/CSS, loves beautiful design
-
-Create 4-6 specific subtasks that can be worked on in parallel or sequence.
-Each subtask should be:
-1. Specific and actionable
-2. Assigned to the most suitable agent
-3. Have clear deliverables
-4. Include technical requirements
-
-Format as JSON:
-{{
-  "subtasks": [
-    {{
-      "title": "Subtask title",
-      "description": "Detailed description with technical requirements",
-      "assigned_agent": "Agent name",
-      "priority": 1,
-      "dependencies": []
-    }}
-  ]
-}}
-"""
+        """Breaks down a main task into subtasks using Letta AI."""
+        print(f"\n🎯 ORCHESTRATOR: Analyzing project with Letta AI: {main_task}")
         
         try:
-            # Add timeout to prevent hanging
-            loop = asyncio.get_event_loop()
-            response = await asyncio.wait_for(
-                loop.run_in_executor(
-                    None,
-                    lambda: self.client.agents.messages.create(
-                        agent_id=self.agent_id,
-                        messages=[{"role": "user", "content": subtasks_prompt}]
-                    )
-                ),
-                timeout=30.0  # 30 second timeout
-            )
+            # Use Letta API to intelligently break down the project
+            subtasks_data = await self._letta_orchestrate_project(main_task)
             
-            # Extract subtasks from response
-            subtasks_data = self._extract_subtasks_from_response(response)
-            self.subtasks = self._create_subtask_objects(subtasks_data, agents)
+            # Convert to Subtask objects
+            self.subtasks = []
+            for i, subtask_data in enumerate(subtasks_data, 1):
+                subtask = Subtask(
+                    id=f"subtask_{i}",
+                    title=subtask_data["title"],
+                    description=subtask_data["description"],
+                    round_num=i
+                )
+                self.subtasks.append(subtask)
             
-            print(f"✅ Orchestrator: Created {len(self.subtasks)} subtasks")
-            for i, subtask in enumerate(self.subtasks, 1):
-                print(f"  {i}. {subtask.title} → {subtask.assigned_agent}")
+            # Update project status
+            self.project_status["total_subtasks"] = len(self.subtasks)
+            self.project_status["completed_subtasks"] = 0
+            self.project_status["progress_percentage"] = 0.0
+            
+            print(f"✅ ORCHESTRATOR: Created {len(self.subtasks)} subtasks:")
+            for subtask in self.subtasks:
+                print(f"  • {subtask.title}: {subtask.description}")
             
             return self.subtasks
             
-        except asyncio.TimeoutError:
-            print(f"⏰ Orchestrator: Letta API timeout, using fallback subtasks")
-            return self._create_fallback_subtasks(main_task, agents)
         except Exception as e:
-            print(f"❌ Orchestrator error: {e}")
-            # Fallback: create basic subtasks
-            return self._create_fallback_subtasks(main_task, agents)
+            print(f"❌ ORCHESTRATOR: Letta orchestration failed: {e}")
+            print("🔄 Falling back to default subtasks...")
+            
+            # Fallback to default subtasks
+            subtasks_data = self._create_subtasks_for_project(main_task)
+            
+            # Convert to Subtask objects
+            self.subtasks = []
+            for i, subtask_data in enumerate(subtasks_data, 1):
+                subtask = Subtask(
+                    id=f"subtask_{i}",
+                    title=subtask_data["title"],
+                    description=subtask_data["description"],
+                    round_num=i
+                )
+                self.subtasks.append(subtask)
+            
+            self.project_status["total_subtasks"] = len(self.subtasks)
+            self.project_status["completed_subtasks"] = 0
+            self.project_status["progress_percentage"] = 0.0
+            
+            print(f"✅ ORCHESTRATOR: Created {len(self.subtasks)} fallback subtasks")
+            for i, subtask in enumerate(self.subtasks, 1):
+                print(f"  {i}. {subtask.title}")
+            
+            return self.subtasks
     
-    def _extract_subtasks_from_response(self, response) -> List[Dict]:
-        """Extract subtasks from Letta response."""
+    async def _letta_orchestrate_project(self, main_task: str) -> List[Dict[str, Any]]:
+        """Use Letta AI to intelligently break down a project into subtasks."""
+        orchestration_prompt = f"""
+🎯 SIMPLE PROJECT BREAKDOWN REQUEST 🎯
+
+You are an expert project manager. Break down this project into 3-4 SIMPLE, EASY subtasks.
+
+PROJECT DESCRIPTION:
+{main_task}
+
+REQUIREMENTS:
+1. Each subtask should be VERY SIMPLE and achievable in 5-10 minutes
+2. Focus on basic functionality only
+3. No complex architecture or deployment
+4. Just basic React components and simple features
+5. Make it EASY for coding agents to complete
+
+EXAMPLES OF SIMPLE SUBTASKS:
+- "Create a basic counter component"
+- "Add increment and decrement buttons"
+- "Add a reset button"
+- "Style the counter with basic CSS"
+
+OUTPUT FORMAT:
+Return ONLY a JSON array with this exact structure:
+[
+  {{
+    "title": "Simple Subtask Title",
+    "description": "Very simple description of what to build"
+  }}
+]
+
+IMPORTANT: Keep it SIMPLE! No complex backend, no authentication, no deployment!
+Return ONLY the JSON array, no other text.
+"""
+        
         try:
+            # Call Letta API with timeout
+            response = self.client.agents.messages.create(
+                agent_id=self.agent_id,
+                messages=[{"role": "user", "content": orchestration_prompt}]
+            )
+            
+            # Extract response content
+            response_text = ""
             for msg in response.messages:
                 if hasattr(msg, 'content'):
-                    content = msg.content.strip()
-                    # Try to find JSON in the response
-                    if '{' in content and '}' in content:
-                        # Find the JSON part
-                        start = content.find('{')
-                        end = content.rfind('}') + 1
-                        json_str = content[start:end]
-                        data = json.loads(json_str)
-                        return data.get('subtasks', [])
-        except Exception as e:
-            print(f"❌ Error parsing subtasks: {e}")
-        
-        return []
-    
-    def _create_subtask_objects(self, subtasks_data: List[Dict], agents: List[Any]) -> List[Subtask]:
-        """Create Subtask objects from parsed data."""
-        subtasks = []
-        agent_names = {agent.name: agent for agent in agents}
-        
-        for i, data in enumerate(subtasks_data):
-            # Find the assigned agent
-            assigned_agent = None
-            for agent in agents:
-                if agent.name in data.get('assigned_agent', ''):
-                    assigned_agent = agent
+                    response_text = msg.content.strip()
                     break
             
-            if not assigned_agent:
-                # Default to first agent if not found
-                assigned_agent = agents[0]
+            if not response_text:
+                raise Exception("Empty response from Letta API")
             
-            subtask = Subtask(
-                id=f"subtask_{i+1}",
-                title=data.get('title', f'Subtask {i+1}'),
-                description=data.get('description', ''),
-                assigned_agent=assigned_agent.agent_id,
-                priority=data.get('priority', 1),
-                dependencies=data.get('dependencies', [])
-            )
-            subtasks.append(subtask)
-        
-        return subtasks
+            # Parse JSON response
+            subtasks_data = json.loads(response_text)
+            
+            # Validate structure
+            if not isinstance(subtasks_data, list):
+                raise Exception("Response is not a JSON array")
+            
+            for subtask in subtasks_data:
+                if not isinstance(subtask, dict) or "title" not in subtask or "description" not in subtask:
+                    raise Exception("Invalid subtask structure")
+            
+            print(f"✅ ORCHESTRATOR: Letta AI created {len(subtasks_data)} intelligent subtasks")
+            return subtasks_data
+            
+        except asyncio.TimeoutError:
+            raise Exception("Letta API timeout - orchestration took too long")
+        except json.JSONDecodeError as e:
+            raise Exception(f"Invalid JSON response from Letta: {e}")
+        except Exception as e:
+            raise Exception(f"Letta orchestration failed: {e}")
     
-    def _create_fallback_subtasks(self, main_task: str, agents: List[Any]) -> List[Subtask]:
-        """Create basic fallback subtasks if Letta fails."""
-        subtasks = []
+    def _create_subtasks_for_project(self, main_task: str) -> List[Dict[str, Any]]:
+        """Create subtasks based on the main task description."""
+        task_lower = main_task.lower()
         
-        # Basic subtasks for a fullstack app
-        basic_tasks = [
-            ("Frontend Setup", "Set up React frontend with routing and basic components", agents[0]),
-            ("Backend API", "Create Node.js backend with REST API endpoints", agents[1]),
-            ("Database Design", "Design and implement database schema", agents[2]),
-            ("UI/UX Implementation", "Create beautiful, responsive user interface", agents[3])
-        ]
-        
-        for i, (title, desc, agent) in enumerate(basic_tasks):
-            subtask = Subtask(
-                id=f"subtask_{i+1}",
-                title=title,
-                description=desc,
-                assigned_agent=agent.agent_id,
-                priority=1
-            )
-            subtasks.append(subtask)
-        
-        return subtasks
-    
-    async def get_next_subtask(self, agent_id: str) -> Subtask:
-        """Get the next available subtask for an agent."""
-        for subtask in self.subtasks:
-            if (subtask.assigned_agent == agent_id and 
-                subtask.status == "pending" and
-                not self._has_blocking_dependencies(subtask)):
-                return subtask
-        return None
-    
-    def _has_blocking_dependencies(self, subtask: Subtask) -> bool:
-        """Check if subtask has uncompleted dependencies."""
-        if not subtask.dependencies:
-            return False
-        
-        for dep_id in subtask.dependencies:
-            dep_subtask = next((s for s in self.subtasks if s.id == dep_id), None)
-            if dep_subtask and dep_subtask.status != "completed":
-                return True
-        return False
+        if "todo" in task_lower:
+            return [
+                {
+                    "title": "Create Todo Component",
+                    "description": "Build a React component for displaying and managing todo items with add, edit, delete functionality"
+                },
+                {
+                    "title": "Add State Management",
+                    "description": "Implement state management for todo items using React hooks or context"
+                },
+                {
+                    "title": "Add Styling and UI",
+                    "description": "Style the todo component with beautiful UI and responsive design"
+                },
+                {
+                    "title": "Add Backend API",
+                    "description": "Create a simple backend API for persisting todo items"
+                }
+            ]
+        elif "blog" in task_lower:
+            return [
+                {
+                    "title": "Create Blog Post Component",
+                    "description": "Build a React component for displaying blog posts with title, content, and metadata"
+                },
+                {
+                    "title": "Add Post Management",
+                    "description": "Implement functionality to create, edit, and delete blog posts"
+                },
+                {
+                    "title": "Add Comment System",
+                    "description": "Create a comment system for blog posts with nested replies"
+                },
+                {
+                    "title": "Add Authentication",
+                    "description": "Implement user authentication and authorization for blog management"
+                }
+            ]
+        elif "landing" in task_lower or "page" in task_lower:
+            return [
+                {
+                    "title": "Create Hero Section",
+                    "description": "Build the main hero section with compelling headline, subtext, and call-to-action"
+                },
+                {
+                    "title": "Add Feature Sections",
+                    "description": "Create feature sections highlighting key benefits and functionality"
+                },
+                {
+                    "title": "Add Navigation and Footer",
+                    "description": "Implement responsive navigation header and footer with links"
+                },
+                {
+                    "title": "Add Styling and Animations",
+                    "description": "Style the landing page with modern design, animations, and responsive layout"
+                }
+            ]
+        elif "counter" in task_lower:
+            return [
+                {
+                    "title": "Create Counter Component",
+                    "description": "Build a React counter component with increment, decrement, and reset functionality"
+                },
+                {
+                    "title": "Add State Management",
+                    "description": "Implement state management for counter value using React hooks"
+                },
+                {
+                    "title": "Add Styling and UI",
+                    "description": "Style the counter with beautiful buttons and responsive design"
+                },
+                {
+                    "title": "Add Advanced Features",
+                    "description": "Add features like step increment, keyboard shortcuts, and persistence"
+                }
+            ]
+        else:
+            # Generic subtasks for any project
+            return [
+                {
+                    "title": "Create Main Component",
+                    "description": "Build the main React component for the application"
+                },
+                {
+                    "title": "Add Core Features",
+                    "description": "Implement the core functionality and features"
+                },
+                {
+                    "title": "Add Styling",
+                    "description": "Style the application with modern UI/UX"
+                },
+                {
+                    "title": "Add Backend Integration",
+                    "description": "Connect to backend services and APIs"
+                }
+            ]
     
     def mark_subtask_completed(self, subtask_id: str):
         """Mark a subtask as completed."""
         for subtask in self.subtasks:
             if subtask.id == subtask_id:
                 subtask.status = "completed"
-                print(f"✅ Orchestrator: {subtask.title} completed!")
+                self.project_status["completed_subtasks"] += 1
+                self.project_status["progress_percentage"] = (
+                    self.project_status["completed_subtasks"] / 
+                    self.project_status["total_subtasks"] * 100
+                )
+                print(f"✅ Orchestrator: Completed {subtask.title}")
                 break
     
     def get_project_status(self) -> Dict[str, Any]:
         """Get current project status."""
-        completed = sum(1 for s in self.subtasks if s.status == "completed")
-        total = len(self.subtasks)
-        
-        return {
-            "total_subtasks": total,
-            "completed_subtasks": completed,
-            "progress_percentage": (completed / total * 100) if total > 0 else 0,
-            "current_phase": self.current_phase,
-            "subtasks": [
-                {
-                    "id": s.id,
-                    "title": s.title,
-                    "assigned_agent": s.assigned_agent,
-                    "status": s.status,
-                    "priority": s.priority
-                }
-                for s in self.subtasks
-            ]
-        }
+        return self.project_status.copy()
+    
+    def get_current_subtask(self) -> Subtask:
+        """Get the current subtask being worked on."""
+        for subtask in self.subtasks:
+            if subtask.status == "pending":
+                return subtask
+        return None
+    
+    def get_remaining_subtasks(self) -> List[Subtask]:
+        """Get all remaining subtasks."""
+        return [subtask for subtask in self.subtasks if subtask.status == "pending"]
+    
+    def get_completed_subtasks(self) -> List[Subtask]:
+        """Get all completed subtasks."""
+        return [subtask for subtask in self.subtasks if subtask.status == "completed"]

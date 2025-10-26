@@ -41,7 +41,7 @@ env/
 
 # Logs
 *.log
-ai-agents/logs/
+logs/
 *.log.*
 
 # OS
@@ -50,7 +50,7 @@ Thumbs.db
 desktop.ini
 
 # Artifacts
-ai-agents/artifacts/
+artifacts/
 *.code
 
 # Temporary files
@@ -61,3 +61,6 @@ ai-agents/artifacts/
 # API Keys (extra safety)
 **/LETTA_API_TOKEN*
 **/CLAUDE_API_KEY*
+
+# Vercel deployment
+.vercel

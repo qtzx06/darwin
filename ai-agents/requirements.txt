@@ -4,5 +4,16 @@ asyncio-mqtt>=0.11.0
 redis>=4.5.0
 python-dotenv>=1.0.0
 rich>=13.0.0
+
+# Claude API for chat simulator
 anthropic>=0.39.0
+
+# Flask API and CORS
+flask>=3.0.0
+flask-cors>=4.0.0
+
+# LiveKit Voice Commentary Dependencies
+livekit>=0.11.0
+livekit-agents>=1.2.13
+requests>=2.31.0
 

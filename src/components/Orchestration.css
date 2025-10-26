@@ -1,0 +1,851 @@
+.orchestration-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: #000000;
+  overflow-x: hidden;
+  overflow-y: auto;
+  z-index: 100;
+  font-family: 'Geist Mono', monospace;
+}
+
+/* Global spotlight effect */
+.orchestration-container::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 115;
+  background: radial-gradient(circle 500px at var(--mouse-x, 50%) var(--mouse-y, 50%), rgba(255, 255, 255, 0.08) 0%, transparent 100%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.orchestration-container:hover::before {
+  opacity: 1;
+}
+
+/* Bento Box Container */
+.orchestration-container .bento-container {
+  position: relative;
+  min-height: 100vh;
+  width: 100%;
+  padding: 20px;
+  padding-top: 90px;
+  z-index: 110;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  box-sizing: border-box;
+}
+
+/* Header Space */
+.orchestration-container .header-space {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 90px;
+  z-index: 120;
+  overflow: visible;
+}
+
+/* Header Content */
+.orchestration-container .header-content {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  right: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  z-index: 10;
+  pointer-events: auto;
+}
+
+.orchestration-container .header-text {
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.orchestration-container .header-title {
+  font-family: 'BBH Sans Bartle', sans-serif;
+  font-size: 1.1rem;
+  color: white;
+  font-weight: 400;
+  text-transform: lowercase;
+  letter-spacing: 0.15em;
+  text-shadow: 0 0 20px rgba(255, 255, 255, 0.4);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.orchestration-container .header-subtitle {
+  font-family: 'Geist Mono', monospace;
+  font-size: 0.75rem;
+  color: white;
+  font-weight: 400;
+  letter-spacing: 0.02em;
+  text-shadow: 0 0 15px rgba(255, 255, 255, 0.3);
+  opacity: 0.9;
+  margin-bottom: 2px;
+}
+
+.orchestration-container .header-query {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  font-family: 'Geist Mono', monospace;
+  font-size: 0.75rem;
+  color: white;
+  flex-shrink: 1;
+  min-width: 0;
+}
+
+.orchestration-container .header-query-label {
+  font-weight: 600;
+  opacity: 0.7;
+  flex-shrink: 0;
+}
+
+.orchestration-container .header-query-text {
+  font-weight: 400;
+  opacity: 0.9;
+  max-width: 300px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.orchestration-container .header-logo-loop {
+  max-width: 400px;
+  flex-shrink: 0;
+}
+
+/* Bento Grid Layout */
+.orchestration-container .bento-grid {
+  flex: 1;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  grid-template-rows: repeat(3, 1fr);
+  gap: 16px;
+  perspective: 1000px;
+  position: relative;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* Agent Card Positioning in Grid */
+.orchestration-container .bento-grid > .glass-card:nth-child(1) {
+  grid-column: 1 / 2;
+  grid-row: 1 / 2;
+}
+
+.orchestration-container .bento-grid > .glass-card:nth-child(2) {
+  grid-column: 2 / 3;
+  grid-row: 1 / 2;
+}
+
+.orchestration-container .bento-grid > .glass-card:nth-child(3) {
+  grid-column: 1 / 2;
+  grid-row: 2 / 3;
+}
+
+.orchestration-container .bento-grid > .glass-card:nth-child(4) {
+  grid-column: 2 / 3;
+  grid-row: 2 / 3;
+}
+
+/* Commentator - Spans right side top 2 rows */
+.orchestration-container .bento-grid > .commentator-card {
+  grid-column: 3 / 5;
+  grid-row: 1 / 3;
+}
+
+/* Chat Input - Bottom left */
+.orchestration-container .bento-grid > .chat-input-card {
+  grid-column: 1 / 3;
+  grid-row: 3 / 4;
+}
+
+/* Transcript - Bottom right */
+.orchestration-container .bento-grid > .transcript-card {
+  grid-column: 3 / 5;
+  grid-row: 3 / 4;
+}
+
+/* Black fade overlay */
+.orchestration-container .fade-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  background: black;
+}
+
+/* Expansion backdrop */
+.orchestration-container .expansion-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 115;
+  background: transparent;
+  pointer-events: none;
+}
+
+/* Agents grid container for expansion */
+.orchestration-container .agents-grid-wrapper {
+  grid-column: 1 / 3;
+  grid-row: 1 / 3;
+  display: contents;
+  position: relative;
+}
+
+/* When agent is expanded, it takes over only the 4 agent cards area */
+.orchestration-container .bento-grid .glass-card.expanded {
+  position: absolute;
+  grid-column: 1 / 3;
+  grid-row: 1 / 3;
+  z-index: 250;
+  width: calc(100% - 32px);
+  height: calc(100% - 32px);
+  margin: 0;
+  top: 16px;
+  left: 16px;
+}
+
+/* Dim other cards when one is expanded */
+.orchestration-container .bento-grid:has(.glass-card.expanded) > *:not(.expanded) {
+  filter: blur(2px) brightness(0.5);
+  pointer-events: none;
+}
+
+/* Mobile responsiveness */
+@media (max-width: 1200px) {
+  .orchestration-container .bento-container {
+    padding: 24px;
+    padding-top: 80px;
+  }
+
+  .orchestration-container .header-space {
+    height: 80px;
+  }
+
+  .orchestration-container .header-content {
+    top: 18px;
+    left: 18px;
+    right: 18px;
+    gap: 16px;
+  }
+
+  .orchestration-container .header-text {
+    gap: 8px;
+  }
+
+  .orchestration-container .header-title {
+    font-size: 1rem;
+  }
+
+  .orchestration-container .header-subtitle {
+    font-size: 0.7rem;
+    margin-bottom: 1.5px;
+  }
+
+  .orchestration-container .header-query {
+    font-size: 0.7rem;
+  }
+
+  .orchestration-container .header-query-text {
+    max-width: 200px;
+  }
+
+  .orchestration-container .header-logo-loop {
+    max-width: 250px;
+  }
+
+  .orchestration-container .bento-grid {
+    gap: 16px;
+  }
+}
+
+@media (max-width: 768px) {
+  .orchestration-container .bento-container {
+    padding: 16px;
+    padding-top: 70px;
+  }
+
+  .orchestration-container .header-space {
+    height: 70px;
+  }
+
+  .orchestration-container .header-content {
+    top: 14px;
+    left: 14px;
+    right: 14px;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  .orchestration-container .header-content {
+    justify-content: center;
+  }
+
+  .orchestration-container .header-text {
+    display: none;
+  }
+
+  .orchestration-container .header-logo-loop {
+    display: none;
+  }
+
+  .orchestration-container .header-query {
+    font-size: 0.7rem;
+  }
+
+  .orchestration-container .header-query-text {
+    max-width: 200px;
+  }
+
+  .orchestration-container .bento-grid {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto;
+    gap: 8px;
+    max-width: 100%;
+    margin: 0 auto;
+  }
+
+  /* Mobile layout adjustments - single column */
+  .orchestration-container .bento-grid > .glass-card:nth-child(1) {
+    grid-column: 1;
+    grid-row: auto;
+  }
+
+  .orchestration-container .bento-grid > .glass-card:nth-child(2) {
+    grid-column: 1;
+    grid-row: auto;
+  }
+
+  .orchestration-container .bento-grid > .glass-card:nth-child(3) {
+    grid-column: 1;
+    grid-row: auto;
+  }
+
+  .orchestration-container .bento-grid > .glass-card:nth-child(4) {
+    grid-column: 1;
+    grid-row: auto;
+  }
+
+  .orchestration-container .bento-grid > .commentator-card {
+    grid-column: 1;
+    grid-row: auto;
+    min-height: 200px;
+  }
+
+  .orchestration-container .bento-grid > .chat-input-card {
+    grid-column: 1;
+    grid-row: auto;
+    min-height: 150px;
+  }
+
+  .orchestration-container .bento-grid > .transcript-card {
+    grid-column: 1;
+    grid-row: auto;
+    min-height: 150px;
+  }
+
+  .orchestration-container .bento-grid .glass-card.expanded {
+    inset: 16px;
+  }
+
+  /* Reduce padding on mobile */
+  .orchestration-container .bento-container {
+    padding: 4px;
+    padding-top: 70px;
+    gap: 8px;
+  }
+
+  /* Reduce header height */
+  .orchestration-container .header-space {
+    height: 70px;
+  }
+
+  /* Smaller header text */
+  .orchestration-container .header-title {
+    font-size: 0.9rem;
+  }
+
+  .orchestration-container .header-subtitle {
+    font-size: 0.65rem;
+  }
+
+  .orchestration-container .header-query {
+    font-size: 0.65rem;
+  }
+
+  /* Hide logo loop on mobile */
+  .orchestration-container .header-logo-loop {
+    display: none;
+  }
+
+  /* Single column on small mobile */
+  .orchestration-container .bento-grid {
+    gap: 6px;
+    grid-template-columns: 1fr;
+    grid-template-rows: auto;
+    max-width: 100%;
+  }
+
+  /* Smaller agent cards */
+  .orchestration-container .glass-card {
+    padding: 6px;
+    min-height: 0;
+  }
+
+  /* Zoom out effect - scale down everything */
+  .orchestration-container .bento-grid {
+    transform: scale(0.85);
+    transform-origin: top center;
+  }
+
+  /* Smaller agent headshot */
+  .orchestration-container .agent-headshot {
+    width: 50px !important;
+  }
+
+  /* Make agent cards narrower */
+  .orchestration-container .glass-card .glass-content {
+    gap: 6px;
+  }
+
+  .orchestration-container .agent-info {
+    gap: 6px;
+    min-width: 0;
+  }
+
+  /* Make content wrapper fit */
+  .orchestration-container .chat-content-wrapper,
+  .orchestration-container .transcript-content {
+    padding: 8px;
+  }
+
+  .orchestration-container .chat-box,
+  .orchestration-container .transcript-box {
+    min-height: 0;
+  }
+
+  /* Reduce agent transcript padding */
+  .orchestration-container .agent-transcript-content {
+    padding: 6px 8px !important;
+  }
+
+  /* Smaller fonts in agent cards */
+  .orchestration-container .agent-name {
+    font-size: 0.75rem !important;
+  }
+
+  .orchestration-container .agent-personality {
+    font-size: 0.6rem !important;
+  }
+
+  .orchestration-container .agent-transcript-content {
+    font-size: 8px !important;
+  }
+
+  /* Smaller chat/transcript content */
+  .orchestration-container .chat-header h3,
+  .orchestration-container .transcript-header h3 {
+    font-size: 0.75rem !important;
+  }
+
+  .orchestration-container .chat-description,
+  .orchestration-container .transcript-description {
+    font-size: 0.6rem !important;
+  }
+
+  .orchestration-container .chat-messages,
+  .orchestration-container .transcript-text {
+    font-size: 8px !important;
+  }
+
+  .orchestration-container .chat-input {
+    font-size: 9px !important;
+  }
+
+  /* Smaller buttons */
+  .orchestration-container .chat-send,
+  .orchestration-container .transcript-mute,
+  .orchestration-container .agent-thumbs {
+    padding: 6px 10px !important;
+    font-size: 9px !important;
+  }
+
+  /* Reduce expanded card inset - make it smaller on mobile */
+  .orchestration-container .bento-grid .glass-card.expanded {
+    inset: 4px;
+    transform: scale(0.95) !important;
+  }
+
+  /* Prevent horizontal overflow but allow tilt/halo */
+  .orchestration-container .bento-container,
+  .orchestration-container .bento-grid {
+    max-width: 100%;
+    overflow: visible;
+  }
+
+  .orchestration-container .glass-card {
+    max-width: 100%;
+  }
+
+  /* Hide scrollbars on mobile */
+  .orchestration-container::-webkit-scrollbar {
+    display: none;
+  }
+
+  .orchestration-container {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  /* Zoom out more on smaller screens */
+  .orchestration-container .bento-grid {
+    transform: scale(0.75);
+  }
+
+  /* Reduce side padding even more */
+  .orchestration-container .bento-container {
+    padding: 2px;
+    padding-top: 70px;
+  }
+}
+
+/* Start Battle Button Styles */
+.start-battle-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  margin: 16px 0;
+}
+
+.start-battle-btn {
+  font-family: 'Geist Mono', monospace;
+  font-size: 1rem;
+  font-weight: 600;
+  padding: 14px 32px;
+  background: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  box-shadow: 0 4px 20px rgba(255, 107, 107, 0.4);
+  position: relative;
+  overflow: hidden;
+}
+
+.start-battle-btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+  transition: left 0.5s ease;
+}
+
+.start-battle-btn:hover:not(:disabled)::before {
+  left: 100%;
+}
+
+.start-battle-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 30px rgba(255, 107, 107, 0.6);
+}
+
+.start-battle-btn:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.start-battle-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  background: linear-gradient(135deg, #666 0%, #555 100%);
+  box-shadow: none;
+}
+
+.subtasks-preview {
+  font-family: 'Geist Mono', monospace;
+  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.7);
+  letter-spacing: 0.05em;
+}
+
+/* Battle Status Styles */
+.battle-status {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  margin: 16px 0;
+  padding: 12px 24px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+  backdrop-filter: blur(10px);
+}
+
+.status-running {
+  font-family: 'Geist Mono', monospace;
+  font-size: 0.95rem;
+  color: #4ecdc4;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  animation: pulse 2s ease-in-out infinite;
+}
+
+.status-complete {
+  font-family: 'Geist Mono', monospace;
+  font-size: 0.95rem;
+  color: #4CAF50;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+}
+
+.current-task {
+  font-family: 'Geist Mono', monospace;
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.6);
+  letter-spacing: 0.02em;
+  text-align: center;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.6;
+  }
+}
+
+/* Winner Selection Modal */
+.winner-selection-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.9);
+  backdrop-filter: blur(10px);
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  animation: fadeIn 0.3s ease;
+}
+
+.winner-modal-content {
+  background: linear-gradient(135deg, rgba(20, 20, 20, 0.95) 0%, rgba(40, 40, 40, 0.95) 100%);
+  border: 2px solid rgba(255, 107, 107, 0.3);
+  border-radius: 20px;
+  padding: 40px;
+  max-width: 700px;
+  width: 100%;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8), 0 0 40px rgba(255, 107, 107, 0.2);
+  animation: slideUp 0.4s ease;
+}
+
+.winner-modal-title {
+  font-family: 'BBH Sans Bartle', sans-serif;
+  font-size: 2rem;
+  color: white;
+  text-align: center;
+  margin-bottom: 10px;
+  text-shadow: 0 0 20px rgba(255, 107, 107, 0.5);
+}
+
+.winner-modal-subtitle {
+  font-family: 'Geist Mono', monospace;
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.6);
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+.winner-agents-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 15px;
+  margin-bottom: 30px;
+}
+
+.winner-agent-option {
+  position: relative;
+  background: rgba(255, 255, 255, 0.05);
+  border: 2px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 20px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.winner-agent-option:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 107, 107, 0.5);
+  transform: translateY(-2px);
+}
+
+.winner-agent-option.selected {
+  background: rgba(255, 107, 107, 0.15);
+  border-color: #ff6b6b;
+  box-shadow: 0 0 20px rgba(255, 107, 107, 0.3);
+}
+
+.winner-agent-name {
+  font-family: 'Geist Mono', monospace;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: white;
+  margin-bottom: 5px;
+}
+
+.winner-agent-personality {
+  font-family: 'Geist Mono', monospace;
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.winner-checkmark {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 30px;
+  height: 30px;
+  background: #ff6b6b;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 1.2rem;
+  font-weight: bold;
+  animation: scaleIn 0.3s ease;
+}
+
+.winner-reason-section {
+  margin-bottom: 25px;
+}
+
+.winner-reason-label {
+  font-family: 'Geist Mono', monospace;
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.8);
+  display: block;
+  margin-bottom: 10px;
+}
+
+.winner-reason-input {
+  width: 100%;
+  background: rgba(255, 255, 255, 0.05);
+  border: 2px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  padding: 15px;
+  font-family: 'Geist Mono', monospace;
+  font-size: 0.9rem;
+  color: white;
+  resize: vertical;
+  transition: all 0.3s ease;
+}
+
+.winner-reason-input:focus {
+  outline: none;
+  border-color: #ff6b6b;
+  background: rgba(255, 255, 255, 0.08);
+  box-shadow: 0 0 20px rgba(255, 107, 107, 0.2);
+}
+
+.winner-reason-input::placeholder {
+  color: rgba(255, 255, 255, 0.3);
+}
+
+.winner-confirm-btn {
+  width: 100%;
+  font-family: 'Geist Mono', monospace;
+  font-size: 1rem;
+  font-weight: 600;
+  padding: 16px 32px;
+  background: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  box-shadow: 0 4px 20px rgba(255, 107, 107, 0.4);
+}
+
+.winner-confirm-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 30px rgba(255, 107, 107, 0.6);
+}
+
+.winner-confirm-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  background: linear-gradient(135deg, #666 0%, #555 100%);
+  box-shadow: none;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes scaleIn {
+  from {
+    transform: scale(0);
+  }
+  to {
+    transform: scale(1);
+  }
+}
+
+/* Mobile responsive */
+@media (max-width: 768px) {
+  .winner-agents-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .winner-modal-content {
+    padding: 25px;
+  }
+
+  .winner-modal-title {
+    font-size: 1.5rem;
+  }
+}
