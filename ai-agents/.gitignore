@@ -239,3 +239,4 @@ artifacts/
 **/api_keys.txt
 **/secrets.txt
 **/*.key
+!config/agent_wallets.json

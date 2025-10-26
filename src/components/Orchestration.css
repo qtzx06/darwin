@@ -125,6 +125,20 @@
   white-space: nowrap;
 }
 
+/* Discrete wallet button in bottom-right corner */
+.discrete-wallet {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  z-index: 1000;
+  opacity: 0.6;
+  transition: opacity 0.3s ease;
+}
+
+.discrete-wallet:hover {
+  opacity: 1;
+}
+
 .orchestration-container .header-logo-loop {
   max-width: 400px;
   flex-shrink: 0;
