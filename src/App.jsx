@@ -7,6 +7,7 @@ import DecryptedText from './components/DecryptedText';
 import Dither from './components/Dither';
 import LogoLoop from './components/LogoLoop';
 import DevpostCard from './components/DevpostCard';
+import Orchestration from './components/Orchestration';
 import { TbBrandThreejs } from 'react-icons/tb';
 import { FaReact, FaPython } from 'react-icons/fa';
 import { RiClaudeFill, RiGeminiFill } from 'react-icons/ri';
@@ -17,6 +18,7 @@ function App() {
   const [isLoading, setIsLoading] = useState(true);
   const [isZooming, setIsZooming] = useState(false);
   const [showOverlay, setShowOverlay] = useState(false);
+  const [currentPage, setCurrentPage] = useState('landing');
   const wispIframeRef = useRef(null);
 
   // Logo Loop data
@@ -41,6 +43,28 @@ function App() {
     return () => clearTimeout(loadingTimer);
   }, []);
 
+  useEffect(() => {
+    // Handle hash changes for routing
+    const handleHashChange = () => {
+      const hash = window.location.hash;
+      if (hash.startsWith('#orchestration')) {
+        setCurrentPage('orchestration');
+      } else {
+        setCurrentPage('landing');
+      }
+    };
+
+    // Check initial hash on mount
+    handleHashChange();
+
+    // Listen for hash changes
+    window.addEventListener('hashchange', handleHashChange);
+
+    return () => {
+      window.removeEventListener('hashchange', handleHashChange);
+    };
+  }, []);
+
   const handleSearchSubmit = (query) => {
     console.log('Starting zoom animation with query:', query);
     setIsZooming(true);
@@ -63,31 +87,36 @@ function App() {
 
   return (
     <div className="app-container">
-      <AnimatePresence>
-        {isLoading && <Loading />}
-      </AnimatePresence>
+      {/* Render Orchestration page if on #orchestration route */}
+      {currentPage === 'orchestration' ? (
+        <Orchestration />
+      ) : (
+        <>
+          <AnimatePresence>
+            {isLoading && <Loading />}
+          </AnimatePresence>
 
-      {/* Background Layer: Wisp Animation */}
-      <motion.div
-        className="wisp-background"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: isLoading ? 0 : 1 }}
-        transition={{ duration: 1, delay: 0.3 }}
-      >
-        <iframe
-          ref={wispIframeRef}
-          src="/wisp/index.html"
-          style={{
-            width: '100%',
-            height: '100%',
-            border: 'none',
-            display: 'block',
-            margin: 0,
-            padding: 0
-          }}
-          title="Wisp Animation"
-        />
-      </motion.div>
+          {/* Background Layer: Wisp Animation */}
+          <motion.div
+            className="wisp-background"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: isLoading ? 0 : 1 }}
+            transition={{ duration: 1, delay: 0.3 }}
+          >
+            <iframe
+              ref={wispIframeRef}
+              src="/wisp/index.html"
+              style={{
+                width: '100%',
+                height: '100%',
+                border: 'none',
+                display: 'block',
+                margin: 0,
+                padding: 0
+              }}
+              title="Wisp Animation"
+            />
+          </motion.div>
 
       {/* Overlay for zoom transition */}
       <AnimatePresence>
@@ -202,15 +231,17 @@ function App() {
         </div>
       )}
 
-      {/* Devpost Card - Fixed to Bottom */}
-      {!isLoading && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: isZooming ? 0 : 1 }}
-          transition={{ duration: 0.8, ease: "easeOut" }}
-        >
-          <DevpostCard />
-        </motion.div>
+          {/* Devpost Card - Fixed to Bottom */}
+          {!isLoading && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: isZooming ? 0 : 1 }}
+              transition={{ duration: 0.8, ease: "easeOut" }}
+            >
+              <DevpostCard />
+            </motion.div>
+          )}
+        </>
       )}
     </div>
   );
