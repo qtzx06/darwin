@@ -7,7 +7,11 @@ import DecryptedText from './components/DecryptedText';
 import Cubes from './components/Cubes';
 import Dither from './components/Dither';
 import LogoLoop from './components/LogoLoop';
-import { SiOpenai, SiGoogle, SiMeta, SiAmazon, SiApple, SiNvidia } from 'react-icons/si';
+import { TbBrandThreejs } from 'react-icons/tb';
+import { FaReact, FaPython } from 'react-icons/fa';
+import { RiClaudeFill, RiGeminiFill } from 'react-icons/ri';
+import { SiTypescript, SiLangchain } from 'react-icons/si';
+import livekitLogo from './assets/livekit-text.svg';
 
 function App() {
   const [isLoading, setIsLoading] = useState(true);
@@ -17,12 +21,15 @@ function App() {
 
   // Logo Loop data
   const logos = [
-    { node: <SiOpenai style={{ color: 'white' }} />, title: 'OpenAI' },
-    { node: <SiGoogle style={{ color: 'white' }} />, title: 'Google' },
-    { node: <SiMeta style={{ color: 'white' }} />, title: 'Meta' },
-    { node: <SiAmazon style={{ color: 'white' }} />, title: 'Amazon' },
-    { node: <SiApple style={{ color: 'white' }} />, title: 'Apple' },
-    { node: <SiNvidia style={{ color: 'white' }} />, title: 'Nvidia' },
+    { node: <TbBrandThreejs style={{ color: 'white' }} />, title: 'Three.js' },
+    { node: <FaReact style={{ color: 'white' }} />, title: 'React' },
+    { node: <RiClaudeFill style={{ color: 'white' }} />, title: 'Claude' },
+    { node: <SiTypescript style={{ color: 'white' }} />, title: 'TypeScript' },
+    { node: <FaPython style={{ color: 'white' }} />, title: 'Python' },
+    { node: <SiLangchain style={{ color: 'white' }} />, title: 'LangChain' },
+    { node: <RiGeminiFill style={{ color: 'white' }} />, title: 'Gemini' },
+    { src: 'https://raw.githubusercontent.com/letta-ai/letta/main/assets/Letta-logo-RGB_GreyonTransparent_cropped_small.png', alt: 'Letta', title: 'Letta' },
+    { src: livekitLogo, alt: 'LiveKit', title: 'LiveKit' },
   ];
 
   useEffect(() => {
@@ -114,14 +121,14 @@ function App() {
           >
             <div className="dither-wrapper dither-wrapper-left">
               <Dither
-                waveColor={[0.6, 0.3, 0.4]}
+                waveColor={[0.7, 0.4, 0.5]}
                 disableAnimation={false}
                 enableMouseInteraction={false}
-                colorNum={4}
-                waveAmplitude={0.06}
-                waveFrequency={4.9}
+                colorNum={6}
+                waveAmplitude={0.3}
+                waveFrequency={5}
                 waveSpeed={0.04}
-                pixelSize={2}
+                pixelSize={4}
                 mouseRadius={0.3}
               />
             </div>
@@ -147,14 +154,14 @@ function App() {
           >
             <div className="dither-wrapper dither-wrapper-right">
               <Dither
-                waveColor={[0.6, 0.3, 0.4]}
+                waveColor={[0.7, 0.4, 0.5]}
                 disableAnimation={false}
                 enableMouseInteraction={false}
-                colorNum={4}
-                waveAmplitude={0.06}
-                waveFrequency={4.9}
+                colorNum={6}
+                waveAmplitude={0.3}
+                waveFrequency={5}
                 waveSpeed={0.04}
-                pixelSize={2}
+                pixelSize={4}
                 mouseRadius={0.3}
               />
             </div>
