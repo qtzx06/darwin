@@ -125,7 +125,7 @@ function Orchestration() {
           <HeaderDither />
           <div className="header-content">
             <div className="header-text">
-              <span className="header-title">DARWIN // </span>
+              <span className="header-title">COLOSSEUM // </span>
               <span className="header-subtitle">evolve your agents.</span>
             </div>
             {query && (

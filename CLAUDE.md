@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Darwin is a React + Vite landing page featuring advanced visual effects including FBO particle animations, liquid glass morphism effects, and interactive 3D cube grids. The site showcases a modern aesthetic with purple/lilac color theming and smooth animations throughout.
+Colosseum is a React + Vite landing page featuring advanced visual effects including FBO particle animations, liquid glass morphism effects, and interactive 3D cube grids. The site showcases a modern aesthetic with purple/lilac color theming and smooth animations throughout.
 
 ## Development Commands
 
@@ -45,7 +45,7 @@ The app has a single-page landing design (`App.jsx`) that orchestrates multiple 
 
 **DecryptedText** (`src/components/DecryptedText.jsx`)
 - Character-by-character decryption animation from Evolve component library
-- Used for "darwin" title with sequential reveal
+- Used for "colosseum" title with sequential reveal
 
 **LogoLoop** (`src/components/LogoLoop.jsx`)
 - Infinite horizontal scrolling carousel

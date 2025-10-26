@@ -195,13 +195,13 @@ function App() {
           >
             <h1 className="title">
               <DecryptedText
-                text="darwin"
+                text="colosseum"
                 animateOn="view"
                 sequential={true}
                 speed={150}
               />
             </h1>
-            <p className="subheader">evolve your agents.</p>
+            <p className="subheader">agentic pvp</p>
           </motion.div>
           <motion.div
             className="glass-wrapper"
