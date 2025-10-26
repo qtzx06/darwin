@@ -5,7 +5,8 @@
   width: 100vw;
   height: 100vh;
   background-color: #000000;
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: auto;
   z-index: 100;
   font-family: 'Geist Mono', monospace;
 }
@@ -31,14 +32,16 @@
 
 /* Bento Box Container */
 .orchestration-container .bento-container {
-  position: absolute;
-  inset: 0;
+  position: relative;
+  min-height: 100vh;
+  width: 100%;
   padding: 20px;
   padding-top: 90px;
   z-index: 110;
   display: flex;
   flex-direction: column;
   gap: 16px;
+  box-sizing: border-box;
 }
 
 /* Header Space */
@@ -136,6 +139,8 @@
   gap: 16px;
   perspective: 1000px;
   position: relative;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 /* Agent Card Positioning in Grid */
@@ -191,7 +196,8 @@
   inset: 0;
   z-index: 115;
   background: transparent;
-  pointer-events: none;
+  pointer-events: auto;
+  cursor: pointer;
 }
 
 /* Agents grid container for expansion */
@@ -207,12 +213,12 @@
   position: absolute;
   grid-column: 1 / 3;
   grid-row: 1 / 3;
-  z-index: 200;
-  width: 100%;
-  height: 100%;
+  z-index: 250;
+  width: calc(100% - 32px);
+  height: calc(100% - 32px);
   margin: 0;
-  top: 0;
-  left: 0;
+  top: 16px;
+  left: 16px;
 }
 
 /* Dim other cards when one is expanded */
@@ -308,48 +314,213 @@
   }
 
   .orchestration-container .bento-grid {
-    grid-template-columns: 1fr 1fr;
-    grid-template-rows: repeat(5, 1fr);
-    gap: 12px;
+    grid-template-columns: 1fr;
+    grid-template-rows: auto;
+    gap: 8px;
+    max-width: 100%;
+    margin: 0 auto;
   }
 
-  /* Mobile layout adjustments */
+  /* Mobile layout adjustments - single column */
   .orchestration-container .bento-grid > .glass-card:nth-child(1) {
-    grid-column: 1 / 2;
-    grid-row: 1 / 2;
+    grid-column: 1;
+    grid-row: auto;
   }
 
   .orchestration-container .bento-grid > .glass-card:nth-child(2) {
-    grid-column: 2 / 3;
-    grid-row: 1 / 2;
+    grid-column: 1;
+    grid-row: auto;
   }
 
   .orchestration-container .bento-grid > .glass-card:nth-child(3) {
-    grid-column: 1 / 2;
-    grid-row: 2 / 3;
+    grid-column: 1;
+    grid-row: auto;
   }
 
   .orchestration-container .bento-grid > .glass-card:nth-child(4) {
-    grid-column: 2 / 3;
-    grid-row: 2 / 3;
+    grid-column: 1;
+    grid-row: auto;
   }
 
   .orchestration-container .bento-grid > .commentator-card {
-    grid-column: 1 / 3;
-    grid-row: 3 / 4;
+    grid-column: 1;
+    grid-row: auto;
+    min-height: 200px;
   }
 
   .orchestration-container .bento-grid > .chat-input-card {
-    grid-column: 1 / 3;
-    grid-row: 4 / 5;
+    grid-column: 1;
+    grid-row: auto;
+    min-height: 150px;
   }
 
   .orchestration-container .bento-grid > .transcript-card {
-    grid-column: 1 / 3;
-    grid-row: 5 / 6;
+    grid-column: 1;
+    grid-row: auto;
+    min-height: 150px;
   }
 
   .orchestration-container .bento-grid .glass-card.expanded {
     inset: 16px;
+  }
+
+  /* Reduce padding on mobile */
+  .orchestration-container .bento-container {
+    padding: 4px;
+    padding-top: 70px;
+    gap: 8px;
+  }
+
+  /* Reduce header height */
+  .orchestration-container .header-space {
+    height: 70px;
+  }
+
+  /* Smaller header text */
+  .orchestration-container .header-title {
+    font-size: 0.9rem;
+  }
+
+  .orchestration-container .header-subtitle {
+    font-size: 0.65rem;
+  }
+
+  .orchestration-container .header-query {
+    font-size: 0.65rem;
+  }
+
+  /* Hide logo loop on mobile */
+  .orchestration-container .header-logo-loop {
+    display: none;
+  }
+
+  /* Single column on small mobile */
+  .orchestration-container .bento-grid {
+    gap: 6px;
+    grid-template-columns: 1fr;
+    grid-template-rows: auto;
+    max-width: 100%;
+  }
+
+  /* Smaller agent cards */
+  .orchestration-container .glass-card {
+    padding: 6px;
+    min-height: 0;
+  }
+
+  /* Zoom out effect - scale down everything */
+  .orchestration-container .bento-grid {
+    transform: scale(0.85);
+    transform-origin: top center;
+  }
+
+  /* Smaller agent headshot */
+  .orchestration-container .agent-headshot {
+    width: 50px !important;
+  }
+
+  /* Make agent cards narrower */
+  .orchestration-container .glass-card .glass-content {
+    gap: 6px;
+  }
+
+  .orchestration-container .agent-info {
+    gap: 6px;
+    min-width: 0;
+  }
+
+  /* Make content wrapper fit */
+  .orchestration-container .chat-content-wrapper,
+  .orchestration-container .transcript-content {
+    padding: 8px;
+  }
+
+  .orchestration-container .chat-box,
+  .orchestration-container .transcript-box {
+    min-height: 0;
+  }
+
+  /* Reduce agent transcript padding */
+  .orchestration-container .agent-transcript-content {
+    padding: 6px 8px !important;
+  }
+
+  /* Smaller fonts in agent cards */
+  .orchestration-container .agent-name {
+    font-size: 0.75rem !important;
+  }
+
+  .orchestration-container .agent-personality {
+    font-size: 0.6rem !important;
+  }
+
+  .orchestration-container .agent-transcript-content {
+    font-size: 8px !important;
+  }
+
+  /* Smaller chat/transcript content */
+  .orchestration-container .chat-header h3,
+  .orchestration-container .transcript-header h3 {
+    font-size: 0.75rem !important;
+  }
+
+  .orchestration-container .chat-description,
+  .orchestration-container .transcript-description {
+    font-size: 0.6rem !important;
+  }
+
+  .orchestration-container .chat-messages,
+  .orchestration-container .transcript-text {
+    font-size: 8px !important;
+  }
+
+  .orchestration-container .chat-input {
+    font-size: 9px !important;
+  }
+
+  /* Smaller buttons */
+  .orchestration-container .chat-send,
+  .orchestration-container .transcript-mute,
+  .orchestration-container .agent-thumbs {
+    padding: 6px 10px !important;
+    font-size: 9px !important;
+  }
+
+  /* Reduce expanded card inset - make it smaller on mobile */
+  .orchestration-container .bento-grid .glass-card.expanded {
+    inset: 4px;
+    transform: scale(0.95) !important;
+  }
+
+  /* Prevent horizontal overflow but allow tilt/halo */
+  .orchestration-container .bento-container,
+  .orchestration-container .bento-grid {
+    max-width: 100%;
+    overflow: visible;
+  }
+
+  .orchestration-container .glass-card {
+    max-width: 100%;
+  }
+
+  /* Hide scrollbars on mobile */
+  .orchestration-container::-webkit-scrollbar {
+    display: none;
+  }
+
+  .orchestration-container {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  /* Zoom out more on smaller screens */
+  .orchestration-container .bento-grid {
+    transform: scale(0.75);
+  }
+
+  /* Reduce side padding even more */
+  .orchestration-container .bento-container {
+    padding: 2px;
+    padding-top: 70px;
   }
 }
