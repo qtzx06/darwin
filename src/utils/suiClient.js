@@ -45,12 +45,19 @@ export async function voteForAgent(agentId) {
  */
 export async function getVoteCounts() {
   try {
-    const object = await suiClient.getObject({
+    // Add timeout to prevent hanging on slow devnet
+    const timeout = new Promise((_, reject) => 
+      setTimeout(() => reject(new Error('Sui network timeout')), 5000)
+    );
+    
+    const fetchVotes = suiClient.getObject({
       id: REGISTRY_ID,
       options: {
         showContent: true
       }
     });
+
+    const object = await Promise.race([fetchVotes, timeout]);
 
     if (object.data && object.data.content && object.data.content.fields) {
       const fields = object.data.content.fields;
@@ -64,7 +71,7 @@ export async function getVoteCounts() {
 
     return { speedrunner: 0, bloom: 0, solver: 0, loader: 0 };
   } catch (error) {
-    console.error('Failed to fetch vote counts:', error);
+    console.warn('⚠️ Sui devnet connection slow/failed (votes defaulting to 0):', error.message);
     return { speedrunner: 0, bloom: 0, solver: 0, loader: 0 };
   }
 }
