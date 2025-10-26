@@ -105,7 +105,7 @@ const GlassSearchBar = ({ onSubmit }) => {
             />
             {!inputValue && (
               <div className="placeholder">
-                <DecryptedText text="search..." animateOn="view" sequential={true} speed={50} />
+                <DecryptedText text="build..." animateOn="view" sequential={true} speed={50} />
               </div>
             )}
             <button type="button" className="search-clear" aria-label="Clear search" onClick={handleClear}>

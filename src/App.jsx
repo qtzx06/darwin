@@ -28,7 +28,7 @@ function App() {
     { node: <SiLangchain style={{ color: 'white' }} />, title: 'LangChain' },
     { node: <RiGeminiFill style={{ color: 'white' }} />, title: 'Gemini' },
     { src: 'https://raw.githubusercontent.com/letta-ai/letta/main/assets/Letta-logo-RGB_GreyonTransparent_cropped_small.png', alt: 'Letta', title: 'Letta' },
-    { src: livekitLogo, alt: 'LiveKit', title: 'LiveKit' },
+    { node: <img src={livekitLogo} alt="LiveKit" style={{ height: '24px', width: 'auto', filter: 'brightness(0) invert(1)' }} />, title: 'LiveKit' },
   ];
 
   useEffect(() => {
