@@ -3,7 +3,7 @@
  * Handles all communication with the Flask backend
  */
 
-const API_BASE_URL = 'http://localhost:5003';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5003';
 
 class ApiError extends Error {
   constructor(message, status, data) {
@@ -64,20 +64,10 @@ export const competitiveApi = {
   },
 
   async orchestrateProject(projectDescription) {
-    console.log('📤 Sending orchestration request:', { project_description: projectDescription });
-    const response = await apiRequest('/api/orchestrate-project', {
+    return apiRequest('/api/orchestrate-project', {
       method: 'POST',
       body: JSON.stringify({ project_description: projectDescription }),
     });
-    console.log('📥 Received orchestration response:', response);
-    console.log('📥 Response type:', typeof response);
-    console.log('📥 Response keys:', Object.keys(response));
-    if (response.subtasks) {
-      console.log('📥 Subtasks:', response.subtasks);
-    } else {
-      console.log('⚠️ No subtasks property in response');
-    }
-    return response;
   },
 
   // Round management
@@ -341,28 +331,11 @@ export const apiUtils = {
   },
 };
 
-// Claude Chat Simulator API
-export const claudeChatApi = {
-  async sendMessage(message) {
-    return apiRequest('/api/chat/send-message', {
-      method: 'POST',
-      body: JSON.stringify({ message }),
-    });
-  },
-  
-  async getRandomMessage() {
-    return apiRequest('/api/chat/random-message', {
-      method: 'GET',
-    });
-  },
-};
-
 // Export everything
 export { ApiError };
 export default {
   competitive: competitiveApi,
   livekit: livekitApi,
   agentChat: agentChatApi,
-  claudeChat: claudeChatApi,
   utils: apiUtils,
 };

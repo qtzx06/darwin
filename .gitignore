@@ -1,80 +1,81 @@
-# Environment variables
+# Dependencies
+node_modules/
+venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# Build outputs
+dist/
+dist-ssr/
+build/
+*.egg-info/
+
+# Environment variables (CRITICAL - contains private keys!)
 .env
 .env.local
 .env.*.local
+*.env
 
-# Python
-__pycache__/
-*.py[cod]
-*$py.class
-*.so
-.Python
-build/
-develop-eggs/
-dist/
-downloads/
-eggs/
-.eggs/
-lib/
-lib64/
-parts/
-sdist/
-var/
-wheels/
-*.egg-info/
-.installed.cfg
-*.egg
+# Sui wallet private keys (NEVER commit these!)
+ai-agents/config/agent_wallets.env
+*.priv
+*.key
 
-# Virtual environments
-venv/
-.venv/
-ENV/
-env/
-.virtualenv/
+# Note: agent_wallets.json contains PUBLIC addresses only and is safe to commit
 
-# IDE
-.vscode/
-.idea/
-*.swp
-*.swo
-*~
+# Sui CLI
+.sui/
+sui.keystore
 
 # Logs
+logs/
 *.log
-ai-agents/logs/
-*.log.*
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
 
-# Generated artifacts
-artifacts/
+# Vercel
+.vercel/
+.vercel
 
-# OS
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+.idea/
 .DS_Store
-Thumbs.db
-desktop.ini
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+*.swp
+*~
 
-# Artifacts
-artifacts/
-*.code
+# OS files
+Thumbs.db
+.AppleDouble
+.LSOverride
 
 # Temporary files
 *.tmp
-*.bak
-*.cache
-*.backup
+*.temp
+.cache/
+.parcel-cache/
 
-# Test and debug files
-test_*.py
-debug_*.py
-demo_*.py
+# Test coverage
+coverage/
+.nyc_output/
 
-# API Keys (extra safety)
-**/LETTA_API_TOKEN*
-**/CLAUDE_API_KEY*
+# Local development
+*.local
+.eslintcache
 
-# Audio test files
-*.mp3
-*.wav
-*.ogg
-
-# Vercel deployment
-.vercel
+# Move build artifacts
+move/**/build/
+move/**/Move.lock

@@ -125,6 +125,20 @@
   white-space: nowrap;
 }
 
+/* Discrete wallet button in bottom-right corner */
+.discrete-wallet {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  z-index: 1000;
+  opacity: 0.6;
+  transition: opacity 0.3s ease;
+}
+
+.discrete-wallet:hover {
+  opacity: 1;
+}
+
 .orchestration-container .header-logo-loop {
   max-width: 400px;
   flex-shrink: 0;
@@ -132,14 +146,14 @@
 
 /* Bento Grid Layout */
 .orchestration-container .bento-grid {
-  flex: 1;
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  grid-template-rows: repeat(3, 1fr);
+  grid-template-rows: repeat(3, minmax(0, 1fr));
   gap: 16px;
   perspective: 1000px;
   position: relative;
   width: 100%;
+  height: calc(100vh - 110px);
   box-sizing: border-box;
 }
 
@@ -209,15 +223,11 @@
 
 /* When agent is expanded, it takes over only the 4 agent cards area */
 .orchestration-container .bento-grid .glass-card.expanded {
-  position: absolute;
   grid-column: 1 / 3;
   grid-row: 1 / 3;
   z-index: 250;
-  width: calc(100% - 32px);
-  height: calc(100% - 32px);
   margin: 0;
-  top: 16px;
-  left: 16px;
+  overflow: hidden;
 }
 
 /* Dim other cards when one is expanded */

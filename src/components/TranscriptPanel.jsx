@@ -1,13 +1,18 @@
 import { useState } from 'react';
 import './TranscriptPanel.css';
 
-function TranscriptPanel() {
-  const [isMuted, setIsMuted] = useState(false);
+function TranscriptPanel({ elevenLabsRef, transcripts = [] }) {
+  const [isMicMuted, setIsMicMuted] = useState(true); // Start with mic muted
 
-  const handleMuteToggle = () => {
-    setIsMuted(!isMuted);
-    console.log('Mute toggled:', !isMuted);
-    // TODO: Handle audio mute/unmute
+  const handleMicToggle = async () => {
+    const newMuted = !isMicMuted;
+    setIsMicMuted(newMuted);
+
+    // Toggle microphone via ElevenLabs
+    if (elevenLabsRef?.current) {
+      await elevenLabsRef.current.setMicMuted(newMuted);
+      console.log(`[TranscriptPanel] Microphone ${newMuted ? 'muted' : 'unmuted'}`);
+    }
   };
 
   return (
@@ -21,8 +26,8 @@ function TranscriptPanel() {
             <h3>Transcription</h3>
             <div className="transcript-description">live audio commentary stream</div>
           </div>
-          <button onClick={handleMuteToggle} className="transcript-mute">
-            <i className={`fas fa-microphone${isMuted ? '-slash' : ''}`}></i>
+          <button onClick={handleMicToggle} className="transcript-mute">
+            <i className={`fas fa-microphone${isMicMuted ? '-slash' : ''}`}></i>
           </button>
         </div>
         <div className="transcript-box">
@@ -30,7 +35,20 @@ function TranscriptPanel() {
           <div className="glass-overlay"></div>
           <div className="glass-specular"></div>
           <div className="transcript-text">
-            Live commentary stream will appear here...
+            {transcripts.length === 0 ? (
+              <div style={{ opacity: 0.5 }}>
+                {isMicMuted ? 'Click mic button to start...' : 'Listening...'}
+              </div>
+            ) : (
+              transcripts.map((t, i) => (
+                <div key={i} style={{ marginBottom: '8px' }}>
+                  <span style={{ color: '#f0b0d0', fontWeight: 'bold' }}>
+                    [{t.speaker === 'user' ? 'YOU' : 'COMPOSER'}]
+                  </span>{' '}
+                  {t.text}
+                </div>
+              ))
+            )}
           </div>
         </div>
       </div>

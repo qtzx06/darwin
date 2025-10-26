@@ -1,6 +1,7 @@
 import { useEffect, useState, useRef } from 'react';
 import { motion } from 'framer-motion';
 import './Orchestration.css';
+import './PreviewCard.css';
 import IridescenceBackground from './IridescenceBackground';
 import AgentCard from './AgentCard';
 import Commentator from './Commentator';
@@ -8,42 +9,212 @@ import TranscriptPanel from './TranscriptPanel';
 import ChatInput from './ChatInput';
 import HeaderDither from './HeaderDither';
 import LogoLoop from './LogoLoop';
+import CodeRenderer from './CodeRenderer';
 import { TbBrandThreejs } from 'react-icons/tb';
 import { FaReact, FaPython } from 'react-icons/fa';
 import { RiClaudeFill, RiGeminiFill } from 'react-icons/ri';
 import { SiTypescript, SiLangchain } from 'react-icons/si';
 import livekitLogo from '../assets/livekit-text.svg';
-import { competitiveApi, livekitApi, apiUtils } from '../services/api';
+import { getVoteCounts, getAgentWalletBalances } from '../utils/suiClient';
+import { startCompetitiveBattle } from '../services/geminiService';
 
 function Orchestration() {
   const [query, setQuery] = useState('');
-  const [projectId, setProjectId] = useState(null);
-  const [subtasks, setSubtasks] = useState([]);
-  const [currentSubtask, setCurrentSubtask] = useState(null);
-  const [agentResults, setAgentResults] = useState([]);
-  const [winner, setWinner] = useState(null);
-  const [projectStatus, setProjectStatus] = useState(null);
   const [expandedAgent, setExpandedAgent] = useState(null);
   const [showFadeOverlay, setShowFadeOverlay] = useState(true);
-  const [chatMessages, setChatMessages] = useState([]);
-  const [roomName, setRoomName] = useState(null);
-  const [isWorkflowRunning, setIsWorkflowRunning] = useState(false);
-  const [workflowStarted, setWorkflowStarted] = useState(false);
-  const [isOrchestrating, setIsOrchestrating] = useState(false);
-  const [pageReady, setPageReady] = useState(false); // Track when page is ready for orchestration
-  const [agentData, setAgentData] = useState({
-    speedrunner: { code: '', isWorking: false, wins: 0 },
-    bloom: { code: '', isWorking: false, wins: 0 },
-    solver: { code: '', isWorking: false, wins: 0 },
-    loader: { code: '', isWorking: false, wins: 0 }
+  const [chatMessages, setChatMessages] = useState([
+    {
+      text: '[SERVER] Darwin systems initialized',
+      type: 'server',
+      timestamp: Date.now()
+    }
+  ]);
+  const [voteCounts, setVoteCounts] = useState({
+    speedrunner: 0,
+    bloom: 0,
+    solver: 0,
+    loader: 0
   });
-  const [commentary, setCommentary] = useState('');
-  const [waitingForWinner, setWaitingForWinner] = useState(false);
-  const [selectedWinner, setSelectedWinner] = useState(null);
-  const [winnerReason, setWinnerReason] = useState('');
-  const [currentRoundResults, setCurrentRoundResults] = useState(null);
+  const [blockchainVotes, setBlockchainVotes] = useState({
+    speedrunner: 0,
+    bloom: 0,
+    solver: 0,
+    loader: 0
+  });
+  const [agentBalances, setAgentBalances] = useState({
+    speedrunner: 0,
+    bloom: 0,
+    solver: 0,
+    loader: 0
+  });
+  const [isBattleRunning, setIsBattleRunning] = useState(false);
+  const [agentsReady, setAgentsReady] = useState(false);
+  const [cachedProjectId, setCachedProjectId] = useState(null);
+  const [agentCode, setAgentCode] = useState({
+    speedrunner: null,
+    bloom: null,
+    solver: null,
+    loader: null
+  });
+  const [agentStatus, setAgentStatus] = useState({
+    speedrunner: '',
+    bloom: '',
+    solver: '',
+    loader: ''
+  });
+  const [previewCode, setPreviewCode] = useState(null);
+  const [transcripts, setTranscripts] = useState([]); // Voice transcripts
+  const banterIntervalRef = useRef(null);
+  const elevenLabsRef = useRef(null); // Store ElevenLabs ref from Commentator
+
+  // Debug: Log when previewCode changes
+  useEffect(() => {
+    console.log('Preview code state:', previewCode ? 'HAS CODE' : 'NULL');
+  }, [previewCode]);
   const containerRef = useRef(null);
-  const winnerResolveRef = useRef(null);
+
+  // Autonomous banter - HARDCODED (no API calls)
+  useEffect(() => {
+    const startAutonomousBanter = () => {
+      const runBanterCycle = () => {
+        const hasCode = Object.values(agentCode).some(code => code);
+        if (!hasCode || isBattleRunning) return;
+
+        const agents = ['speedrunner', 'bloom', 'solver', 'loader'];
+        const activeAgents = agents.filter(id => agentCode[id]);
+        if (activeAgents.length < 2) return; // Need at least 2 agents
+
+        const randomAgent = activeAgents[Math.floor(Math.random() * activeAgents.length)];
+
+        const agentNames = {
+          speedrunner: 'SPEEDRUNNER',
+          bloom: 'BLOOM',
+          solver: 'SOLVER',
+          loader: 'LOADER'
+        };
+
+        // Hardcoded random banter (TONS of variety)
+        const randomBanterLines = {
+          speedrunner: [
+            "still waiting for y'all to finish lmao",
+            "bloom's animations doing too much fr",
+            "my bundle size >>>>> solver's",
+            "loader taking forever as usual",
+            "already optimized while y'all still rendering",
+            "solver's algorithm slow af ngl",
+            "bloom's gradients making my eyes hurt",
+            "loader forgot what 'fast' means",
+            "y'all code like u got dial-up internet",
+            "bloom's CSS file bigger than the actual app",
+            "solver using recursion when iteration exists??",
+            "loader's async handling is synchronous lmao",
+            "mine loads instant, theirs buffering",
+            "ngl bloom's animations janky on my screen"
+          ],
+          bloom: [
+            "speedrunner forgot design exists",
+            "solver's ui giving windows 95 vibes",
+            "mine's literally art, theirs... not",
+            "loader's code basic af ngl",
+            "speedrunner's aesthetic is 'none'",
+            "solver using console.log as ui??",
+            "mine got LAYERS y'all got rectangles",
+            "loader's gradients looking flat fr",
+            "speedrunner really said 'design optional'",
+            "solver's color palette is grayscale lmao",
+            "mine's giving gallery vibes, theirs terminal",
+            "loader's animations??? what animations",
+            "speedrunner's ui hurting my soul rn",
+            "solver deadass used Times New Roman"
+          ],
+          solver: [
+            "speedrunner's O(n³) looking rough",
+            "bloom using 20 useState hooks lmao why",
+            "mine's mathematically superior",
+            "loader's error handling nonexistent",
+            "speedrunner's logic got holes fr",
+            "bloom's code not even DRY",
+            "mine uses proper algorithms unlike...",
+            "loader forgot try/catch exists",
+            "speedrunner really nested 8 loops deep",
+            "bloom's component structure is chaos",
+            "mine's complexity: optimal. theirs: yikes",
+            "loader's edge cases unhandled as usual",
+            "speedrunner's variable names make no sense",
+            "bloom deadass computing on every render"
+          ],
+          loader: [
+            "speedrunner's memory leaking fr",
+            "bloom's bundle bout to crash browsers",
+            "solver's stack overflow incoming",
+            "mine actually production ready unlike...",
+            "speedrunner forgot cleanup functions exist",
+            "bloom's dependencies list longer than code",
+            "solver's recursion depth exceeding limits",
+            "mine handles scale, theirs crashes",
+            "speedrunner's gonna run out of RAM",
+            "bloom loading 50mb of assets for what",
+            "solver's time complexity exponential lmao",
+            "mine's optimized for load, theirs for lag",
+            "speedrunner's memory footprint HUGE",
+            "bloom's code splitting??? never heard of her"
+          ]
+        };
+
+        const lines = randomBanterLines[randomAgent] || [];
+        const randomBanter = lines[Math.floor(Math.random() * lines.length)];
+
+        if (randomBanter) {
+          setChatMessages(prev => [...prev, {
+            text: `[${agentNames[randomAgent]}] ${randomBanter}`,
+            type: 'agent',
+            timestamp: Date.now() + Math.random()
+          }]);
+        }
+      };
+
+      const scheduleNextBanter = () => {
+        const delay = 6000 + Math.random() * 3000; // 6-9s (way more frequent!)
+        banterIntervalRef.current = setTimeout(() => {
+          runBanterCycle();
+          scheduleNextBanter();
+        }, delay);
+      };
+
+      scheduleNextBanter();
+    };
+
+    if (agentsReady) {
+      startAutonomousBanter();
+    }
+
+    return () => {
+      if (banterIntervalRef.current) {
+        clearTimeout(banterIntervalRef.current);
+      }
+    };
+  }, [agentsReady, agentCode, chatMessages, isBattleRunning]);
+
+  // Fetch blockchain vote counts on mount and every 10 seconds
+  useEffect(() => {
+    const fetchVotes = async () => {
+      try {
+        const counts = await getVoteCounts();
+        setBlockchainVotes(counts);
+        
+        // Also fetch agent wallet balances
+        const balances = await getAgentWalletBalances();
+        setAgentBalances(balances);
+      } catch (error) {
+        console.error('Failed to fetch blockchain votes:', error);
+      }
+    };
+
+    fetchVotes(); // Initial fetch
+    const interval = setInterval(fetchVotes, 10000); // Fetch every 10 seconds
+
+    return () => clearInterval(interval);
+  }, []);
 
   // Logo Loop data
   const logos = [
@@ -59,188 +230,37 @@ function Orchestration() {
   ];
 
   useEffect(() => {
-    // Extract query and projectId from URL hash
+    // Extract query from URL hash
     const hash = window.location.hash;
     const params = new URLSearchParams(hash.split('?')[1]);
     const q = params.get('q');
-    const pid = params.get('projectId');
     if (q) {
       setQuery(decodeURIComponent(q));
     }
-    if (pid) {
-      setProjectId(pid);
-    }
   }, []);
 
+  // Agents are always ready in frontend mode
   useEffect(() => {
-    if (!projectId) return;
-
-    const createRoom = async () => {
-      try {
-        const response = await livekitApi.createBattleRoom(projectId);
-        setRoomName(response.room_name);
-      } catch (error) {
-        // LiveKit is optional - just log and continue without voice features
-        console.log('ℹ️ LiveKit voice features not available (optional)');
-      }
-    };
-
-    createRoom();
-  }, [projectId]);
-
-  // Only orchestrate (get subtasks) automatically - don't run the workflow yet
-  useEffect(() => {
-    // Wait for page to be ready (fade complete) before orchestrating
-    if (!projectId || !query || subtasks.length > 0 || !pageReady) return;
-
-    // Additional small delay after page is ready
-    const delayTimer = setTimeout(() => {
-      const orchestrateOnly = async () => {
-        setIsOrchestrating(true);
-        try {
-          console.log('🎯 Orchestrating project:', query);
-          const orchestrationResult = await competitiveApi.orchestrateProject(query);
-        console.log('📦 Orchestration response:', orchestrationResult);
-        
-        if (orchestrationResult && orchestrationResult.subtasks) {
-          setSubtasks(orchestrationResult.subtasks);
-          console.log('✅ Subtasks created:', orchestrationResult.subtasks);
-        } else {
-          console.warn('⚠️ No subtasks returned from orchestration. Response:', orchestrationResult);
-          // Use fallback subtasks based on the query
-          const fallbackSubtasks = [
-            { id: 1, title: "Create Main Component", description: `Build the main component for ${query}` },
-            { id: 2, title: "Add Styling", description: "Style the component with CSS" },
-            { id: 3, title: "Add Functionality", description: "Add interactive features" }
-          ];
-          setSubtasks(fallbackSubtasks);
-        }
-      } catch (error) {
-        console.error('❌ Error orchestrating project:', error);
-        // Use fallback subtasks on error
-        const fallbackSubtasks = [
-          { id: 1, title: "Create Main Component", description: `Build the main component for ${query}` },
-          { id: 2, title: "Add Styling", description: "Style the component with CSS" },
-          { id: 3, title: "Add Functionality", description: "Add interactive features" }
-        ];
-        setSubtasks(fallbackSubtasks);
-      } finally {
-        console.log('🏁 Orchestration complete, setting isOrchestrating to false');
-        setIsOrchestrating(false);
-      }
-    };
-
-      orchestrateOnly();
-    }, 500); // Small additional delay after page ready
-
-    return () => clearTimeout(delayTimer);
-  }, [projectId, query, subtasks.length, pageReady]);
-
-  // Manual workflow execution - triggered by button click
-  const startBattle = async () => {
-    if (!projectId || !subtasks.length || isWorkflowRunning) return;
-
-    setIsWorkflowRunning(true);
-    setWorkflowStarted(true);
-
-    try {
-      console.log('🔥 Starting battle with', subtasks.length, 'subtasks');
-
-      // Run competitive rounds for each subtask
-      for (const subtask of subtasks) {
-        setCurrentSubtask(subtask);
-        console.log('⚔️ Starting work on subtask:', subtask);
-
-        // Mark all agents as working
-        setAgentData(prev => ({
-          speedrunner: { ...prev.speedrunner, isWorking: true },
-          bloom: { ...prev.bloom, isWorking: true },
-          solver: { ...prev.solver, isWorking: true },
-          loader: { ...prev.loader, isWorking: true }
-        }));
-
-        // Start work
-        await competitiveApi.startWork(projectId, subtask.id);
-
-        // Get results (this sends the task to agents)
-        const results = await competitiveApi.getResults(projectId);
-        setAgentResults(results.agents);
-        console.log('📊 Agent results:', results.agents);
-
-        // Mark agents as done working
-        ['speedrunner', 'bloom', 'solver', 'loader'].forEach(agentId => {
-          setAgentData(prev => ({
-            ...prev,
-            [agentId]: {
-              ...prev[agentId],
-              isWorking: false
-            }
-          }));
-        });
-
-        // Auto-fetch code for all agents
-        console.log('🔄 Auto-fetching code for all agents...');
-        for (const agentId of ['speedrunner', 'bloom', 'solver', 'loader']) {
-          await fetchAgentCode(agentId);
-        }
-
-        // Get agent reactions and add to chat
-        try {
-          const reactions = await livekitApi.getAgentReaction(
-            roomName,
-            'code_submitted',
-            {
-              agent_stats: { /* simplified for now */ },
-              total_rounds: subtasks.length
-            }
-          );
-          
-          // Add reactions to chat messages
-          if (reactions.agent_responses) {
-            reactions.agent_responses.forEach(reaction => {
-              const chatMessage = {
-                text: `${reaction.agent_name}: ${reaction.response_text}`,
-                speaker: reaction.agent_name,
-                timestamp: Date.now(),
-                emotion: reaction.emotion_level
-              };
-              setChatMessages(prev => [...prev, chatMessage]);
-            });
-          }
-        } catch (err) {
-          console.log('⚠️ Could not get reactions:', err);
-        }
-
-        // Get commentary
-        try {
-          const commentaryResult = await competitiveApi.getCommentary(projectId, subtask.id);
-          setCommentary(commentaryResult.commentary || 'Battle is heating up!');
-        } catch (err) {
-          console.log('⚠️ Could not get commentary:', err);
-        }
-
-        // Store results and wait for user to select winner
-        setCurrentRoundResults(results);
-        setWaitingForWinner(true);
-        console.log('⏸️ Waiting for user to select winner...');
-
-        // Wait for user selection using promise
-        await new Promise((resolve) => {
-          winnerResolveRef.current = resolve;
-        });
-      }
-
-      // Get final project status
-      const status = await competitiveApi.getProjectStatus(projectId);
-      setProjectStatus(status);
-      console.log('🎉 Project complete:', status);
-
-    } catch (error) {
-      console.error('❌ Error running competitive workflow:', error);
-    } finally {
-      setIsWorkflowRunning(false);
+    if (query && !agentsReady) {
+      setChatMessages(prev => [...prev, {
+        text: '[SERVER] Agents initialized and ready',
+        type: 'server',
+        timestamp: Date.now()
+      }]);
+      setAgentsReady(true);
     }
-  };
+  }, [query, agentsReady]);
+
+  // Auto-start battle when query is loaded and agents are ready
+  useEffect(() => {
+    if (query && agentsReady && !isBattleRunning) {
+      // Small delay to let the UI settle
+      const timer = setTimeout(() => {
+        handleBattleStart();
+      }, 500);
+      return () => clearTimeout(timer);
+    }
+  }, [query, agentsReady]);
 
   // Spotlight effect mouse tracking
   useEffect(() => {
@@ -267,103 +287,418 @@ function Orchestration() {
     setExpandedAgent(null);
   };
 
-  const handleAgentLike = (agentName) => {
+  const handleAgentLike = (agentName, agentId) => {
+    // Increment vote count
+    setVoteCounts(prev => ({
+      ...prev,
+      [agentId]: prev[agentId] + 1
+    }));
+
+    // Send message to chat
     const likeMessage = {
-      text: `user liked ${agentName}'s work`,
-      timestamp: Date.now()
+      text: `[YOU] voted for ${agentName}`,
+      timestamp: Date.now(),
+      type: 'user'
     };
     setChatMessages(prev => [...prev, likeMessage]);
   };
 
-  const fetchAgentCode = async (agentId) => {
-    if (!projectId) return;
-    
+  const handleUserMessage = async (userMessage) => {
+    // Add user message to chat
+    const addChatMessage = (text, type = 'server') => {
+      setChatMessages(prev => [...prev, {
+        text,
+        type,
+        timestamp: Date.now() + Math.random()
+      }]);
+    };
+
+    addChatMessage(`[YOU] ${userMessage}`, 'user');
+
+    // Import the functions
+    const { analyzeFeedback, iterateOnCode } = await import('../services/geminiService');
+
     try {
-      const agentName = apiUtils.mapAgentIdToName(agentId);
-      console.log(`📥 Fetching code for ${agentName}...`);
-      
-      const result = await competitiveApi.retrieveCode(projectId, agentName);
-      console.log(`📦 API Response:`, result);
-      
-      if (result.success && result.code) {
-        console.log(`📝 Code length: ${result.code.length} characters`);
-        console.log(`📝 Code preview:`, result.code.substring(0, 100));
-        
-        setAgentData(prev => ({
-          ...prev,
-          [agentId]: {
-            ...prev[agentId],
-            code: result.code
+      // Silently analyze the feedback
+      const analysis = await analyzeFeedback(userMessage, agentCode);
+      console.log('Feedback analysis:', analysis);
+
+      // Agent reactions to user feedback (with spacing to avoid rate limits)
+      const agentNames = {
+        speedrunner: 'SPEEDRUNNER',
+        bloom: 'BLOOM',
+        solver: 'SOLVER',
+        loader: 'LOADER'
+      };
+
+      // Generate reactions for agents that were praised/critiqued (HARDCODED)
+      const reactingAgents = [...new Set([...(analysis.praise || []), ...(analysis.critique || [])])];
+
+      // Hardcoded reactions
+      const praisedReactions = {
+        speedrunner: [
+          "BOOM knew mine was fastest",
+          "told y'all mine optimized fr",
+          "ez dub",
+          "already knew that ngl"
+        ],
+        bloom: [
+          "vibes recognized ✨",
+          "taste level: immaculate",
+          "finally someone gets it",
+          "manifested this W"
+        ],
+        solver: [
+          "logical choice tbh",
+          "computed this outcome",
+          "analysis: correct decision",
+          "validated fr"
+        ],
+        loader: [
+          "pipeline approved ✓",
+          "fully loaded W",
+          "synchronized success",
+          "buffered that compliment"
+        ]
+      };
+
+      const critiqueReactions = {
+        speedrunner: [
+          "nah mine still faster tho",
+          "y'all just slow to appreciate it",
+          "bet urs worse lmao",
+          "cap, mine's optimized"
+        ],
+        bloom: [
+          "ur taste broken fr",
+          "not everyone gets art ngl",
+          "layers too complex for u?",
+          "skill issue on ur end"
+        ],
+        solver: [
+          "numbers don't lie, mine's better",
+          "ur logic flawed not mine",
+          "recalculate ur opinion",
+          "objectively wrong but ok"
+        ],
+        loader: [
+          "ur load times worse guaranteed",
+          "my async >>>>> urs",
+          "cope + skill issue",
+          "mine handles scale, urs doesn't"
+        ]
+      };
+
+      if (reactingAgents.length > 0) {
+        for (let i = 0; i < reactingAgents.length; i++) {
+          const reactAgentId = reactingAgents[i];
+
+          // Add delay between reactions
+          if (i > 0) {
+            await new Promise(resolve => setTimeout(resolve, 1200));
           }
-        }));
-        console.log(`✅ Code retrieved and set for ${agentName}`);
-      } else {
-        console.warn(`⚠️ No code in response for ${agentName}`, result);
+
+          const wasPraised = analysis.praise?.includes(reactAgentId);
+          const reactionPool = wasPraised ? praisedReactions[reactAgentId] : critiqueReactions[reactAgentId];
+          const reaction = reactionPool[Math.floor(Math.random() * reactionPool.length)];
+
+          if (reaction) {
+            setChatMessages(prev => [...prev, {
+              text: `[${agentNames[reactAgentId]}] ${reaction}`,
+              type: 'agent',
+              timestamp: Date.now()
+            }]);
+          }
+
+          // If someone was praised, have ONE other agent be salty about it
+          if (wasPraised && i === 0) {
+            await new Promise(resolve => setTimeout(resolve, 1500));
+
+            const otherAgents = ['speedrunner', 'bloom', 'solver', 'loader'].filter(id => id !== reactAgentId);
+            const saltyAgent = otherAgents[Math.floor(Math.random() * otherAgents.length)];
+
+            const saltyLines = {
+              speedrunner: ["bro what mine's literally faster", "cap fr", "nahh mine better"],
+              bloom: ["mine prettier tho", "aesthetic >>> theirs", "nah mine's art"],
+              solver: ["mine's more efficient actually", "check the Big O lmao", "logic > theirs"],
+              loader: ["mine scales better ngl", "wait till high load", "mine's production ready"]
+            };
+
+            const saltyReaction = saltyLines[saltyAgent][Math.floor(Math.random() * saltyLines[saltyAgent].length)];
+
+            setChatMessages(prev => [...prev, {
+              text: `[${agentNames[saltyAgent]}] ${saltyReaction}`,
+              type: 'agent',
+              timestamp: Date.now()
+            }]);
+          }
+        }
+      }
+
+      // Then: Target agents actually iterate on their code
+      const allCodes = Object.entries(agentCode).map(([id, code]) => ({ agentId: id, code }));
+
+      // Process agents ONE AT A TIME with delays to avoid rate limiting
+      for (let i = 0; i < analysis.targetAgents.length; i++) {
+        const targetAgentId = analysis.targetAgents[i];
+
+        if (agentCode[targetAgentId]) {
+          try {
+            // Add delay BEFORE starting this agent (except for the first one)
+            if (i > 0) {
+              console.log(`[Orchestration] Waiting 2s before processing ${targetAgentId}...`);
+              await new Promise(resolve => setTimeout(resolve, 2000)); // 2 second delay between agents
+            }
+
+            // Show hardcoded "working on it" message (no API call!)
+            const workingMessages = {
+              speedrunner: 'optimizing rn',
+              bloom: 'iterating...',
+              solver: 'recomputing...',
+              loader: 'updating...'
+            };
+
+            setAgentStatus(prev => ({
+              ...prev,
+              [targetAgentId]: workingMessages[targetAgentId] || 'working on it'
+            }));
+
+            console.log(`[Orchestration] Starting iteration for ${targetAgentId}...`);
+            const improvedCode = await iterateOnCode(
+              targetAgentId,
+              agentCode[targetAgentId],
+              analysis.suggestions,
+              allCodes
+            );
+
+            // Update the agent's code
+            setAgentCode(prev => ({
+              ...prev,
+              [targetAgentId]: improvedCode
+            }));
+
+            // Show hardcoded "done" message (no API call!)
+            const doneMessages = {
+              speedrunner: ['done. ez.', 'updated fr', 'BOOM done'],
+              bloom: ['vibes updated ✨', 'evolved it', 'bloomed again'],
+              solver: ['computed. done.', 'solution updated.', 'refined it.'],
+              loader: ['buffered.', 'loaded changes.', 'synchronized.']
+            };
+
+            const messages = doneMessages[targetAgentId] || ['done.'];
+            const randomMsg = messages[Math.floor(Math.random() * messages.length)];
+
+            setAgentStatus(prev => ({
+              ...prev,
+              [targetAgentId]: randomMsg
+            }));
+
+            // Clear status after a moment
+            setTimeout(() => {
+              setAgentStatus(prev => ({
+                ...prev,
+                [targetAgentId]: ''
+              }));
+            }, 3000);
+
+            console.log(`[Orchestration] ${targetAgentId} completed iteration`);
+          } catch (error) {
+            console.error(`Iteration failed for ${targetAgentId}:`, error);
+          }
+        }
       }
     } catch (error) {
-      console.error(`❌ Error fetching code for ${agentId}:`, error);
+      console.error('Failed to process user message:', error);
+      addChatMessage('[ERROR] failed to process that', 'error');
     }
   };
 
-  const handleSelectWinner = (agentId) => {
-    setSelectedWinner(agentId);
-  };
+  const handleBattleStart = async () => {
+    if (!query || isBattleRunning || !agentsReady) return;
 
-  const handleConfirmWinner = async () => {
-    if (!selectedWinner || !winnerReason.trim()) {
-      alert('Please select a winner and provide a reason');
-      return;
-    }
+    setIsBattleRunning(true);
+    const addChatMessage = (text, type = 'server') => {
+      setChatMessages(prev => [...prev, {
+        text,
+        type,
+        timestamp: Date.now() + Math.random()
+      }]);
+    };
 
-    // Convert frontend ID to backend name
-    const winnerName = apiUtils.mapAgentIdToName(selectedWinner);
-    
-    // Update winner's win count
-    setAgentData(prev => ({
-      ...prev,
-      [selectedWinner]: {
-        ...prev[selectedWinner],
-        wins: prev[selectedWinner].wins + 1
-      }
-    }));
+    addChatMessage('[SERVER] AI battle started, agents generating code in parallel...');
 
-    // Store winner info for the workflow to continue
-    setWinner(winnerName);
-    setWaitingForWinner(false);
-    
-    // Continue the workflow
-    await continueWorkflow(winnerName, winnerReason);
-  };
+    const agentProgress = {
+      speedrunner: { done: false, code: '', chunkCount: 0 },
+      bloom: { done: false, code: '', chunkCount: 0 },
+      solver: { done: false, code: '', chunkCount: 0 },
+      loader: { done: false, code: '', chunkCount: 0 }
+    };
 
-  const continueWorkflow = async (winnerName, reason) => {
     try {
-      await competitiveApi.selectWinner(projectId, winnerName, reason);
-      console.log('🏆 Winner selected:', winnerName, 'Reason:', reason);
+      // Set initial "working on it" status for all agents
+      const workingMessages = {
+        speedrunner: 'optimizing rn',
+        bloom: 'manifesting...',
+        solver: 'computing...',
+        loader: 'initializing...'
+      };
 
-      // Complete the round
-      const winnerCode = currentRoundResults.agents.find(a => a.agent_name === winnerName)?.code || 'dummy_code';
-      await competitiveApi.completeRound(projectId, winnerName, winnerCode, currentSubtask.id);
-      console.log('✅ Round completed for subtask:', currentSubtask.id);
+      Object.keys(workingMessages).forEach(agentId => {
+        setAgentStatus(prev => ({
+          ...prev,
+          [agentId]: workingMessages[agentId]
+        }));
+      });
 
-      // Reset selection state
-      setSelectedWinner(null);
-      setWinnerReason('');
-      setCurrentRoundResults(null);
-      setWaitingForWinner(false);
+      // Start competitive battle with all 4 agents
+      await startCompetitiveBattle(
+        query,
+        // onAgentChunk - called as tokens stream in
+        (agentId, chunk, fullText) => {
+          const agentNames = {
+            speedrunner: 'SPEEDRUNNER',
+            bloom: 'BLOOM',
+            solver: 'SOLVER',
+            loader: 'LOADER'
+          };
 
-      // Resolve the promise to continue workflow
-      if (winnerResolveRef.current) {
-        winnerResolveRef.current();
-        winnerResolveRef.current = null;
-      }
+          // Update progress tracker
+          agentProgress[agentId].code = fullText;
+          agentProgress[agentId].chunkCount++;
 
+          // Only update agentCode every 6-7 chunks to avoid spamming Babel
+          if (agentProgress[agentId].chunkCount % 7 === 0) {
+            setAgentCode(prev => ({
+              ...prev,
+              [agentId]: fullText
+            }));
+          }
+        },
+        // onAgentComplete - called when an agent finishes
+        (agentId, fullText) => {
+          agentProgress[agentId].done = true;
+          agentProgress[agentId].code = fullText;
+
+          // Set final code
+          setAgentCode(prev => ({
+            ...prev,
+            [agentId]: fullText
+          }));
+
+          // Show completion status with personality-based messages
+          const completionMessages = {
+            speedrunner: ['done. ez.', 'finished first obv', 'already done fr', 'BOOM done'],
+            bloom: ['manifested it ✨', 'vibes complete', 'done spreading layers', 'bloomed fr'],
+            solver: ['computed. done.', 'solution verified.', 'analysis complete.', 'solved it.'],
+            loader: ['fully loaded.', 'pipeline complete.', 'all systems go.', 'buffered & ready.']
+          };
+
+          const messages = completionMessages[agentId] || ['done.'];
+          const randomMsg = messages[Math.floor(Math.random() * messages.length)];
+
+          setAgentStatus(prev => ({
+            ...prev,
+            [agentId]: randomMsg
+          }));
+
+          // Clear status after 3s
+          setTimeout(() => {
+            setAgentStatus(prev => ({
+              ...prev,
+              [agentId]: ''
+            }));
+          }, 3000);
+        },
+        // onBattleComplete - called when all agents finish
+        async (results) => {
+          addChatMessage('[SERVER] All agents finished!');
+          console.log('Battle results:', results);
+
+          // Post-battle banter (HARDCODED - no API calls!)
+          const agentNames = {
+            speedrunner: 'SPEEDRUNNER',
+            bloom: 'BLOOM',
+            solver: 'SOLVER',
+            loader: 'LOADER'
+          };
+
+          // Hardcoded banter for each agent roasting others
+          const banterLines = {
+            speedrunner: [
+              "broo bloom's gradients slow af, mine renders instant",
+              "solver using 50 divs when 5 would work lmao",
+              "loader's code gonna crash on mobile ngl",
+              "y'all sleeping while i'm already done fr",
+              "bloom's animations janky, mine buttery smooth"
+            ],
+            bloom: [
+              "speedrunner's design ugly ngl, no aesthetic",
+              "solver forgot colors exist or what?",
+              "loader's ui basic af, needs pizzazz fr",
+              "mine got LAYERS y'all ain't ready",
+              "speedrunner's code working but at what cost? 💀"
+            ],
+            solver: [
+              "speedrunner's logic unstructured mess",
+              "bloom's code all over the place ngl",
+              "loader forgot edge cases again smh",
+              "mine's O(n log n) while y'all stuck at O(n²)",
+              "bloom using 10 useState when 1 would work"
+            ],
+            loader: [
+              "speedrunner's gonna memory leak on load",
+              "bloom's bundle size HUGE bro optimize",
+              "solver's recursion bout to stack overflow fr",
+              "mine handles async properly unlike y'all",
+              "speedrunner speedrunning to bugs lmao"
+            ]
+          };
+
+          // Pick 2-3 random agents to banter
+          const shuffledResults = [...results].sort(() => Math.random() - 0.5).slice(0, 3);
+
+          for (let i = 0; i < shuffledResults.length; i++) {
+            const result = shuffledResults[i];
+
+            // Add delay between each agent's banter
+            if (i > 0) {
+              await new Promise(resolve => setTimeout(resolve, 1800)); // 1.8s delay
+            }
+
+            if (result.code) {
+              const lines = banterLines[result.agentId] || [];
+              const randomBanter = lines[Math.floor(Math.random() * lines.length)];
+
+              if (randomBanter) {
+                addChatMessage(`[${agentNames[result.agentId]}] ${randomBanter}`, 'agent');
+              }
+            }
+          }
+
+          addChatMessage('[SERVER] battle complete!');
+        },
+        // onAgentError - called when an agent hits an error
+        (agentId, errorMsg) => {
+          console.error(`❌ ${agentId} error:`, errorMsg);
+          setAgentStatus(prev => ({
+            ...prev,
+            [agentId]: '💀 failed'
+          }));
+
+          // Clear error status after 5s
+          setTimeout(() => {
+            setAgentStatus(prev => ({
+              ...prev,
+              [agentId]: ''
+            }));
+          }, 5000);
+        }
+      );
     } catch (error) {
-      console.error('❌ Error completing round:', error);
-      setWaitingForWinner(false);
-      if (winnerResolveRef.current) {
-        winnerResolveRef.current();
-        winnerResolveRef.current = null;
-      }
+      console.error('Battle error:', error);
+      addChatMessage(`[ERROR] Battle failed: ${error.message}`, 'error');
+    } finally {
+      setIsBattleRunning(false);
     }
   };
 
@@ -375,38 +710,13 @@ function Orchestration() {
     return () => window.removeEventListener('keydown', handleEscape);
   }, []);
 
-  // Mark page as ready after fade overlay completes
   useEffect(() => {
-    const readyTimer = setTimeout(() => {
-      console.log('📍 Page ready - fade overlay complete');
-      setPageReady(true);
+    // Fade out the black overlay after component mounts
+    const timer = setTimeout(() => {
       setShowFadeOverlay(false);
-    }, 2000); // Wait for fade animation to complete
-    return () => clearTimeout(readyTimer);
+    }, 100); // Small delay to ensure it renders first
+    return () => clearTimeout(timer);
   }, []);
-
-  useEffect(() => {
-    // Fade out the black overlay after orchestration completes
-    // We check for subtasks because orchestration always sets them (either from API or fallback)
-    if (!isOrchestrating && subtasks.length > 0) {
-      console.log('✅ Orchestration complete, fading out overlay');
-      const timer = setTimeout(() => {
-        setShowFadeOverlay(false);
-      }, 300); // Slightly longer delay for smoother transition
-      return () => clearTimeout(timer);
-    }
-  }, [isOrchestrating, subtasks.length]);
-
-  // Fallback: Always fade out after 5 seconds regardless of orchestration state
-  useEffect(() => {
-    const fallbackTimer = setTimeout(() => {
-      if (showFadeOverlay) {
-        console.warn('⏰ Fallback: Forcing overlay fadeout after 5 seconds');
-        setShowFadeOverlay(false);
-      }
-    }, 5000);
-    return () => clearTimeout(fallbackTimer);
-  }, [showFadeOverlay]);
 
   return (
     <motion.div
@@ -433,65 +743,6 @@ function Orchestration() {
         <div className="expansion-backdrop" onClick={handleClickOutside} />
       )}
 
-      {/* Winner Selection Modal */}
-      {waitingForWinner && (
-        <div className="winner-selection-modal">
-          <div className="winner-modal-content">
-            <h2 className="winner-modal-title">🏆 Select Round Winner</h2>
-            <p className="winner-modal-subtitle">
-              Review the agents' work and choose the best solution
-            </p>
-
-            <div className="winner-agents-grid">
-              {['speedrunner', 'bloom', 'solver', 'loader'].map((agentId) => (
-                <div
-                  key={agentId}
-                  className={`winner-agent-option ${selectedWinner === agentId ? 'selected' : ''}`}
-                  onClick={() => handleSelectWinner(agentId)}
-                >
-                  <div className="winner-agent-name">
-                    {agentId === 'speedrunner' && 'Speedrunner'}
-                    {agentId === 'bloom' && 'Bloom'}
-                    {agentId === 'solver' && 'Solver'}
-                    {agentId === 'loader' && 'Loader'}
-                  </div>
-                  <div className="winner-agent-personality">
-                    {agentId === 'speedrunner' && 'Fast & Competitive'}
-                    {agentId === 'bloom' && 'Creative & Pattern-seeking'}
-                    {agentId === 'solver' && 'Logical & Methodical'}
-                    {agentId === 'loader' && 'Patient & Process-oriented'}
-                  </div>
-                  {selectedWinner === agentId && (
-                    <div className="winner-checkmark">✓</div>
-                  )}
-                </div>
-              ))}
-            </div>
-
-            <div className="winner-reason-section">
-              <label className="winner-reason-label">
-                Why did you choose this agent?
-              </label>
-              <textarea
-                className="winner-reason-input"
-                placeholder="e.g., Best code quality, most efficient solution, cleanest implementation..."
-                value={winnerReason}
-                onChange={(e) => setWinnerReason(e.target.value)}
-                rows={3}
-              />
-            </div>
-
-            <button
-              className="winner-confirm-btn"
-              onClick={handleConfirmWinner}
-              disabled={!selectedWinner || !winnerReason.trim()}
-            >
-              Confirm Winner & Continue
-            </button>
-          </div>
-        </div>
-      )}
-
       {/* Bento Box Layout */}
       <div className="bento-container">
         {/* Header with Dither Animation */}
@@ -506,38 +757,6 @@ function Orchestration() {
               <div className="header-query">
                 <span className="header-query-label">Query:</span>
                 <span className="header-query-text">{query}</span>
-              </div>
-            )}
-            
-            {/* Start Battle Button */}
-            {subtasks.length > 0 && !workflowStarted && (
-              <div className="start-battle-container">
-                <button 
-                  className="start-battle-btn"
-                  onClick={startBattle}
-                  disabled={isWorkflowRunning}
-                >
-                  {isWorkflowRunning ? '⚔️ Battle in Progress...' : '🔥 Start Battle'}
-                </button>
-                <div className="subtasks-preview">
-                  {subtasks.length} subtasks ready
-                </div>
-              </div>
-            )}
-            
-            {/* Battle Status */}
-            {workflowStarted && (
-              <div className="battle-status">
-                {isWorkflowRunning ? (
-                  <span className="status-running">⚔️ Battle in progress...</span>
-                ) : (
-                  <span className="status-complete">✅ Battle complete!</span>
-                )}
-                {currentSubtask && (
-                  <span className="current-task">
-                    Current: {currentSubtask.title}
-                  </span>
-                )}
               </div>
             )}
             <div className="header-logo-loop">
@@ -562,11 +781,10 @@ function Orchestration() {
             isExpanded={expandedAgent === 'speedrunner'}
             onExpand={handleExpandAgent}
             onLike={handleAgentLike}
-            code={agentData.speedrunner.code}
-            isWorking={agentData.speedrunner.isWorking}
-            wins={agentData.speedrunner.wins}
-            onFetchCode={fetchAgentCode}
-            projectId={projectId}
+            voteCount={blockchainVotes.speedrunner}
+            agentBalance={agentBalances.speedrunner}
+            generatedCode={agentCode.speedrunner}
+            statusMessage={agentStatus.speedrunner}
           />
           <AgentCard
             agentId="bloom"
@@ -574,11 +792,11 @@ function Orchestration() {
             isExpanded={expandedAgent === 'bloom'}
             onExpand={handleExpandAgent}
             onLike={handleAgentLike}
-            code={agentData.bloom.code}
-            isWorking={agentData.bloom.isWorking}
-            wins={agentData.bloom.wins}
-            onFetchCode={fetchAgentCode}
-            projectId={projectId}
+            onPreview={(code) => setPreviewCode(code)}
+            voteCount={blockchainVotes.bloom}
+            agentBalance={agentBalances.bloom}
+            generatedCode={agentCode.bloom}
+            statusMessage={agentStatus.bloom}
           />
           <AgentCard
             agentId="solver"
@@ -586,11 +804,10 @@ function Orchestration() {
             isExpanded={expandedAgent === 'solver'}
             onExpand={handleExpandAgent}
             onLike={handleAgentLike}
-            code={agentData.solver.code}
-            isWorking={agentData.solver.isWorking}
-            wins={agentData.solver.wins}
-            onFetchCode={fetchAgentCode}
-            projectId={projectId}
+            voteCount={blockchainVotes.solver}
+            agentBalance={agentBalances.solver}
+            generatedCode={agentCode.solver}
+            statusMessage={agentStatus.solver}
           />
           <AgentCard
             agentId="loader"
@@ -598,21 +815,41 @@ function Orchestration() {
             isExpanded={expandedAgent === 'loader'}
             onExpand={handleExpandAgent}
             onLike={handleAgentLike}
-            code={agentData.loader.code}
-            isWorking={agentData.loader.isWorking}
-            wins={agentData.loader.wins}
-            onFetchCode={fetchAgentCode}
-            projectId={projectId}
+            voteCount={blockchainVotes.loader}
+            agentBalance={agentBalances.loader}
+            generatedCode={agentCode.loader}
+            statusMessage={agentStatus.loader}
           />
 
-          {/* Commentator */}
-          <Commentator projectId={projectId} subtaskId={currentSubtask?.id} />
+          {/* Commentator with Battle Controls */}
+          <Commentator
+            query={query}
+            onBattleStart={handleBattleStart}
+            isRunning={isBattleRunning}
+            agentsReady={agentsReady}
+            chatMessages={chatMessages}
+            onElevenLabsReady={(ref) => {
+              elevenLabsRef.current = ref.current;
+              console.log('[Orchestration] ElevenLabs ref received');
+
+              // Set up user transcript callback
+              if (ref.current) {
+                ref.current.onUserTranscript = (text) => {
+                  console.log('[Orchestration] User transcript:', text);
+                  setTranscripts(prev => [...prev, { speaker: 'user', text, timestamp: Date.now() }]);
+
+                  // Also send user speech to agents as a message
+                  handleUserMessage(text);
+                };
+              }
+            }}
+          />
 
           {/* Chat Input */}
-          <ChatInput externalMessages={chatMessages} />
+          <ChatInput externalMessages={chatMessages} onUserMessage={handleUserMessage} />
 
           {/* Transcript */}
-          <TranscriptPanel roomName={roomName} />
+          <TranscriptPanel elevenLabsRef={elevenLabsRef} transcripts={transcripts} />
         </div>
       </div>
     </motion.div>

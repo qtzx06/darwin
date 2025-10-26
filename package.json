@@ -7,12 +7,22 @@
     "dev": "vite",
     "build": "vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "server": "node server/index.js"
   },
   "dependencies": {
+    "@babel/standalone": "^7.28.5",
+    "@elevenlabs/elevenlabs-js": "^2.20.1",
     "@fontsource/geist-mono": "^5.2.7",
+    "@google/genai": "^1.27.0",
+    "@mysten/dapp-kit": "^0.19.6",
+    "@mysten/sui": "^1.43.1",
     "@react-three/fiber": "^9.4.0",
     "@react-three/postprocessing": "^3.0.4",
+    "@tanstack/react-query": "^5.90.5",
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.3",
+    "express": "^5.1.0",
     "fiber": "^1.0.4",
     "framer-motion": "^12.23.24",
     "gsap": "^3.13.0",
