@@ -76,29 +76,35 @@ function App() {
     }
 
     // Start fade to black after 0.8 seconds to cover the deep zoom
+    const fadeStartTime = Date.now();
     setTimeout(() => {
       setShowOverlay(true);
     }, 800);
 
-    try {
-      // Submit project to backend
-      const project = await competitiveApi.submitProject(query);
-      console.log('Project submitted:', project);
+    // Fire and forget - API calls happen in background without blocking
+    (async () => {
+      try {
+        // Submit project to backend
+        const project = await competitiveApi.submitProject(query);
+        console.log('Project submitted:', project);
 
-      // Create agents for the project
-      await competitiveApi.createAgents(project.project_id);
-      console.log('Agents created for project:', project.project_id);
+        // Ensure fade animation has at least 2 seconds to complete (0.8s delay + 1.5s fade = 2.3s)
+        const elapsed = Date.now() - fadeStartTime;
+        const minFadeTime = 2300;
+        const remainingTime = Math.max(0, minFadeTime - elapsed);
+        
+        setTimeout(() => {
+          // Navigate when both project is ready AND fade is complete
+          window.location.hash = `#orchestration?q=${encodeURIComponent(query)}&projectId=${project.project_id}`;
+        }, remainingTime);
 
-      // Navigate after animation completes (0.8s delay + 1.5s fade = 2.3 total)
-      setTimeout(() => {
-        window.location.hash = `#orchestration?q=${encodeURIComponent(query)}&projectId=${project.project_id}`;
-      }, 2300);
-    } catch (error) {
-      console.error('Error submitting project:', error);
-      // Handle error state in UI
-      setIsZooming(false);
-      setShowOverlay(false);
-    }
+        // Create agents for the project
+        await competitiveApi.createAgents(project.project_id);
+        console.log('Agents created for project:', project.project_id);
+      } catch (error) {
+        console.error('Error submitting project:', error);
+      }
+    })();
   };
 
   return (

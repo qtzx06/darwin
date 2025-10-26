@@ -30,6 +30,7 @@ function Orchestration() {
   const [isWorkflowRunning, setIsWorkflowRunning] = useState(false);
   const [workflowStarted, setWorkflowStarted] = useState(false);
   const [isOrchestrating, setIsOrchestrating] = useState(false);
+  const [pageReady, setPageReady] = useState(false); // Track when page is ready for orchestration
   const [agentData, setAgentData] = useState({
     speedrunner: { code: '', isWorking: false, wins: 0 },
     bloom: { code: '', isWorking: false, wins: 0 },
@@ -89,13 +90,16 @@ function Orchestration() {
 
   // Only orchestrate (get subtasks) automatically - don't run the workflow yet
   useEffect(() => {
-    if (!projectId || !query || subtasks.length > 0) return;
+    // Wait for page to be ready (fade complete) before orchestrating
+    if (!projectId || !query || subtasks.length > 0 || !pageReady) return;
 
-    const orchestrateOnly = async () => {
-      setIsOrchestrating(true);
-      try {
-        console.log('🎯 Orchestrating project:', query);
-        const orchestrationResult = await competitiveApi.orchestrateProject(query);
+    // Additional small delay after page is ready
+    const delayTimer = setTimeout(() => {
+      const orchestrateOnly = async () => {
+        setIsOrchestrating(true);
+        try {
+          console.log('🎯 Orchestrating project:', query);
+          const orchestrationResult = await competitiveApi.orchestrateProject(query);
         console.log('📦 Orchestration response:', orchestrationResult);
         
         if (orchestrationResult && orchestrationResult.subtasks) {
@@ -126,8 +130,11 @@ function Orchestration() {
       }
     };
 
-    orchestrateOnly();
-  }, [projectId, query, subtasks.length]);
+      orchestrateOnly();
+    }, 500); // Small additional delay after page ready
+
+    return () => clearTimeout(delayTimer);
+  }, [projectId, query, subtasks.length, pageReady]);
 
   // Manual workflow execution - triggered by button click
   const startBattle = async () => {
@@ -368,6 +375,16 @@ function Orchestration() {
     return () => window.removeEventListener('keydown', handleEscape);
   }, []);
 
+  // Mark page as ready after fade overlay completes
+  useEffect(() => {
+    const readyTimer = setTimeout(() => {
+      console.log('📍 Page ready - fade overlay complete');
+      setPageReady(true);
+      setShowFadeOverlay(false);
+    }, 2000); // Wait for fade animation to complete
+    return () => clearTimeout(readyTimer);
+  }, []);
+
   useEffect(() => {
     // Fade out the black overlay after orchestration completes
     // We check for subtasks because orchestration always sets them (either from API or fallback)
@@ -409,28 +426,7 @@ function Orchestration() {
         animate={{ opacity: showFadeOverlay ? 1 : 0 }}
         transition={{ duration: 1.5, ease: "easeOut" }}
         style={{ pointerEvents: showFadeOverlay ? 'auto' : 'none' }}
-      >
-        {isOrchestrating && (
-          <div style={{
-            position: 'absolute',
-            top: '50%',
-            left: '50%',
-            transform: 'translate(-50%, -50%)',
-            color: 'white',
-            fontSize: '24px',
-            textAlign: 'center',
-            zIndex: 10
-          }}>
-            <div style={{ marginBottom: '20px' }}>
-              <i className="fas fa-spinner fa-spin" style={{ fontSize: '48px' }}></i>
-            </div>
-            <div>Orchestrating project...</div>
-            <div style={{ fontSize: '16px', opacity: 0.7, marginTop: '10px' }}>
-              Breaking down tasks for the agents
-            </div>
-          </div>
-        )}
-      </motion.div>
+      />
 
       {/* Backdrop for clicking outside */}
       {expandedAgent && (
