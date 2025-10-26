@@ -14,7 +14,7 @@ export const REGISTRY_ID = '0x28ab822cc91b6daf3c6e6f9ba087713ec956b9369d4222f13d
  */
 export async function voteForAgent(agentId) {
   try {
-    const response = await fetch('http://localhost:3001/api/vote', {
+    const response = await fetch('/api/vote', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
