@@ -1,5 +1,20 @@
 import { useRef } from 'react';
 import './AgentCard.css';
+import LiquidChrome from './LiquidChrome';
+
+const PERSONALITIES = {
+  speedrunner: 'fast, competitive, efficiency-obsessed',
+  bloom: 'creative, scattered, pattern-seeking',
+  solver: 'logical, methodical, puzzle-driven',
+  loader: 'patient, steady, process-oriented'
+};
+
+const AGENT_COLORS = {
+  speedrunner: [0.10, 0.03, 0.04],  // Very dark red
+  bloom: [0.08, 0.05, 0.10],        // Very dark purple
+  solver: [0.10, 0.04, 0.08],       // Very dark magenta
+  loader: [0.10, 0.06, 0.04]        // Very dark coral/orange
+};
 
 const TRANSCRIPTS = {
   speedrunner: 'Analyzing rapid execution patterns and optimization strategies for maximum throughput...',
@@ -182,22 +197,36 @@ function AgentCard({ agentId, agentName, isExpanded, onExpand }) {
       <div className="glass-overlay"></div>
       <div className="glass-specular"></div>
       <div className="glass-content">
-        <div className="agent-name" onClick={handleNameClick}>
-          {agentName}
-        </div>
-        <div className="icon-wrapper">
-          <canvas id={agentId} className="agent-canvas"></canvas>
-        </div>
-        <div className="agent-transcript">
-          <div className="glass-filter"></div>
-          <div className="glass-overlay"></div>
-          <div className="glass-specular"></div>
-          <div
-            className="agent-transcript-content"
-            dangerouslySetInnerHTML={{
-              __html: isExpanded ? EXPANDED_CONTENT[agentId] : TRANSCRIPTS[agentId]
-            }}
+        <div className="agent-headshot">
+          <LiquidChrome
+            baseColor={AGENT_COLORS[agentId]}
+            speed={0.3}
+            amplitude={0.4}
+            frequencyX={3}
+            frequencyY={3}
+            interactive={false}
           />
+        </div>
+        <div className="agent-info">
+          <div className="agent-header">
+            <div className="agent-name" onClick={handleNameClick}>
+              {agentName}
+            </div>
+            <div className="agent-personality">
+              {PERSONALITIES[agentId]}
+            </div>
+          </div>
+          <div className="agent-transcript">
+            <div className="glass-filter"></div>
+            <div className="glass-overlay"></div>
+            <div className="glass-specular"></div>
+            <div
+              className="agent-transcript-content"
+              dangerouslySetInnerHTML={{
+                __html: isExpanded ? EXPANDED_CONTENT[agentId] : TRANSCRIPTS[agentId]
+              }}
+            />
+          </div>
         </div>
       </div>
     </div>

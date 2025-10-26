@@ -1,4 +1,5 @@
 import './Commentator.css';
+import LiquidChrome from './LiquidChrome';
 
 function Commentator() {
   return (
@@ -7,11 +8,15 @@ function Commentator() {
       <div className="glass-overlay"></div>
       <div className="glass-specular"></div>
       <div className="glass-content">
-        <div className="agent-name" style={{ alignSelf: 'center' }}>
-          Commentator
-        </div>
-        <div id="visualizer-container">
-          {/* Audio visualizer will go here */}
+        <div className="commentator-headshot">
+          <LiquidChrome
+            baseColor={[0.06, 0.04, 0.10]}
+            speed={0.25}
+            amplitude={0.5}
+            frequencyX={2.5}
+            frequencyY={2.5}
+            interactive={false}
+          />
         </div>
       </div>
     </div>
