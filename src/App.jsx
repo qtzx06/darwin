@@ -101,10 +101,10 @@ function App() {
           >
             <div className="cubes-wrapper">
               <Cubes
-                gridSize={6}
+                gridSize={8}
                 maxAngle={60}
                 radius={4}
-                borderStyle="2px dashed #1B1B1B"
+                borderStyle="1px dashed #444444"
                 faceColor="#000000"
                 rippleColor="#ffffff"
                 rippleSpeed={1.5}
@@ -121,10 +121,10 @@ function App() {
           >
             <div className="cubes-wrapper">
               <Cubes
-                gridSize={6}
+                gridSize={8}
                 maxAngle={60}
                 radius={4}
-                borderStyle="2px dashed #1B1B1B"
+                borderStyle="1px dashed #444444"
                 faceColor="#000000"
                 rippleColor="#ffffff"
                 rippleSpeed={1.5}

@@ -40,8 +40,9 @@ const Cubes = ({
         const c = +cube.dataset.col;
         const dist = Math.hypot(r - rowCenter, c - colCenter);
         if (dist <= radius) {
+          // On hover: flatten to 0 rotation (square)
           const pct = 1 - dist / radius;
-          const angle = pct * maxAngle;
+          const angle = (1 - pct) * maxAngle;
           gsap.to(cube, {
             duration: enterDur,
             ease: easing,
@@ -50,12 +51,13 @@ const Cubes = ({
             rotateY: angle
           });
         } else {
+          // Default state: tilted
           gsap.to(cube, {
             duration: leaveDur,
             ease: 'power3.out',
             overwrite: true,
-            rotateX: 0,
-            rotateY: 0
+            rotateX: -maxAngle,
+            rotateY: maxAngle
           });
         }
       });
@@ -89,12 +91,12 @@ const Cubes = ({
     sceneRef.current.querySelectorAll('.cube').forEach(cube =>
       gsap.to(cube, {
         duration: leaveDur,
-        rotateX: 0,
-        rotateY: 0,
+        rotateX: -maxAngle,
+        rotateY: maxAngle,
         ease: 'power3.out'
       })
     );
-  }, [leaveDur]);
+  }, [leaveDur, maxAngle]);
 
   const onTouchMove = useCallback(
     e => {
