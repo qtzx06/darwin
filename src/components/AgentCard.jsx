@@ -161,24 +161,16 @@ function AgentCard({ agentId, agentName, isExpanded, onExpand, onLike, code, isW
   const extractCode = (codeString) => {
     if (!codeString) return '';
     
-    console.log(`[${agentId}] Extracting from:`, codeString.substring(0, 100));
-    
     // Check if code is wrapped in markdown code blocks
     const codeBlockMatch = codeString.match(/```(?:\w+)?\n([\s\S]*?)```/);
     if (codeBlockMatch) {
-      console.log(`[${agentId}] Found code block, extracted ${codeBlockMatch[1].length} chars`);
       return codeBlockMatch[1].trim();
     }
     
-    console.log(`[${agentId}] No code block found, returning as-is`);
     return codeString;
   };
 
   const displayCode = extractCode(code);
-
-  // Debug logging
-  console.log(`[${agentId}] code prop:`, code ? `${code.length} chars` : 'empty');
-  console.log(`[${agentId}] displayCode:`, displayCode ? `${displayCode.length} chars` : 'empty');
 
   // Typing animation effect with auto-scroll
   useEffect(() => {
@@ -245,7 +237,6 @@ function AgentCard({ agentId, agentName, isExpanded, onExpand, onLike, code, isW
 
   const handleThumbsUp = (e) => {
     e.stopPropagation(); // Prevent backdrop click
-    console.log('Thumbs up:', agentId);
     onLike(agentName); // Send like message to chat
     onExpand(null); // Close the expanded card
   };

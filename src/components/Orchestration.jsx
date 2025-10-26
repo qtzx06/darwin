@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import './Orchestration.css';
 import IridescenceBackground from './IridescenceBackground';
@@ -26,9 +26,11 @@ function Orchestration() {
   const [expandedAgent, setExpandedAgent] = useState(null);
   const [showFadeOverlay, setShowFadeOverlay] = useState(true);
   const [chatMessages, setChatMessages] = useState([]);
+  const [transcriptMessages, setTranscriptMessages] = useState([]);
   const [roomName, setRoomName] = useState(null);
   const [isWorkflowRunning, setIsWorkflowRunning] = useState(false);
   const [workflowStarted, setWorkflowStarted] = useState(false);
+  const [currentAudio, setCurrentAudio] = useState(null);
   const [agentData, setAgentData] = useState({
     speedrunner: { code: '', isWorking: false, wins: 0 },
     bloom: { code: '', isWorking: false, wins: 0 },
@@ -85,6 +87,80 @@ function Orchestration() {
     createRoom();
   }, [projectId]);
 
+  // Audio context for orb visualization
+  const audioContextRef = useRef(null);
+  const analyserRef = useRef(null);
+  const audioSourceRef = useRef(null);
+  
+  // Initialize audio context once
+  useEffect(() => {
+    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    audioContextRef.current = audioContext;
+    
+    const analyser = audioContext.createAnalyser();
+    analyser.fftSize = 512;
+    analyserRef.current = analyser;
+    
+    console.log('🎙️ Audio context initialized for orb visualization');
+    
+    return () => {
+      audioContext.close();
+    };
+  }, []);
+
+  // Simple audio playback function with orb reactivity
+  const playCommentatorAudio = async (text, voiceId = 'gnPxliFHTp6OK6tcoA6i') => {
+    try {
+      console.log('🎤 Playing commentator audio:', text);
+      
+      const response = await fetch('http://localhost:5003/api/livekit/speak-text', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text, voice_id: voiceId })
+      });
+
+      if (response.ok) {
+        const audioBlob = await response.blob();
+        const audioUrl = URL.createObjectURL(audioBlob);
+        const audio = new Audio(audioUrl);
+        
+        // Connect audio to analyser for orb visualization
+        if (audioContextRef.current && analyserRef.current) {
+          try {
+            // Disconnect previous source if exists
+            if (audioSourceRef.current) {
+              audioSourceRef.current.disconnect();
+            }
+            
+            const source = audioContextRef.current.createMediaElementSource(audio);
+            source.connect(analyserRef.current);
+            analyserRef.current.connect(audioContextRef.current.destination);
+            audioSourceRef.current = source;
+            console.log('✅ Audio connected to orb visualizer');
+          } catch (err) {
+            // If MediaElementSource already exists, just play the audio
+            console.log('⚠️ Using existing audio connection');
+          }
+        }
+        
+        setCurrentAudio(audio);
+        
+        audio.onended = () => {
+          URL.revokeObjectURL(audioUrl);
+          setCurrentAudio(null);
+          console.log('✅ Audio finished playing');
+        };
+        
+        await audio.play();
+        console.log('🔊 Audio is playing and orb should react!');
+      } else {
+        console.error('❌ TTS API error:', response.status);
+      }
+    } catch (error) {
+      console.error('❌ Error playing audio:', error);
+    }
+  };
+
   // Only orchestrate (get subtasks) automatically - don't run the workflow yet
   useEffect(() => {
     if (!projectId || !query || subtasks.length > 0) return;
@@ -116,8 +192,87 @@ function Orchestration() {
       // Run competitive rounds for each subtask
       for (const subtask of subtasks) {
         setCurrentSubtask(subtask);
-        console.log('⚔️ Starting work on subtask:', subtask);
+        // STEP 1: Get pre-battle trash talk from agents (before work starts!)
+        try {
+          const reactions = await livekitApi.getAgentReaction(
+            roomName,
+            'round_start',
+            {
+              agent_stats: { /* simplified for now */ },
+              total_rounds: subtasks.length,
+              current_round: subtask.id
+            }
+          );
+          
+          // Add trash talk to chat immediately
+          if (reactions.agent_responses) {
+            reactions.agent_responses.forEach(reaction => {
+              const chatMessage = {
+                text: reaction.response_text,
+                speaker: reaction.agent_name,
+                timestamp: Date.now(),
+                emotion: reaction.emotion_level
+              };
+              setChatMessages(prev => [...prev, chatMessage]);
+            });
+          }
+        } catch (err) {
+          console.error('Could not get pre-battle reactions:', err);
+        }
 
+        // STEP 2: Get LLM-generated commentary (intro to the round) + trigger voice
+        try {
+          const commentaryResult = await competitiveApi.getCommentary(projectId, subtask.id);
+          const commentaryText = commentaryResult.commentary || 'Battle is heating up!';
+          setCommentary(commentaryText);
+          
+          // Trigger LiveKit voice commentary
+          if (roomName) {
+            try {
+              // Get commentary from Letta
+              console.log('📝 Getting commentary from Letta:', commentaryText);
+              const commentatorResponse = await livekitApi.askCommentator(roomName, commentaryText);
+              
+              // Use the actual response text
+              const spokenText = commentatorResponse.response_text || commentaryText;
+              console.log('🗣️ Commentator will say:', spokenText);
+              
+              // Add to transcript
+              const transcriptMessage = {
+                text: spokenText,
+                speaker: 'Commentator',
+                timestamp: Date.now()
+              };
+              setTranscriptMessages(prev => [...prev, transcriptMessage]);
+              
+              // Play audio (same as simple_frontend.html)
+              await playCommentatorAudio(spokenText);
+              
+            } catch (audioErr) {
+              console.error('Could not get commentary:', audioErr);
+              // Fallback: add original text to transcript
+              const transcriptMessage = {
+                text: commentaryText,
+                speaker: 'Commentator',
+                timestamp: Date.now()
+              };
+              setTranscriptMessages(prev => [...prev, transcriptMessage]);
+            }
+          } else {
+            // No room, just add original commentary to transcript
+            const transcriptMessage = {
+              text: commentaryText,
+              speaker: 'Commentator',
+              timestamp: Date.now()
+            };
+            setTranscriptMessages(prev => [...prev, transcriptMessage]);
+          }
+        } catch (err) {
+          console.error('Could not get commentary:', err);
+        }
+
+        // STEP 3: NOW start the actual work
+        
         // Mark all agents as working
         setAgentData(prev => ({
           speedrunner: { ...prev.speedrunner, isWorking: true },
@@ -126,14 +281,12 @@ function Orchestration() {
           loader: { ...prev.loader, isWorking: true }
         }));
 
-        // Start work
         await competitiveApi.startWork(projectId, subtask.id);
 
-        // Get results (this sends the task to agents)
+        // Get results (agents do their work)
         const results = await competitiveApi.getResults(projectId);
         setAgentResults(results.agents);
-        console.log('📊 Agent results:', results.agents);
-
+        
         // Mark agents as done working
         ['speedrunner', 'bloom', 'solver', 'loader'].forEach(agentId => {
           setAgentData(prev => ({
@@ -145,51 +298,48 @@ function Orchestration() {
           }));
         });
 
-        // Auto-fetch code for all agents
-        console.log('🔄 Auto-fetching code for all agents...');
-        for (const agentId of ['speedrunner', 'bloom', 'solver', 'loader']) {
-          await fetchAgentCode(agentId);
-        }
-
-        // Get agent reactions and add to chat
-        try {
-          const reactions = await livekitApi.getAgentReaction(
-            roomName,
-            'code_submitted',
-            {
-              agent_stats: { /* simplified for now */ },
-              total_rounds: subtasks.length
+        // STEP 4: After work is done, fetch code and get post-battle reactions in parallel
+        await Promise.all([
+          // Fetch code for all agents
+          (async () => {
+            for (const agentId of ['speedrunner', 'bloom', 'solver', 'loader']) {
+              await fetchAgentCode(agentId);
             }
-          );
-          
-          // Add reactions to chat messages
-          if (reactions.agent_responses) {
-            reactions.agent_responses.forEach(reaction => {
-              const chatMessage = {
-                text: `${reaction.agent_name}: ${reaction.response_text}`,
-                speaker: reaction.agent_name,
-                timestamp: Date.now(),
-                emotion: reaction.emotion_level
-              };
-              setChatMessages(prev => [...prev, chatMessage]);
-            });
-          }
-        } catch (err) {
-          console.log('⚠️ Could not get reactions:', err);
-        }
+          })(),
 
-        // Get commentary
-        try {
-          const commentaryResult = await competitiveApi.getCommentary(projectId, subtask.id);
-          setCommentary(commentaryResult.commentary || 'Battle is heating up!');
-        } catch (err) {
-          console.log('⚠️ Could not get commentary:', err);
-        }
+          // Get post-battle reactions
+          (async () => {
+            try {
+              const postReactions = await livekitApi.getAgentReaction(
+                roomName,
+                'code_submitted',
+                {
+                  agent_stats: { /* simplified for now */ },
+                  total_rounds: subtasks.length
+                }
+              );
+              
+              // Add post-battle reactions to chat
+              if (postReactions.agent_responses) {
+                postReactions.agent_responses.forEach(reaction => {
+                  const chatMessage = {
+                    text: reaction.response_text,
+                    speaker: reaction.agent_name,
+                    timestamp: Date.now(),
+                    emotion: reaction.emotion_level
+                  };
+                  setChatMessages(prev => [...prev, chatMessage]);
+                });
+              }
+            } catch (err) {
+              console.error('Could not get post-battle reactions:', err);
+            }
+          })()
+        ]);
 
         // Store results and wait for user to select winner
         setCurrentRoundResults(results);
         setWaitingForWinner(true);
-        console.log('⏸️ Waiting for user to select winner...');
 
         // Wait for user selection using promise
         await new Promise((resolve) => {
@@ -240,6 +390,50 @@ function Orchestration() {
       timestamp: Date.now()
     };
     setChatMessages(prev => [...prev, likeMessage]);
+  };
+
+  const handleUserQuestion = async (question) => {
+    if (!roomName || !question) return;
+    
+    try {
+      console.log('🗣️ User asked:', question);
+      
+      // Add user question to transcript immediately
+      const userMessage = {
+        text: question,
+        speaker: 'You',
+        timestamp: Date.now()
+      };
+      setTranscriptMessages(prev => [...prev, userMessage]);
+      
+      // Get commentator's response
+      const response = await livekitApi.askCommentator(roomName, question);
+      const answerText = response.response_text || response.message;
+      
+      console.log('🎙️ Commentator responds:', answerText);
+      
+      // Add commentator response to transcript
+      const commentatorMessage = {
+        text: answerText,
+        speaker: 'Commentator',
+        timestamp: Date.now()
+      };
+      setTranscriptMessages(prev => [...prev, commentatorMessage]);
+      
+      // Play audio response
+      await playCommentatorAudio(answerText);
+      
+    } catch (error) {
+      console.error('❌ Error asking commentator:', error);
+      
+      // Add error message to transcript
+      const errorMessage = {
+        text: 'Sorry, I couldn\'t process that question.',
+        speaker: 'System',
+        timestamp: Date.now()
+      };
+      setTranscriptMessages(prev => [...prev, errorMessage]);
+    }
   };
 
   const fetchAgentCode = async (agentId) => {
@@ -461,6 +655,7 @@ function Orchestration() {
                 >
                   {isWorkflowRunning ? '⚔️ Battle in Progress...' : '🔥 Start Battle'}
                 </button>
+                
                 <div className="subtasks-preview">
                   {subtasks.length} subtasks ready
                 </div>
@@ -548,13 +743,17 @@ function Orchestration() {
           />
 
           {/* Commentator */}
-          <Commentator projectId={projectId} subtaskId={currentSubtask?.id} />
+          <Commentator analyser={analyserRef.current} />
 
           {/* Chat Input */}
           <ChatInput externalMessages={chatMessages} />
 
           {/* Transcript */}
-          <TranscriptPanel roomName={roomName} />
+          <TranscriptPanel 
+            roomName={roomName} 
+            messages={transcriptMessages}
+            onUserQuestion={handleUserQuestion}
+          />
         </div>
       </div>
     </motion.div>

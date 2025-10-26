@@ -442,6 +442,37 @@ Give a SHORT, EXCITING response (1 sentence max). Be dramatic and fast-paced lik
         "time_formatted": time.strftime('%H:%M:%S', time.localtime())
     })
     
+    # Trigger TTS and stream to LiveKit room (async, don't wait)
+    try:
+        import threading
+        def speak_async():
+            try:
+                # Use commentator voice ID
+                commentator_voice = os.getenv('LETTA_VOICE_COMMENTATOR', 'cgSgspJ2msm6clMCkdW9')
+                
+                # Stream TTS to LiveKit room
+                from src.livekit.tts_publisher import tts_publisher
+                import asyncio
+                
+                # Run async function in thread
+                loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(loop)
+                loop.run_until_complete(
+                    tts_publisher.speak_to_room(room_name, response_text, commentator_voice)
+                )
+                loop.close()
+                
+                print(f"🎙️ TTS streamed to LiveKit room")
+            except Exception as e:
+                print(f"⚠️ TTS streaming failed: {e}")
+                import traceback
+                traceback.print_exc()
+        
+        # Start TTS in background thread
+        threading.Thread(target=speak_async, daemon=True).start()
+    except Exception as e:
+        print(f"⚠️ Could not start TTS thread: {e}")
+    
     return jsonify({
         "success": True,
         "response_text": response_text,
@@ -711,8 +742,18 @@ def agent_reaction():
                     # Get Letta client and agent ID
                     letta_config = LettaConfig()
                     client = letta_config.client
-                    agent_env_key = f'LETTA_AGENT_{agent_name}'
-                    agent_id = os.getenv(agent_env_key)
+                    
+                    # Map agent names to env var names
+                    agent_env_map = {
+                        'One': 'LETTA_AGENT_ONE',
+                        'Two': 'LETTA_AGENT_TWO',
+                        'Three': 'LETTA_AGENT_THREE',
+                        'Four': 'LETTA_AGENT_FOUR'
+                    }
+                    agent_env_key = agent_env_map.get(agent_name)
+                    agent_id = os.getenv(agent_env_key) if agent_env_key else None
+                    
+                    print(f"🔍 Looking for {agent_name} with key {agent_env_key}: {agent_id[:20] if agent_id else 'NOT FOUND'}")
                     
                     if agent_id:
                         # Build personality-specific prompt

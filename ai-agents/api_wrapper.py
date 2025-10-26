@@ -689,17 +689,18 @@ export default GeneratedComponent;"""
                     "project_id": project_id
                 }
             
-            # Create commentary prompt
+            # Create hype commentary prompt (simplified - no need for project state)
             commentary_prompt = f"""
-You are the commentator for project {project_id}, subtask {subtask_id}.
+🎤 LIVE BATTLE COMMENTARY - Round {subtask_id}
 
-Provide engaging commentary on:
-1. Current progress and energy
-2. Notable approaches or techniques
-3. Any interesting developments
-4. Overall team dynamics
+You're the HYPE commentator for an AI coding battle! Four agents competing:
+- Agent One (Speedrunner) - Fast & competitive
+- Agent Two (Bloom) - Creative & pattern-seeking  
+- Agent Three (Solver) - Analytical & methodical
+- Agent Four (Loader) - Async specialist
 
-Keep it engaging and use emojis! Make it 2-3 sentences.
+Give ENERGETIC commentary for Round {subtask_id} in 1-2 SHORT sentences MAX! 
+Make it HYPE with emojis! Like a real sports commentator!
 """
             
             # Send prompt to commentator

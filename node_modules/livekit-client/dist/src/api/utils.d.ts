@@ -1,0 +1,6 @@
+import { SignalResponse } from '@livekit/protocol';
+export declare function createRtcUrl(url: string, searchParams: URLSearchParams): string;
+export declare function createValidateUrl(rtcWsUrl: string): string;
+export declare function parseSignalResponse(value: ArrayBuffer | string): SignalResponse;
+export declare function getAbortReasonAsString(signal: AbortSignal | Error | unknown, defaultMessage?: string): any;
+//# sourceMappingURL=utils.d.ts.map

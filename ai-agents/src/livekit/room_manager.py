@@ -82,7 +82,7 @@ class LiveKitRoomManager:
                 "success": True,
                 "room_name": room_name,
                 "commentator_token": commentator_token.to_jwt(),
-                "room_url": f"{self.config.url}/{room_name}",
+                "room_url": self.config.url,  # Just base URL, room name passed separately via token
                 "message": f"Room {room_name} created successfully"
             }
             

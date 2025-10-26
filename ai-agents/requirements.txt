@@ -11,4 +11,6 @@ flask-cors>=4.0.0
 livekit>=0.11.0
 livekit-agents>=1.2.13
 requests>=2.31.0
+numpy>=1.24.0
+# Note: ffmpeg must be installed on system (brew install ffmpeg)
 
