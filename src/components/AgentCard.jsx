@@ -1,10 +1,11 @@
-import { useRef } from 'react';
+import { useRef, useState, useEffect } from 'react';
 import './AgentCard.css';
 import LiquidChrome from './LiquidChrome';
 import AgentOrb from './AgentOrb';
 import BloomOrb from './BloomOrb';
 import SolverOrb from './SolverOrb';
 import LoaderOrb from './LoaderOrb';
+import DecryptedText from './DecryptedText';
 
 const PERSONALITIES = {
   speedrunner: 'fast, competitive, efficiency-obsessed',
@@ -21,10 +22,78 @@ const AGENT_COLORS = {
 };
 
 const TRANSCRIPTS = {
-  speedrunner: 'Analyzing rapid execution patterns and optimization strategies for maximum throughput...',
-  bloom: 'Processing distributed data points across neural network manifolds...',
-  solver: 'Computing optimal solution paths using advanced heuristic algorithms...',
-  loader: 'Loading synchronous operations with concurrent state management...'
+  speedrunner: [
+    'optimizing critical path O(n) to O(log n) lets GO!',
+    'caching data structures, eliminating 12 API calls down to 3!',
+    'parallel processing ACTIVATED! initial load 2.4s to 0.6s BOOM!',
+    'response time 450ms to 180ms we FLYING!',
+    'bottleneck in render loop spotted, applying memoization NOW!',
+    '75% load time reduction achieved baby!',
+    'concurrent requests optimized, throughput MAXIMIZED!',
+    'lazy loading implemented, bundle size cut in HALF!',
+    'debouncing inputs, performance CRANKED!',
+    'tree-shaking dependencies, dead code ELIMINATED!',
+    'implementing virtual scrolling, rendering 10k items smooth!',
+    'code splitting routes, initial bundle 2MB to 400KB!',
+    'webworkers deployed, UI thread FREED UP!',
+    'compression enabled, gzip assets 80% smaller!',
+    'CDN configured, global latency DOWN!',
+    'service workers caching, offline mode READY!'
+  ],
+  bloom: [
+    'scattering thoughts... distributing data across neural layers...',
+    'input dimensions 1024x768, hidden layers [512, 256, 128, 64]...',
+    'ReLU activation with dropout 0.3, wait what was I...',
+    'cluster 1: 342 nodes density 0.82, interesting patterns...',
+    'cluster 2: 189 nodes density 0.64, hmm...',
+    'gradient descent optimization, learning rate 0.001...',
+    'batch size 32, convergence looking good...',
+    'oh right! neural network manifolds processing...',
+    'particle distribution patterns emerging...',
+    'hidden layer activations stabilizing, nice...',
+    'attention mechanism weights adjusting... focus shifting...',
+    'backpropagation through time, memories forming...',
+    'embedding space expanding, semantic relationships...',
+    'softmax probabilities normalizing, decisions crystallizing...',
+    'convolutional filters detecting edges, shapes, textures...',
+    'recurrent connections creating temporal dependencies...'
+  ],
+  solver: [
+    'analyzing current configuration... F2 R U\' D L2 B',
+    'solution depth 18 moves, optimal is 20, acceptable.',
+    'pattern database lookup: 12ms, efficient.',
+    'A* algorithm applied, pruning inefficient branches.',
+    'move sequence generation: step 1 F R U R\' U\' F\'',
+    'step 2 R U R\' U R U2 R\', validating...',
+    'step 3 U R U\' L\' U R\' U\' L, checking path...',
+    'heuristic search complete, solution found.',
+    'verification complete, path optimal.',
+    'systematic branch elimination successful.',
+    'constraint satisfaction problem solved, all variables assigned.',
+    'backtracking algorithm terminated, solution space explored.',
+    'dynamic programming table computed, subproblems cached.',
+    'binary search converging, bounds narrowing systematically.',
+    'graph traversal complete, shortest path identified.',
+    'minimax tree evaluated, optimal strategy determined.'
+  ],
+  loader: [
+    'initializing... active threads: 5, queue size: 127 tasks',
+    'memory usage 42.3 MB / 256 MB, stable.',
+    'loading sequence phase 1: asset prefetch 23 items',
+    'phase 2: dependency resolution in progress...',
+    'phase 3: state hydration queued, waiting...',
+    'phase 4: event binding scheduled.',
+    'torus ring 0 rotation(0.02, 0.01, 0.03), synchronized.',
+    'torus ring 1 rotation(-0.01, 0.02, -0.01), coordinated.',
+    'torus ring 2 rotation(0.03, -0.02, 0.01), aligned.',
+    'all systems nominal, processes running smoothly...',
+    'buffer pool allocation complete, resources distributed.',
+    'connection pool established, 20 connections ready.',
+    'lazy initialization deferred, memory footprint minimal.',
+    'middleware chain assembled, request pipeline configured.',
+    'cache warming in progress, hot data preloaded.',
+    'graceful degradation enabled, fallbacks prepared.'
+  ]
 };
 
 const EXPANDED_CONTENT = {
@@ -153,6 +222,38 @@ async function loadResources() {
 
 function AgentCard({ agentId, agentName, isExpanded, onExpand, onLike }) {
   const cardRef = useRef(null);
+  const [currentMessageIndex, setCurrentMessageIndex] = useState(0);
+  const [visibleMessages, setVisibleMessages] = useState([0]); // Track which messages are visible
+
+  // Cycle through transcript messages (append one at a time, show 4 total)
+  useEffect(() => {
+    if (!isExpanded) {
+      // Speedrunner cycles faster
+      const cycleSpeed = agentId === 'speedrunner' ? 1200 : 2500;
+      const interval = setInterval(() => {
+        setVisibleMessages(prev => {
+          const lastIndex = prev[prev.length - 1];
+          const nextIndex = lastIndex + 1;
+
+          // If we have 4 messages visible, reset to show next group
+          if (prev.length >= 4) {
+            const newStartIndex = (lastIndex + 1) % TRANSCRIPTS[agentId].length;
+            return [newStartIndex];
+          }
+
+          // If we've reached the end of messages, wrap to 0
+          if (nextIndex >= TRANSCRIPTS[agentId].length) {
+            return [0];
+          }
+
+          // Otherwise append the next message
+          return [...prev, nextIndex];
+        });
+      }, cycleSpeed);
+
+      return () => clearInterval(interval);
+    }
+  }, [agentId, isExpanded]);
 
   const handleMouseMove = (e) => {
     if (!cardRef.current || isExpanded) return;
@@ -242,12 +343,30 @@ function AgentCard({ agentId, agentName, isExpanded, onExpand, onLike }) {
             <div className="glass-filter"></div>
             <div className="glass-overlay"></div>
             <div className="glass-specular"></div>
-            <div
-              className="agent-transcript-content"
-              dangerouslySetInnerHTML={{
-                __html: isExpanded ? EXPANDED_CONTENT[agentId] : TRANSCRIPTS[agentId]
-              }}
-            />
+            <div className="agent-transcript-content">
+              {isExpanded ? (
+                <div dangerouslySetInnerHTML={{ __html: EXPANDED_CONTENT[agentId] }} />
+              ) : (
+                <>
+                  {visibleMessages.map((msgIndex, idx) => (
+                    <div key={`${msgIndex}-${idx}`}>
+                      <DecryptedText
+                        text={TRANSCRIPTS[agentId][msgIndex]}
+                        speed={agentId === 'speedrunner' ? 20 : 30}
+                        sequential={true}
+                        revealDirection="start"
+                        animateOn="view"
+                      />
+                    </div>
+                  ))}
+                  <div className="loading-dots">
+                    <span>.</span>
+                    <span>.</span>
+                    <span>.</span>
+                  </div>
+                </>
+              )}
+            </div>
           </div>
         </div>
       </div>

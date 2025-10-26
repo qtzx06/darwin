@@ -257,6 +257,42 @@
   font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
 }
 
+/* Loading dots animation */
+.orchestration-container .loading-dots {
+  display: flex;
+  gap: 4px;
+  margin-top: 8px;
+  justify-content: flex-start;
+}
+
+.orchestration-container .loading-dots span {
+  color: #f0b0d0;
+  font-size: 1.2em;
+  animation: loadingDotFade 1.4s infinite;
+  opacity: 0;
+}
+
+.orchestration-container .loading-dots span:nth-child(1) {
+  animation-delay: 0s;
+}
+
+.orchestration-container .loading-dots span:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.orchestration-container .loading-dots span:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+@keyframes loadingDotFade {
+  0%, 100% {
+    opacity: 0;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
 /* Mobile adjustments */
 @media (max-width: 768px) {
   .orchestration-container .agent-headshot {
