@@ -1,5 +1,8 @@
+@import '@fontsource/geist-mono';
+
 :root {
   background-color: #1B1B1B;
+  font-family: 'Geist Mono', monospace;
 }
 
 html, body {
@@ -9,6 +12,8 @@ html, body {
   height: 100%;
   overflow: hidden;
   background-color: #1B1B1B;
+  font-family: 'Geist Mono', monospace;
+  text-transform: lowercase;
 }
 
 #root {
