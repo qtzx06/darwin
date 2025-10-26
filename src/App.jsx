@@ -8,7 +8,6 @@ import Dither from './components/Dither';
 import LogoLoop from './components/LogoLoop';
 import DevpostCard from './components/DevpostCard';
 import Orchestration from './components/Orchestration';
-import SuiWalletButton from './components/SuiWalletButton';
 import { TbBrandThreejs } from 'react-icons/tb';
 import { FaReact, FaPython } from 'react-icons/fa';
 import { RiClaudeFill, RiGeminiFill } from 'react-icons/ri';
@@ -88,9 +87,6 @@ function App() {
 
   return (
     <div className="app-container">
-      {/* Sui Wallet Button - Show on all pages */}
-      {!isLoading && <SuiWalletButton />}
-      
       {/* Render Orchestration page if on #orchestration route */}
       {currentPage === 'orchestration' ? (
         <Orchestration />
