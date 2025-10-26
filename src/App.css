@@ -82,7 +82,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(to right, rgba(221, 160, 221, 0.2), rgba(255, 182, 193, 0.15), transparent);
+  background: linear-gradient(to right, rgba(255, 255, 255, 0.15), rgba(255, 255, 255, 0.08), transparent);
 }
 
 .side-card-left .cubes-wrapper {
@@ -94,7 +94,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(to left, rgba(221, 160, 221, 0.2), rgba(255, 182, 193, 0.15), transparent);
+  background: linear-gradient(to left, rgba(255, 255, 255, 0.15), rgba(255, 255, 255, 0.08), transparent);
 }
 
 .cubes-wrapper {
