@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import './TranscriptPanel.css';
 
-function TranscriptPanel({ geminiLiveRef }) {
+function TranscriptPanel({ geminiLiveRef, transcripts = [] }) {
   const [isMicMuted, setIsMicMuted] = useState(true); // Start with mic muted
 
   const handleMicToggle = async () => {
@@ -35,7 +35,20 @@ function TranscriptPanel({ geminiLiveRef }) {
           <div className="glass-overlay"></div>
           <div className="glass-specular"></div>
           <div className="transcript-text">
-            Live commentary stream will appear here...
+            {transcripts.length === 0 ? (
+              <div style={{ opacity: 0.5 }}>
+                {isMicMuted ? 'Click mic button to start...' : 'Listening...'}
+              </div>
+            ) : (
+              transcripts.map((t, i) => (
+                <div key={i} style={{ marginBottom: '8px' }}>
+                  <span style={{ color: t.speaker === 'user' ? '#64ffda' : '#f0b0d0', fontWeight: 'bold' }}>
+                    [{t.speaker === 'user' ? 'YOU' : 'COMPOSER'}]
+                  </span>{' '}
+                  {t.text}
+                </div>
+              ))
+            )}
           </div>
         </div>
       </div>

@@ -57,6 +57,7 @@ function Orchestration() {
     loader: ''
   });
   const [previewCode, setPreviewCode] = useState(null);
+  const [transcripts, setTranscripts] = useState([]); // Voice transcripts
   const banterIntervalRef = useRef(null);
   const geminiLiveRef = useRef(null); // Store Gemini Live ref from Commentator
 
@@ -814,16 +815,29 @@ function Orchestration() {
             agentsReady={agentsReady}
             chatMessages={chatMessages}
             onComposerMessage={(message) => {
+              // Add to chat
               setChatMessages(prev => [...prev, {
                 text: `[COMPOSER] ${message}`,
                 type: 'agent',
                 timestamp: Date.now()
               }]);
+
+              // Add to transcripts
+              setTranscripts(prev => [...prev, { speaker: 'composer', text: message, timestamp: Date.now() }]);
             }}
             onUserMessage={handleUserMessage}
             onGeminiLiveReady={(ref) => {
               geminiLiveRef.current = ref.current;
               console.log('[Orchestration] Gemini Live ref received');
+
+              // Set up transcript callbacks
+              if (ref.current) {
+                // When user speaks
+                ref.current.onUserTranscript = (text) => {
+                  console.log('[Orchestration] User transcript:', text);
+                  setTranscripts(prev => [...prev, { speaker: 'user', text, timestamp: Date.now() }]);
+                };
+              }
             }}
           />
 
@@ -831,7 +845,7 @@ function Orchestration() {
           <ChatInput externalMessages={chatMessages} onUserMessage={handleUserMessage} />
 
           {/* Transcript */}
-          <TranscriptPanel geminiLiveRef={geminiLiveRef} />
+          <TranscriptPanel geminiLiveRef={geminiLiveRef} transcripts={transcripts} />
         </div>
       </div>
     </motion.div>

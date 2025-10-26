@@ -2,16 +2,17 @@ import { useState, useEffect, useRef } from 'react';
 import './Commentator.css';
 import NeuroShaderCanvas from './NeuroShaderCanvas';
 import CommentatorOrb from './CommentatorOrb';
-import { GeminiLiveManager } from '../services/liveGeminiService';
+import { VapiVoiceManager } from '../services/vapiService';
 
-function Commentator({ query, onBattleStart, isRunning, agentsReady, chatMessages = [], onComposerMessage, onUserMessage, onGeminiLiveReady }) {
+function Commentator({ query, onBattleStart, isRunning, agentsReady, chatMessages = [], onComposerMessage, onUserMessage, onVapiReady }) {
   const [analyser, setAnalyser] = useState(null);
   const [isSoundActive, setIsSoundActive] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
   const [loadingMessageIndex, setLoadingMessageIndex] = useState(0);
-  const [isOutputMuted, setIsOutputMuted] = useState(false); // Gemini voice output (start unmuted)
-  const [geminiConnected, setGeminiConnected] = useState(false);
-  const geminiLiveRef = useRef(null);
+  const [isOutputMuted, setIsOutputMuted] = useState(false); // Voice output (start unmuted)
+  const [vapiConnected, setVapiConnected] = useState(false);
+  const vapiRef = useRef(null);
+  const assistantId = import.meta.env.VITE_VAPI_ASSISTANT_ID;
 
   const loadingMessages = [
     'initializing agents...',
@@ -24,34 +25,23 @@ function Commentator({ query, onBattleStart, isRunning, agentsReady, chatMessage
     'calibrating systems...'
   ];
 
-  // Initialize Gemini Live connection when agents are ready
+  // Initialize VAPI connection when agents are ready
   useEffect(() => {
-    let isCleanup = false;
-
-    const connectGeminiLive = async () => {
-      // Don't connect if already connected or if we're cleaning up
-      if (!agentsReady || geminiConnected || geminiLiveRef.current?.isConnected) {
+    const initVapi = async () => {
+      if (!agentsReady || vapiConnected || !assistantId) {
         return;
       }
 
       try {
-        console.log('[Commentator] Connecting to Gemini Live...');
+        console.log('[Commentator] Initializing VAPI...');
 
-        // Create Gemini Live manager if it doesn't exist
-        if (!geminiLiveRef.current) {
-          geminiLiveRef.current = new GeminiLiveManager();
+        // Create VAPI manager if it doesn't exist
+        if (!vapiRef.current) {
+          vapiRef.current = new VapiVoiceManager();
         }
 
-        // Set up callbacks for audio visualization
-        geminiLiveRef.current.onAudioLevel = (level) => {
-          if (!isCleanup) {
-            setIsSoundActive(level > 0.05);
-          }
-        };
-
-        // When Composer speaks, add to chat
-        geminiLiveRef.current.onTranscript = (text) => {
-          if (isCleanup) return;
+        // Set up callbacks
+        vapiRef.current.onTranscript = (text) => {
           console.log('[Commentator] Composer says:', text);
           if (onComposerMessage) {
             onComposerMessage(text);
@@ -60,68 +50,48 @@ function Commentator({ query, onBattleStart, isRunning, agentsReady, chatMessage
           // Check if Composer is giving commands to agents
           if (text.toLowerCase().includes('make') || text.toLowerCase().includes('change') || text.toLowerCase().includes('add')) {
             console.log('[Commentator] Composer might be giving a command, processing...');
-            // Send command to agents via onUserMessage
             if (onUserMessage) {
               onUserMessage(text);
             }
           }
         };
 
-        // When user speaks, show in chat
-        geminiLiveRef.current.onUserTranscript = (text) => {
-          if (isCleanup) return;
+        vapiRef.current.onUserTranscript = (text) => {
           console.log('[Commentator] User says:', text);
-          // This would be shown in transcript panel
         };
 
-        // Build system instruction with chat context
-        const recentChat = chatMessages.slice(-5).map(msg => msg.text).join('\n');
-        const systemInstruction = `You are Composer, an AI assistant helping orchestrate a coding battle between 4 AI agents (Speedrunner, Bloom, Solver, Loader).
+        vapiRef.current.onSpeechStart = () => {
+          setIsSoundActive(true);
+        };
 
-Your role:
-1. Provide witty, brief commentary on what's happening (under 15 words)
-2. When the user asks you to change something, give commands like "yo agents, make that button black" and the agents will respond
-3. Be casual, fun, and energetic - use slang like "fr", "ngl", "yo"
+        vapiRef.current.onSpeechEnd = () => {
+          setIsSoundActive(false);
+        };
 
-Recent chat context:
-${recentChat}
+        // Initialize VAPI
+        await vapiRef.current.initialize(assistantId);
 
-Remember: Keep responses SHORT and conversational!`;
+        setVapiConnected(true);
+        console.log('[Commentator] VAPI initialized successfully');
 
-        // Connect to Gemini Live API with context
-        await geminiLiveRef.current.connect(systemInstruction);
-
-        // Get analyser for orb visualization
-        const analyserNode = geminiLiveRef.current.getAnalyser();
-        if (analyserNode && !isCleanup) {
-          setAnalyser(analyserNode);
-        }
-
-        if (!isCleanup) {
-          setGeminiConnected(true);
-          console.log('[Commentator] Gemini Live connected successfully');
-
-          // Notify parent that Gemini Live is ready
-          if (onGeminiLiveReady) {
-            onGeminiLiveReady(geminiLiveRef);
-          }
+        // Notify parent that VAPI is ready
+        if (onVapiReady) {
+          onVapiReady(vapiRef);
         }
       } catch (error) {
-        if (!isCleanup) {
-          console.error('[Commentator] Failed to connect Gemini Live:', error);
-        }
+        console.error('[Commentator] Failed to initialize VAPI:', error);
       }
     };
 
-    connectGeminiLive();
+    initVapi();
 
-    // Cleanup only disconnects if component is actually unmounting
     return () => {
-      isCleanup = true;
-      console.log('[Commentator] Cleanup triggered');
-      // Don't disconnect on strict mode remount - only on actual unmount
+      // Cleanup on unmount
+      if (vapiRef.current) {
+        vapiRef.current.stop();
+      }
     };
-  }, [agentsReady]); // Remove geminiConnected from deps to prevent re-running
+  }, [agentsReady, assistantId]);
 
   // Cycle loading messages
   useEffect(() => {

@@ -103,6 +103,41 @@ export class GeminiLiveManager {
       }
     }
 
+    // Handle user's speech transcription
+    if (message.serverContent?.turnComplete) {
+      console.log('[Gemini Live] User turn complete');
+    }
+
+    // Check for user transcript in client content
+    if (message.clientContent?.turns) {
+      for (const turn of message.clientContent.turns) {
+        if (turn.role === 'user' && turn.parts) {
+          const userText = turn.parts
+            .filter(part => part.text)
+            .map(part => part.text)
+            .join(' ');
+
+          if (userText && this.onUserTranscript) {
+            console.log('[Gemini Live] User transcript:', userText);
+            this.onUserTranscript(userText);
+          }
+        }
+      }
+    }
+
+    // Also check in serverContent for user turns
+    if (message.serverContent?.userTurn?.parts) {
+      const userText = message.serverContent.userTurn.parts
+        .filter(part => part.text)
+        .map(part => part.text)
+        .join(' ');
+
+      if (userText && this.onUserTranscript) {
+        console.log('[Gemini Live] User transcript (from server):', userText);
+        this.onUserTranscript(userText);
+      }
+    }
+
     // Handle user's speech transcription (from Gemini's understanding)
     if (message.serverContent?.interrupted) {
       console.log('[Gemini Live] User interrupted');
@@ -285,9 +320,13 @@ export class GeminiLiveManager {
    * Send audio to Gemini
    */
   sendAudio(base64Audio) {
-    if (!this.session || !this.isConnected) return;
+    if (!this.session || !this.isConnected) {
+      console.warn('[Gemini Live] Cannot send audio - not connected');
+      return;
+    }
 
     try {
+      console.log('[Gemini Live] Sending audio chunk, length:', base64Audio.length);
       this.session.sendRealtimeInput({
         audio: {
           data: base64Audio,
