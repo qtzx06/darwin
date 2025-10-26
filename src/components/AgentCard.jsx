@@ -1,4 +1,4 @@
-import { useRef } from 'react';
+import { useRef, useState, useEffect } from 'react';
 import './AgentCard.css';
 import LiquidChrome from './LiquidChrome';
 import AgentOrb from './AgentOrb';
@@ -151,8 +151,62 @@ async function loadResources() {
 </async_loader>`
 };
 
-function AgentCard({ agentId, agentName, isExpanded, onExpand, onLike }) {
+function AgentCard({ agentId, agentName, isExpanded, onExpand, onLike, code, isWorking, wins, onFetchCode, projectId }) {
   const cardRef = useRef(null);
+  const codeDisplayRef = useRef(null);
+  const [typedCode, setTypedCode] = useState('');
+  const [isTyping, setIsTyping] = useState(false);
+
+  // Extract code from markdown code blocks if present
+  const extractCode = (codeString) => {
+    if (!codeString) return '';
+    
+    console.log(`[${agentId}] Extracting from:`, codeString.substring(0, 100));
+    
+    // Check if code is wrapped in markdown code blocks
+    const codeBlockMatch = codeString.match(/```(?:\w+)?\n([\s\S]*?)```/);
+    if (codeBlockMatch) {
+      console.log(`[${agentId}] Found code block, extracted ${codeBlockMatch[1].length} chars`);
+      return codeBlockMatch[1].trim();
+    }
+    
+    console.log(`[${agentId}] No code block found, returning as-is`);
+    return codeString;
+  };
+
+  const displayCode = extractCode(code);
+
+  // Debug logging
+  console.log(`[${agentId}] code prop:`, code ? `${code.length} chars` : 'empty');
+  console.log(`[${agentId}] displayCode:`, displayCode ? `${displayCode.length} chars` : 'empty');
+
+  // Typing animation effect with auto-scroll
+  useEffect(() => {
+    if (!displayCode || displayCode === typedCode) return;
+    
+    setIsTyping(true);
+    setTypedCode('');
+    
+    let currentIndex = 0;
+    const typingSpeed = 1; // milliseconds per character (super fast)
+    
+    const typeInterval = setInterval(() => {
+      if (currentIndex < displayCode.length) {
+        setTypedCode(displayCode.substring(0, currentIndex + 1));
+        currentIndex++;
+        
+        // Auto-scroll to bottom
+        if (codeDisplayRef.current) {
+          codeDisplayRef.current.scrollTop = codeDisplayRef.current.scrollHeight;
+        }
+      } else {
+        setIsTyping(false);
+        clearInterval(typeInterval);
+      }
+    }, typingSpeed);
+    
+    return () => clearInterval(typeInterval);
+  }, [displayCode]);
 
   const handleMouseMove = (e) => {
     if (!cardRef.current || isExpanded) return;
@@ -196,6 +250,13 @@ function AgentCard({ agentId, agentName, isExpanded, onExpand, onLike }) {
     onExpand(null); // Close the expanded card
   };
 
+  const handleFetchCode = (e) => {
+    e.stopPropagation();
+    if (onFetchCode && projectId) {
+      onFetchCode(agentId);
+    }
+  };
+
   return (
     <div
       ref={cardRef}
@@ -227,27 +288,48 @@ function AgentCard({ agentId, agentName, isExpanded, onExpand, onLike }) {
             <div>
               <div className="agent-name" onClick={handleNameClick}>
                 {agentName}
+                {wins > 0 && <span className="agent-wins"> 🏆 {wins}</span>}
               </div>
               <div className="agent-personality">
                 {PERSONALITIES[agentId]}
               </div>
             </div>
-            {isExpanded && (
-              <button onClick={handleThumbsUp} className="agent-thumbs">
-                <i className="fas fa-thumbs-up"></i>
-              </button>
-            )}
+            <div className="agent-actions">
+              {isExpanded && (
+                <button onClick={handleThumbsUp} className="agent-thumbs">
+                  <i className="fas fa-thumbs-up"></i>
+                </button>
+              )}
+            </div>
           </div>
+          {isWorking && (
+            <div className="agent-working-indicator">
+              ⚡ Working on task...
+            </div>
+          )}
           <div className="agent-transcript">
             <div className="glass-filter"></div>
             <div className="glass-overlay"></div>
             <div className="glass-specular"></div>
-            <div
-              className="agent-transcript-content"
-              dangerouslySetInnerHTML={{
-                __html: isExpanded ? EXPANDED_CONTENT[agentId] : TRANSCRIPTS[agentId]
-              }}
-            />
+            {code ? (
+              typedCode ? (
+                <pre ref={codeDisplayRef} className="agent-transcript-content agent-code-display">
+                  {isExpanded ? typedCode : (typedCode.length > 200 ? typedCode.substring(0, 200) + '...' : typedCode)}
+                  {isTyping && <span className="typing-cursor">▊</span>}
+                </pre>
+              ) : (
+                <div className="agent-transcript-content">
+                  <p>⏳ Loading code...</p>
+                </div>
+              )
+            ) : (
+              <div
+                className="agent-transcript-content"
+                dangerouslySetInnerHTML={{
+                  __html: isExpanded ? EXPANDED_CONTENT[agentId] : TRANSCRIPTS[agentId]
+                }}
+              />
+            )}
           </div>
         </div>
       </div>

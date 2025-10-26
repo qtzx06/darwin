@@ -283,3 +283,107 @@
     font-size: 0.65rem;
   }
 }
+
+/* Agent Status Indicators */
+.orchestration-container .agent-wins {
+  font-size: 0.8em;
+  color: #FFD700;
+  margin-left: 8px;
+}
+
+.orchestration-container .agent-working-indicator {
+  font-family: 'Geist Mono', monospace;
+  font-size: 0.75rem;
+  color: #4ecdc4;
+  padding: 6px 10px;
+  background: rgba(78, 205, 196, 0.1);
+  border-radius: 6px;
+  margin: 8px 0;
+  text-align: center;
+  animation: pulse 2s ease-in-out infinite;
+}
+
+.orchestration-container .agent-reaction {
+  font-family: 'Geist Mono', monospace;
+  font-size: 0.7rem;
+  color: rgba(255, 255, 255, 0.8);
+  padding: 8px 10px;
+  background: rgba(255, 255, 255, 0.05);
+  border-left: 3px solid #ff6b6b;
+  border-radius: 4px;
+  margin: 8px 0;
+  line-height: 1.4;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.6;
+  }
+}
+
+/* Agent Actions */
+.orchestration-container .agent-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.orchestration-container .agent-fetch-btn {
+  background: rgba(78, 205, 196, 0.15);
+  border: 1px solid rgba(78, 205, 196, 0.3);
+  border-radius: 6px;
+  padding: 6px 10px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.orchestration-container .agent-fetch-btn:hover {
+  background: rgba(78, 205, 196, 0.25);
+  border-color: #4ecdc4;
+  transform: scale(1.1);
+}
+
+/* Code Display */
+.orchestration-container .agent-code-display {
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', 'Courier New', monospace;
+  font-size: 10px;
+  line-height: 1.5;
+  color: rgba(255, 255, 255, 0.9);
+  background: rgba(0, 0, 0, 0.3);
+  padding: 12px;
+  border-radius: 6px;
+  overflow-x: auto;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  text-align: left;
+}
+
+.orchestration-container .glass-card.expanded .agent-code-display {
+  font-size: 11px;
+  padding: 16px;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+/* Typing Cursor Animation */
+.typing-cursor {
+  animation: blink 1s step-end infinite;
+  color: #4ecdc4;
+  font-weight: bold;
+}
+
+@keyframes blink {
+  0%, 50% {
+    opacity: 1;
+  }
+  51%, 100% {
+    opacity: 0;
+  }
+}

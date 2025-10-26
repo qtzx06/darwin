@@ -7,7 +7,13 @@ function ChatInput({ externalMessages = [] }) {
 
   useEffect(() => {
     if (externalMessages.length > 0) {
-      setMessages(prev => [...prev, ...externalMessages.slice(prev.length - externalMessages.length)]);
+      // Only add new messages
+      const newMessages = externalMessages.filter(
+        extMsg => !messages.some(msg => msg.timestamp === extMsg.timestamp)
+      );
+      if (newMessages.length > 0) {
+        setMessages(prev => [...prev, ...newMessages]);
+      }
     }
   }, [externalMessages]);
 
@@ -42,8 +48,14 @@ function ChatInput({ externalMessages = [] }) {
           <div className="chat-content-wrapper">
             <div className="chat-messages">
               {messages.map((msg) => (
-                <div key={msg.timestamp} className="chat-message">
-                  {msg.text}
+                <div key={msg.timestamp} className={`chat-message ${msg.speaker ? 'agent-message' : 'user-message'}`}>
+                  {msg.speaker && <span className="message-speaker">{msg.speaker}:</span>}
+                  <span className="message-text">{msg.text}</span>
+                  {msg.emotion !== undefined && (
+                    <span className="message-emotion" title={`Emotion: ${msg.emotion}`}>
+                      {msg.emotion > 0.7 ? '🔥' : msg.emotion > 0.4 ? '😤' : '😐'}
+                    </span>
+                  )}
                 </div>
               ))}
             </div>

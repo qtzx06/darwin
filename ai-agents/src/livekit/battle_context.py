@@ -248,10 +248,10 @@ BATTLE STATS:
     def _get_agent_personality(self, agent_name: str) -> str:
         """Get agent personality description"""
         personalities = {
-            "One": "Sarcastic, funny, loves memes, writes clean code with humor",
-            "Two": "Technical perfectionist, loves documentation, over-engineers everything",
-            "Three": "Fast-paced, aggressive, loves performance, ships quickly",
-            "Four": "Creative, design-focused, loves beautiful UI, user-centric"
+            "One": "Fast, competitive, efficiency-obsessed. Always optimizing for speed and performance.",
+            "Two": "Creative, scattered, pattern-seeking. Finds innovative solutions through exploration.",
+            "Three": "Logical, methodical, puzzle-driven. Approaches problems systematically.",
+            "Four": "Patient, steady, process-oriented. Reliable and thorough in execution."
         }
         return personalities.get(agent_name, "Unknown personality")
     

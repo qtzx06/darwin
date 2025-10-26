@@ -321,10 +321,29 @@
             border-left: 4px solid;
         }
         
-        .agent-one { border-left-color: #3B82F6; background-color: #EFF6FF; }
-        .agent-two { border-left-color: #10B981; background-color: #ECFDF5; }
-        .agent-three { border-left-color: #EF4444; background-color: #FEF2F2; }
-        .agent-four { border-left-color: #8B5CF6; background-color: #F3E8FF; }
+        .agent-one-message {
+            background: rgba(59, 130, 246, 0.2);
+            border-left: 4px solid #3B82F6;
+            color: #3B82F6;
+        }
+        
+        .agent-two-message {
+            background: rgba(16, 185, 129, 0.2);
+            border-left: 4px solid #10B981;
+            color: #10B981;
+        }
+        
+        .agent-three-message {
+            background: rgba(239, 68, 68, 0.2);
+            border-left: 4px solid #EF4444;
+            color: #EF4444;
+        }
+        
+        .agent-four-message {
+            background: rgba(139, 92, 246, 0.2);
+            border-left: 4px solid #8B5CF6;
+            color: #8B5CF6;
+        }
         
         .agent-voice-tests {
             margin: 20px 0;
@@ -475,10 +494,10 @@
             <div id="agent-controls" class="mode-controls" style="display: none;">
                 <select id="agent-selector" class="agent-selector" disabled>
                     <option value="">Select Agent</option>
-                    <option value="One">Agent One (Sarcastic)</option>
-                    <option value="Two">Agent Two (Perfectionist)</option>
-                    <option value="Three">Agent Three (Competitive)</option>
-                    <option value="Four">Agent Four (Creative)</option>
+                    <option value="One">Speedrunner (Fast & Competitive)</option>
+                    <option value="Two">Bloom (Creative & Pattern-seeking)</option>
+                    <option value="Three">Solver (Logical & Methodical)</option>
+                    <option value="Four">Loader (Patient & Process-oriented)</option>
                 </select>
                 <button id="ask-agent-btn" class="btn btn-secondary" disabled>
                     <span class="mic-indicator" id="agent-mic-indicator"></span>

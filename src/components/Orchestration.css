@@ -523,3 +523,329 @@
     padding-top: 70px;
   }
 }
+
+/* Start Battle Button Styles */
+.start-battle-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  margin: 16px 0;
+}
+
+.start-battle-btn {
+  font-family: 'Geist Mono', monospace;
+  font-size: 1rem;
+  font-weight: 600;
+  padding: 14px 32px;
+  background: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  box-shadow: 0 4px 20px rgba(255, 107, 107, 0.4);
+  position: relative;
+  overflow: hidden;
+}
+
+.start-battle-btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+  transition: left 0.5s ease;
+}
+
+.start-battle-btn:hover:not(:disabled)::before {
+  left: 100%;
+}
+
+.start-battle-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 30px rgba(255, 107, 107, 0.6);
+}
+
+.start-battle-btn:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.start-battle-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  background: linear-gradient(135deg, #666 0%, #555 100%);
+  box-shadow: none;
+}
+
+.subtasks-preview {
+  font-family: 'Geist Mono', monospace;
+  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.7);
+  letter-spacing: 0.05em;
+}
+
+/* Battle Status Styles */
+.battle-status {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  margin: 16px 0;
+  padding: 12px 24px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+  backdrop-filter: blur(10px);
+}
+
+.status-running {
+  font-family: 'Geist Mono', monospace;
+  font-size: 0.95rem;
+  color: #4ecdc4;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  animation: pulse 2s ease-in-out infinite;
+}
+
+.status-complete {
+  font-family: 'Geist Mono', monospace;
+  font-size: 0.95rem;
+  color: #4CAF50;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+}
+
+.current-task {
+  font-family: 'Geist Mono', monospace;
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.6);
+  letter-spacing: 0.02em;
+  text-align: center;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.6;
+  }
+}
+
+/* Winner Selection Modal */
+.winner-selection-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.9);
+  backdrop-filter: blur(10px);
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  animation: fadeIn 0.3s ease;
+}
+
+.winner-modal-content {
+  background: linear-gradient(135deg, rgba(20, 20, 20, 0.95) 0%, rgba(40, 40, 40, 0.95) 100%);
+  border: 2px solid rgba(255, 107, 107, 0.3);
+  border-radius: 20px;
+  padding: 40px;
+  max-width: 700px;
+  width: 100%;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8), 0 0 40px rgba(255, 107, 107, 0.2);
+  animation: slideUp 0.4s ease;
+}
+
+.winner-modal-title {
+  font-family: 'BBH Sans Bartle', sans-serif;
+  font-size: 2rem;
+  color: white;
+  text-align: center;
+  margin-bottom: 10px;
+  text-shadow: 0 0 20px rgba(255, 107, 107, 0.5);
+}
+
+.winner-modal-subtitle {
+  font-family: 'Geist Mono', monospace;
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.6);
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+.winner-agents-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 15px;
+  margin-bottom: 30px;
+}
+
+.winner-agent-option {
+  position: relative;
+  background: rgba(255, 255, 255, 0.05);
+  border: 2px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 20px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.winner-agent-option:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 107, 107, 0.5);
+  transform: translateY(-2px);
+}
+
+.winner-agent-option.selected {
+  background: rgba(255, 107, 107, 0.15);
+  border-color: #ff6b6b;
+  box-shadow: 0 0 20px rgba(255, 107, 107, 0.3);
+}
+
+.winner-agent-name {
+  font-family: 'Geist Mono', monospace;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: white;
+  margin-bottom: 5px;
+}
+
+.winner-agent-personality {
+  font-family: 'Geist Mono', monospace;
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.winner-checkmark {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 30px;
+  height: 30px;
+  background: #ff6b6b;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 1.2rem;
+  font-weight: bold;
+  animation: scaleIn 0.3s ease;
+}
+
+.winner-reason-section {
+  margin-bottom: 25px;
+}
+
+.winner-reason-label {
+  font-family: 'Geist Mono', monospace;
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.8);
+  display: block;
+  margin-bottom: 10px;
+}
+
+.winner-reason-input {
+  width: 100%;
+  background: rgba(255, 255, 255, 0.05);
+  border: 2px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  padding: 15px;
+  font-family: 'Geist Mono', monospace;
+  font-size: 0.9rem;
+  color: white;
+  resize: vertical;
+  transition: all 0.3s ease;
+}
+
+.winner-reason-input:focus {
+  outline: none;
+  border-color: #ff6b6b;
+  background: rgba(255, 255, 255, 0.08);
+  box-shadow: 0 0 20px rgba(255, 107, 107, 0.2);
+}
+
+.winner-reason-input::placeholder {
+  color: rgba(255, 255, 255, 0.3);
+}
+
+.winner-confirm-btn {
+  width: 100%;
+  font-family: 'Geist Mono', monospace;
+  font-size: 1rem;
+  font-weight: 600;
+  padding: 16px 32px;
+  background: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  box-shadow: 0 4px 20px rgba(255, 107, 107, 0.4);
+}
+
+.winner-confirm-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 30px rgba(255, 107, 107, 0.6);
+}
+
+.winner-confirm-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  background: linear-gradient(135deg, #666 0%, #555 100%);
+  box-shadow: none;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes scaleIn {
+  from {
+    transform: scale(0);
+  }
+  to {
+    transform: scale(1);
+  }
+}
+
+/* Mobile responsive */
+@media (max-width: 768px) {
+  .winner-agents-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .winner-modal-content {
+    padding: 25px;
+  }
+
+  .winner-modal-title {
+    font-size: 1.5rem;
+  }
+}

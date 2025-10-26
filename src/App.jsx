@@ -13,6 +13,7 @@ import { FaReact, FaPython } from 'react-icons/fa';
 import { RiClaudeFill, RiGeminiFill } from 'react-icons/ri';
 import { SiTypescript, SiLangchain } from 'react-icons/si';
 import livekitLogo from './assets/livekit-text.svg';
+import { competitiveApi } from './services/api';
 
 function App() {
   const [isLoading, setIsLoading] = useState(true);
@@ -65,7 +66,7 @@ function App() {
     };
   }, []);
 
-  const handleSearchSubmit = (query) => {
+  const handleSearchSubmit = async (query) => {
     console.log('Starting zoom animation with query:', query);
     setIsZooming(true);
 
@@ -79,10 +80,25 @@ function App() {
       setShowOverlay(true);
     }, 800);
 
-    // Navigate after animation completes (0.8s delay + 1.5s fade = 2.3 total)
-    setTimeout(() => {
-      window.location.hash = `#orchestration?q=${encodeURIComponent(query)}`;
-    }, 2300);
+    try {
+      // Submit project to backend
+      const project = await competitiveApi.submitProject(query);
+      console.log('Project submitted:', project);
+
+      // Create agents for the project
+      await competitiveApi.createAgents(project.project_id);
+      console.log('Agents created for project:', project.project_id);
+
+      // Navigate after animation completes (0.8s delay + 1.5s fade = 2.3 total)
+      setTimeout(() => {
+        window.location.hash = `#orchestration?q=${encodeURIComponent(query)}&projectId=${project.project_id}`;
+      }, 2300);
+    } catch (error) {
+      console.error('Error submitting project:', error);
+      // Handle error state in UI
+      setIsZooming(false);
+      setShowOverlay(false);
+    }
   };
 
   return (

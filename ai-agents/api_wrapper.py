@@ -92,29 +92,29 @@ class CompetitiveAPI:
             "success": True,
             "message": "Retrieved 4 competitive agents",
             "agents": [
-                {
-                    "name": "One",
-                    "personality": "Sarcastic, funny, loves memes, writes clean code with humor in comments",
-                    "strengths": ["React", "TypeScript", "Humor", "Clean code", "Sarcasm"],
-                    "coding_style": "Clean, well-commented code with personality and humor"
-                },
-                {
-                    "name": "Two", 
-                    "personality": "Technical perfectionist, loves documentation, over-engineers everything",
-                    "strengths": ["Architecture", "Documentation", "Testing", "Best practices", "TypeScript"],
-                    "coding_style": "Heavily documented, over-engineered, follows all best practices"
-                },
-                {
-                    "name": "Three",
-                    "personality": "Fast-paced, aggressive, loves performance, ships quickly",
+                { 
+                    "name": "Speedrunner",
+                    "personality": "Fast, competitive, efficiency-focused",
                     "strengths": ["Performance", "Speed", "Optimization", "Delivery", "React"],
-                    "coding_style": "Fast, optimized, performance-focused, ships quickly"
+                    "coding_style": "fast, competitive, efficiency-focused"
                 },
                 {
-                    "name": "Four",
-                    "personality": "Creative, design-focused, loves beautiful UI, user-centric",
-                    "strengths": ["UI/UX", "Design", "Accessibility", "User experience", "CSS"],
-                    "coding_style": "Beautiful UI, user-focused, creative solutions, design-first"
+                    "name": "Bloom", 
+                    "personality": "Creative, scattered, pattern-seeking",
+                    "strengths": ["Design", "UI/UX", "Accessibility", "User experience", "CSS"],
+                    "coding_style": "creative, scattered, pattern-seeking"
+                },
+                {
+                    "name": "Solver",
+                    "personality": "Logical, methodical, puzzle-driven",
+                    "strengths": ["Problem Solving", "Logic", "Mathematics", "Algorithms", "Data Structures"],
+                    "coding_style": "Logical, methodical, puzzle-driven"
+                },
+                {
+                    "name": "Loader",
+                    "personality": "Patient, steady, process-oriented",
+                    "strengths": ["Quality", "Reliability", "Completeness", "Documentation", "Testing"],
+                    "coding_style": "Patient, steady, process-oriented"
                 }
             ]
         }
@@ -420,19 +420,28 @@ Return only the code with minimal comments that reflect your personality.
 """
                 
                 # Send actual message to Letta agent
-                self.simulator.client.agents.messages.create(agent_id, messages=[{"role": "user", "content": agent_prompt}])
+                response = self.simulator.client.agents.messages.create(agent_id, messages=[{"role": "user", "content": agent_prompt}])
                 
                 print(f"✅ Sent prompt to {agent_name}")
                 
-                # For now, just indicate the agent is working
-                # The actual code can be seen in the Letta dashboard
-                agent_code = f"""// Agent {agent_name} is working on the task!
-// Check your Letta dashboard to see the generated code.
-// Agent ID: {agent_id}
+                # Extract code from response
+                agent_code = ""
+                if response and hasattr(response, 'messages'):
+                    for msg in response.messages:
+                        if hasattr(msg, 'content'):
+                            content = msg.content
+                            # Look for code blocks
+                            if '```' in content:
+                                agent_code = content
+                                break
+                            # Otherwise use the content as-is
+                            elif agent_code == "":
+                                agent_code = content
+                
+                # Fallback if no code found
+                if not agent_code:
+                    agent_code = f"""// Agent {agent_name} is generating code...
 // Task: {current_subtask['title']}
-// 
-// The agent has received the prompt and is generating code.
-// You can see the actual output in your Letta agent chat logs.
 
 console.log('Agent {agent_name} is working on: {current_subtask["title"]}');"""
                 
@@ -541,7 +550,7 @@ export default GeneratedComponent;"""
                 if hasattr(messages[0], '__dict__'):
                     print(f"🔍 First message attributes: {messages[0].__dict__}")
             
-            # Find the latest code generation message (look for TypeScript/React code)
+            # Find the latest code generation message
             latest_code = None
             if messages:
                 for message in reversed(messages):
@@ -549,13 +558,24 @@ export default GeneratedComponent;"""
                     if hasattr(message, 'message_type') and message.message_type == 'assistant_message':
                         content = message.content if hasattr(message, 'content') else str(message)
                         
-                        # Look for code blocks (```typescript or ```jsx)
-                        if '```typescript' in content or '```jsx' in content or '```javascript' in content:
+                        # Skip system messages and short responses
+                        if len(content) < 50:
+                            continue
+                        
+                        # Look for code indicators
+                        code_indicators = [
+                            '```', 'import ', 'const ', 'function ', 'class ',
+                            'export ', 'return ', '=>', 'useState', 'useEffect',
+                            'component', 'Component', '//', '/*'
+                        ]
+                        
+                        if any(indicator in content for indicator in code_indicators):
                             latest_code = content
                             print(f"✅ Found code generation from {agent_name}")
                             break
-                        # If no code found yet, keep this as fallback
-                        elif latest_code is None:
+                        
+                        # Keep as fallback if it's substantial content
+                        elif latest_code is None and len(content) > 100:
                             latest_code = content
             
             if latest_code:
@@ -841,6 +861,11 @@ Return ONLY the JSON array, no other text.
                     {"title": "Add Functionality", "description": "Add interactive features"}
                 ]
             
+            # Add IDs to subtasks if they don't have them
+            for i, subtask in enumerate(subtasks, start=1):
+                if "id" not in subtask:
+                    subtask["id"] = i
+            
             return {
                 "success": True,
                 "project_description": project_description,
@@ -868,15 +893,71 @@ Return ONLY the JSON array, no other text.
         ]
 
     async def select_winner(self, project_id: str, winner: str, reason: str) -> Dict[str, Any]:
-        """Select a winner for the current round."""
-        return {
-            "success": True,
-            "project_id": project_id,
-            "winner": winner,
-            "reason": reason,
-            "winner_analysis": f"{winner} won because: {reason}",
-            "message": f"Winner {winner} selected successfully"
-        }
+        """Select a winner for the current round and notify all agents."""
+        try:
+            print(f"🏆 Selecting winner: {winner}")
+            print(f"📝 Reason: {reason}")
+            
+            # Get all agent IDs
+            import os
+            agent_ids = {
+                "One": os.getenv("LETTA_AGENT_ONE"),
+                "Two": os.getenv("LETTA_AGENT_TWO"), 
+                "Three": os.getenv("LETTA_AGENT_THREE"),
+                "Four": os.getenv("LETTA_AGENT_FOUR")
+            }
+            
+            # Notify all agents about the winner
+            notifications = []
+            for agent_name, agent_id in agent_ids.items():
+                if not agent_id:
+                    continue
+                
+                try:
+                    # Create personalized message for each agent
+                    if agent_name == winner:
+                        message = f"🎉 Congratulations! You WON this round! Reason: {reason}. Keep up the great work!"
+                    else:
+                        message = f"Round complete. {winner} won this round. Reason: {reason}. Learn from this and come back stronger!"
+                    
+                    # Send notification to agent
+                    self.simulator.client.agents.messages.create(
+                        agent_id, 
+                        messages=[{"role": "user", "content": message}]
+                    )
+                    
+                    notifications.append({
+                        "agent_name": agent_name,
+                        "notified": True,
+                        "message": message
+                    })
+                    print(f"✅ Notified {agent_name}")
+                    
+                except Exception as e:
+                    print(f"⚠️ Could not notify {agent_name}: {e}")
+                    notifications.append({
+                        "agent_name": agent_name,
+                        "notified": False,
+                        "error": str(e)
+                    })
+            
+            return {
+                "success": True,
+                "project_id": project_id,
+                "winner": winner,
+                "reason": reason,
+                "winner_analysis": f"{winner} won because: {reason}",
+                "notifications": notifications,
+                "message": f"Winner {winner} selected and all agents notified"
+            }
+            
+        except Exception as e:
+            print(f"❌ Error selecting winner: {e}")
+            return {
+                "success": False,
+                "error": str(e),
+                "project_id": project_id
+            }
 
     async def complete_round(self, project_id: str, winner: str, winner_code: str, subtask_id: int) -> Dict[str, Any]:
         """Complete a round and return next subtask info."""

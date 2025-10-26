@@ -127,6 +127,34 @@
   border: 1px solid rgba(255, 255, 255, 0.1);
   font-family: 'Geist Mono', monospace;
   word-wrap: break-word;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.orchestration-container .chat-message.agent-message {
+  background: rgba(78, 205, 196, 0.1);
+  border-left: 3px solid #4ecdc4;
+}
+
+.orchestration-container .chat-message.user-message {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.orchestration-container .message-speaker {
+  font-weight: 600;
+  color: #4ecdc4;
+  flex-shrink: 0;
+}
+
+.orchestration-container .message-text {
+  flex: 1;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.orchestration-container .message-emotion {
+  flex-shrink: 0;
+  font-size: 12px;
   flex-shrink: 0;
 }
 

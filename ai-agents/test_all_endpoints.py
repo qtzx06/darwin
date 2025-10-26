@@ -224,6 +224,139 @@ class EndpointTester:
             for i, subtask in enumerate(subtasks, 1):
                 print(f"  {i}. {subtask.get('title', 'Unknown')}: {subtask.get('description', 'No description')[:50]}...")
         
+        # VOICE SYSTEM TESTS
+        self.print_header("VOICE SYSTEM TESTS")
+        
+        # Test 17: Create Battle Room
+        self.print_header("TEST 17: Create Battle Room (LiveKit)")
+        voice_project_id = f"voice_test_{int(time.time())}"
+        room_data = {"project_id": voice_project_id}
+        room_result = self.test_endpoint("POST", "/api/livekit/create-battle-room", room_data)
+        
+        room_name = None
+        if room_result and room_result.get('success'):
+            room_name = room_result.get('room_name')
+            print(f"🎙️ Room Name: {room_name}")
+        else:
+            # Use mock room name for testing even if LiveKit not configured
+            room_name = f"darwin-battle-{voice_project_id}"
+            print(f"⚠️ LiveKit not configured, using mock room: {room_name}")
+        
+        # Test 18: Join Room
+        self.print_header("TEST 18: Join Room")
+        if room_name:
+            join_data = {
+                "room_name": room_name,
+                "user_name": "TestUser"
+            }
+            join_result = self.test_endpoint("POST", "/api/livekit/join-room", join_data)
+        
+        # Test 19: Set Mode - Commentary
+        self.print_header("TEST 19: Set Mode - Commentary")
+        if room_name:
+            mode_data = {
+                "room_name": room_name,
+                "mode": "commentary"
+            }
+            mode_result = self.test_endpoint("POST", "/api/livekit/set-mode", mode_data)
+        
+        # Test 20: Ask Commentator
+        self.print_header("TEST 20: Ask Commentator")
+        if room_name:
+            commentator_data = {
+                "room_name": room_name,
+                "question": "What's happening in the battle?"
+            }
+            commentator_result = self.test_endpoint("POST", "/api/livekit/ask-commentator", commentator_data, timeout=30)
+            
+            if commentator_result and commentator_result.get('success'):
+                response = commentator_result.get('response_text', '')
+                print(f"🎙️ Commentator Response: {response[:100]}..." if len(response) > 100 else f"🎙️ Commentator Response: {response}")
+        
+        # Test 21: Set Mode - Agent
+        self.print_header("TEST 21: Set Mode - Agent")
+        if room_name:
+            mode_data = {
+                "room_name": room_name,
+                "mode": "agent"
+            }
+            mode_result = self.test_endpoint("POST", "/api/livekit/set-mode", mode_data)
+        
+        # Test 22: Ask Agent
+        self.print_header("TEST 22: Ask Agent (Agent One)")
+        if room_name:
+            agent_data = {
+                "room_name": room_name,
+                "agent_name": "One",
+                "question": "How's your code looking?"
+            }
+            agent_result = self.test_endpoint("POST", "/api/livekit/ask-agent", agent_data, timeout=30)
+            
+            if agent_result and agent_result.get('success'):
+                response = agent_result.get('response_text', '')
+                print(f"🤖 Agent One Response: {response[:100]}..." if len(response) > 100 else f"🤖 Agent One Response: {response}")
+        
+        # Test 23: Agent Reactions
+        self.print_header("TEST 23: Agent Reactions")
+        if room_name:
+            reaction_data = {
+                "room_name": room_name,
+                "event_type": "code_submitted",
+                "context": {
+                    "agent_stats": {
+                        "One": {"wins": 2},
+                        "Two": {"wins": 1},
+                        "Three": {"wins": 1},
+                        "Four": {"wins": 0}
+                    },
+                    "total_rounds": 4
+                }
+            }
+            reaction_result = self.test_endpoint("POST", "/api/livekit/agent-reaction", reaction_data, timeout=30)
+            
+            if reaction_result and reaction_result.get('success'):
+                reactions = reaction_result.get('agent_responses', [])
+                print(f"🎭 Generated {len(reactions)} agent reactions:")
+                for reaction in reactions:
+                    agent_name = reaction.get('agent_name')
+                    text = reaction.get('response_text', '')
+                    emotion = reaction.get('emotion_level', 0)
+                    print(f"   • {agent_name} (emotion: {emotion}): {text[:60]}..." if len(text) > 60 else f"   • {agent_name} (emotion: {emotion}): {text}")
+        
+        # Test 24: Get Agent Config
+        self.print_header("TEST 24: Get Agent Voice Config")
+        config_result = self.test_endpoint("GET", "/api/livekit/agent-config")
+        
+        if config_result and config_result.get('success'):
+            agent_config = config_result.get('agent_config', {})
+            print(f"🎤 Agent Voice Configuration:")
+            for agent_name, config in agent_config.items():
+                print(f"   • {agent_name}:")
+                print(f"     Voice ID: {config.get('voice_id')}")
+                print(f"     Personality: {config.get('personality')}")
+                print(f"     Style: {config.get('speech_style')}")
+        
+        # Test 25: Get Transcript
+        self.print_header("TEST 25: Get Transcript")
+        if room_name:
+            transcript_result = self.test_endpoint("GET", f"/api/livekit/get-transcript?room_name={room_name}")
+            
+            if transcript_result and transcript_result.get('success'):
+                transcript = transcript_result.get('transcript', [])
+                print(f"📝 Transcript has {len(transcript)} messages")
+                if transcript:
+                    print("   Last 3 messages:")
+                    for msg in transcript[-3:]:
+                        speaker = msg.get('speaker', 'Unknown')
+                        text = msg.get('text', '')
+                        time_str = msg.get('time_formatted', '')
+                        print(f"   [{time_str}] {speaker}: {text[:50]}..." if len(text) > 50 else f"   [{time_str}] {speaker}: {text}")
+        
+        # Test 26: Room Status
+        self.print_header("TEST 26: Room Status")
+        if room_name:
+            status_result = self.test_endpoint("GET", f"/api/livekit/room-status?room_name={room_name}")
+        
         # Summary
         self.print_header("TEST SUMMARY")
         total_tests = len(self.test_results)
