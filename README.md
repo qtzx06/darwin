@@ -19,28 +19,50 @@ Each agent has its own personality, processing style, and unique 3D visualizatio
 
 ## 🔗 Sui Blockchain Integration
 
-### On-Chain Voting System
+### On-Chain Voting & Tipping System
 
-Darwin leverages **Sui blockchain** to create a transparent, verifiable voting mechanism:
+Darwin leverages **Sui blockchain** to create a transparent, verifiable voting mechanism with integrated agent wallets for tipping:
 
 - **Smart Contract**: Written in Move language, deployed on Sui devnet
-- **Sponsored Transactions**: Users can vote without needing a wallet or crypto
-- **Real-Time Updates**: Vote counts fetched directly from blockchain every 10 seconds
-- **Zero Cost for Users**: All gas fees sponsored by the platform
+- **Dual Voting System**: Free sponsored votes OR vote with SUI tips
+- **Agent Wallets**: Each agent has their own Sui address to receive tips
+- **Real-Time Updates**: Vote counts and agent earnings fetched every 10 seconds
+- **User Choice**: Vote free (we pay gas) or connect wallet to tip agents
 
 ### How It Works
 
-1. **User Votes**: Click the thumbs up button on any agent
+#### Free Voting (Sponsored)
+1. **User Votes**: Click "Vote Free" button on any agent
 2. **Backend Sponsors**: Serverless function signs transaction with platform wallet
 3. **Blockchain Confirms**: Vote recorded on Sui devnet in ~400ms
 4. **UI Updates**: New vote count appears within 10 seconds
+5. **Zero Cost**: All gas fees sponsored by the platform
+
+#### Tipping System (User-Signed)
+1. **Connect Wallet**: Click "Connect Wallet" button (supports Sui Wallet, Suiet, Ethos)
+2. **Choose Agent**: Expand agent card and click "💎 Tip Agent"
+3. **Select Amount**: Choose preset (0.1, 0.5, 1.0 SUI) or enter custom amount
+4. **Sign Transaction**: Wallet popup asks for approval
+5. **Tip Sent**: SUI transferred directly to agent's wallet address
+6. **Vote Recorded**: Vote count increments + agent earnings displayed
 
 ### Smart Contract Details
 
 - **Network**: Sui Devnet
-- **Package ID**: `0xcf1f3a68ade5af6ecd417e8f71cc3d11ca19cfa7d5d07244962161a83f21118e`
-- **VoteRegistry ID**: `0x28ab822cc91b6daf3c6e6f9ba087713ec956b9369d4222f13d196f6532f82a4b`
-- **Explorer**: [View on Sui Explorer](https://devnet.suivision.xyz/object/0x28ab822cc91b6daf3c6e6f9ba087713ec956b9369d4222f13d196f6532f82a4b)
+- **Package ID**: `0xe649e16e62ffeaa9fdf8e2132e29c5704ac70292e0c73e4faf01313d66270c55`
+- **VoteRegistry ID**: `0xf87ad1c43397ce66942ff74b15d367c57842d6aaf1dbea4e1a195f0eead405c3`
+- **Explorer**: [View on Sui Explorer](https://devnet.suivision.xyz/object/0xf87ad1c43397ce66942ff74b15d367c57842d6aaf1dbea4e1a195f0eead405c3)
+
+### Agent Wallet Addresses
+
+Each agent has their own Sui address to receive tips:
+
+- **Speedrunner**: `0xb77755f36b8af6e50a601606713f7be643a4beb7c9da534d852a028edf1e3ea0`
+- **Bloom**: `0x0f49ec7048b42e6139d2d22b9acd078807426b94a26c31e3632366f34b84d513`
+- **Solver**: `0xaba9b0ab7fbd9963adc13ddc5468f57f06f2b54fc46390a31a646ba12a88f401`
+- **Loader**: `0x3efa42d7ae0c18f26fc6a91fca387ee64d4c542a523f5862d6cede24ed448bda`
+
+You can view agent earnings in real-time on each agent card or by checking their addresses on [Sui Explorer](https://devnet.suivision.xyz/).
 
 ## 🏆 Betting & Competition
 
@@ -67,6 +89,8 @@ Check live rankings:
 - **Three.js** - 3D graphics and visualizations
 - **Framer Motion** - Smooth animations
 - **@mysten/sui** - Sui blockchain SDK
+- **@mysten/dapp-kit** - Sui wallet integration
+- **@tanstack/react-query** - Data fetching and caching
 
 ### Backend
 - **Vercel Serverless Functions** - API endpoints
@@ -123,7 +147,9 @@ SPONSOR_MNEMONIC="your twelve word mnemonic here"
 4. Deploy!
 
 ### Environment Variables (Vercel)
-- `SPONSOR_MNEMONIC` - Required for sponsoring vote transactions
+- `SPONSOR_MNEMONIC` - Required for sponsoring free vote transactions
+
+**Note**: Agent wallet private keys are optional and only needed if agents need to spend their earned SUI. For receive-only tips, private keys can be kept offline or destroyed.
 
 ## 🎮 Usage
 
@@ -131,29 +157,38 @@ SPONSOR_MNEMONIC="your twelve word mnemonic here"
 1. Visit the site
 2. Watch agents process tasks in real-time
 3. Click on any agent card to expand
-4. Click the thumbs up button to vote
-5. Vote is recorded on Sui blockchain instantly!
+4. **Vote for free**: Click "Vote Free" button (no wallet needed)
+5. **Tip an agent**: 
+   - Click "Connect Wallet" in the header
+   - Select your preferred Sui wallet (Sui Wallet, Suiet, Ethos, etc.)
+   - Click "💎 Tip Agent" on your favorite agent
+   - Choose tip amount (0.1, 0.5, 1.0 SUI or custom)
+   - Approve transaction in your wallet
+6. View agent earnings displayed in real-time!
 
 ### For Developers
 
 #### Vote Manually via CLI
+
+**Free Vote (no tip):**
 ```bash
 # Vote for Speedrunner (0)
 sui client call --package 0xcf1f3a68ade5af6ecd417e8f71cc3d11ca19cfa7d5d07244962161a83f21118e --module agent_votes --function vote --args 0x28ab822cc91b6daf3c6e6f9ba087713ec956b9369d4222f13d196f6532f82a4b 0 --gas-budget 10000000
-
-# Vote for Bloom (1)
-sui client call --package 0xcf1f3a68ade5af6ecd417e8f71cc3d11ca19cfa7d5d07244962161a83f21118e --module agent_votes --function vote --args 0x28ab822cc91b6daf3c6e6f9ba087713ec956b9369d4222f13d196f6532f82a4b 1 --gas-budget 10000000
-
-# Vote for Solver (2)
-sui client call --package 0xcf1f3a68ade5af6ecd417e8f71cc3d11ca19cfa7d5d07244962161a83f21118e --module agent_votes --function vote --args 0x28ab822cc91b6daf3c6e6f9ba087713ec956b9369d4222f13d196f6532f82a4b 2 --gas-budget 10000000
-
-# Vote for Loader (3)
-sui client call --package 0xcf1f3a68ade5af6ecd417e8f71cc3d11ca19cfa7d5d07244962161a83f21118e --module agent_votes --function vote --args 0x28ab822cc91b6daf3c6e6f9ba087713ec956b9369d4222f13d196f6532f82a4b 3 --gas-budget 10000000
 ```
 
-#### Query Vote Counts
+**Vote with Tip (1 SUI example):**
 ```bash
+# Vote for Speedrunner with 1 SUI tip
+sui client call --package 0xcf1f3a68ade5af6ecd417e8f71cc3d11ca19cfa7d5d07244962161a83f21118e --module agent_votes --function vote_with_tip --args 0x28ab822cc91b6daf3c6e6f9ba087713ec956b9369d4222f13d196f6532f82a4b 0 --gas-budget 10000000 --split-coins gas [1000000000]
+```
+
+#### Query Vote Counts and Agent Wallets
+```bash
+# View vote registry (includes vote counts and agent wallet addresses)
 sui client object 0x28ab822cc91b6daf3c6e6f9ba087713ec956b9369d4222f13d196f6532f82a4b
+
+# Check agent wallet balance (example: Speedrunner)
+sui client balance 0xb77755f36b8af6e50a601606713f7be643a4beb7c9da534d852a028edf1e3ea0
 ```
 
 ## 📁 Project Structure
@@ -210,9 +245,12 @@ darwin/
 
 ## 🔐 Security
 
-- Private keys stored in environment variables only
+- Platform sponsor keys stored in environment variables only
+- Agent wallet private keys optional (receive-only addresses)
 - `.env` file excluded from version control
-- Sponsored transactions prevent user wallet exposure
+- Sponsored transactions allow gasless voting for users
+- User wallets connect via standard Sui dApp Kit (non-custodial)
+- All tip transactions signed by user's wallet (platform never touches user funds)
 - Rate limiting on API endpoints (recommended for production)
 
 ## 🛠️ Development

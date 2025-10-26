@@ -6,8 +6,8 @@ import { Ed25519Keypair } from '@mysten/sui/keypairs/ed25519';
 const suiClient = new SuiClient({ url: getFullnodeUrl('devnet') });
 
 // Contract IDs
-const PACKAGE_ID = '0xcf1f3a68ade5af6ecd417e8f71cc3d11ca19cfa7d5d07244962161a83f21118e';
-const REGISTRY_ID = '0x28ab822cc91b6daf3c6e6f9ba087713ec956b9369d4222f13d196f6532f82a4b';
+const PACKAGE_ID = '0xe649e16e62ffeaa9fdf8e2132e29c5704ac70292e0c73e4faf01313d66270c55';
+const REGISTRY_ID = '0xf87ad1c43397ce66942ff74b15d367c57842d6aaf1dbea4e1a195f0eead405c3';
 
 // Load keypair from environment variable
 const MNEMONIC = process.env.SPONSOR_MNEMONIC;

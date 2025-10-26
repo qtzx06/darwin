@@ -15,7 +15,7 @@ import { FaReact, FaPython } from 'react-icons/fa';
 import { RiClaudeFill, RiGeminiFill } from 'react-icons/ri';
 import { SiTypescript, SiLangchain } from 'react-icons/si';
 import livekitLogo from '../assets/livekit-text.svg';
-import { getVoteCounts } from '../utils/suiClient';
+import { getVoteCounts, getAgentWalletBalances } from '../utils/suiClient';
 import { startCompetitiveBattle } from '../services/geminiService';
 
 function Orchestration() {
@@ -36,6 +36,12 @@ function Orchestration() {
     loader: 0
   });
   const [blockchainVotes, setBlockchainVotes] = useState({
+    speedrunner: 0,
+    bloom: 0,
+    solver: 0,
+    loader: 0
+  });
+  const [agentBalances, setAgentBalances] = useState({
     speedrunner: 0,
     bloom: 0,
     solver: 0,
@@ -136,6 +142,10 @@ function Orchestration() {
       try {
         const counts = await getVoteCounts();
         setBlockchainVotes(counts);
+        
+        // Also fetch agent wallet balances
+        const balances = await getAgentWalletBalances();
+        setAgentBalances(balances);
       } catch (error) {
         console.error('Failed to fetch blockchain votes:', error);
       }
@@ -584,6 +594,7 @@ function Orchestration() {
             onExpand={handleExpandAgent}
             onLike={handleAgentLike}
             voteCount={blockchainVotes.speedrunner}
+            agentBalance={agentBalances.speedrunner}
             generatedCode={agentCode.speedrunner}
             statusMessage={agentStatus.speedrunner}
           />
@@ -595,6 +606,7 @@ function Orchestration() {
             onLike={handleAgentLike}
             onPreview={(code) => setPreviewCode(code)}
             voteCount={blockchainVotes.bloom}
+            agentBalance={agentBalances.bloom}
             generatedCode={agentCode.bloom}
             statusMessage={agentStatus.bloom}
           />
@@ -605,6 +617,7 @@ function Orchestration() {
             onExpand={handleExpandAgent}
             onLike={handleAgentLike}
             voteCount={blockchainVotes.solver}
+            agentBalance={agentBalances.solver}
             generatedCode={agentCode.solver}
             statusMessage={agentStatus.solver}
           />
@@ -615,6 +628,7 @@ function Orchestration() {
             onExpand={handleExpandAgent}
             onLike={handleAgentLike}
             voteCount={blockchainVotes.loader}
+            agentBalance={agentBalances.loader}
             generatedCode={agentCode.loader}
             statusMessage={agentStatus.loader}
           />
