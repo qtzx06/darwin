@@ -7,11 +7,30 @@ import Commentator from './Commentator';
 import TranscriptPanel from './TranscriptPanel';
 import ChatInput from './ChatInput';
 import HeaderDither from './HeaderDither';
+import LogoLoop from './LogoLoop';
+import { TbBrandThreejs } from 'react-icons/tb';
+import { FaReact, FaPython } from 'react-icons/fa';
+import { RiClaudeFill, RiGeminiFill } from 'react-icons/ri';
+import { SiTypescript, SiLangchain } from 'react-icons/si';
+import livekitLogo from '../assets/livekit-text.svg';
 
 function Orchestration() {
   const [query, setQuery] = useState('');
   const [expandedAgent, setExpandedAgent] = useState(null);
   const containerRef = useRef(null);
+
+  // Logo Loop data
+  const logos = [
+    { node: <TbBrandThreejs style={{ color: 'white' }} />, title: 'Three.js' },
+    { node: <FaReact style={{ color: 'white' }} />, title: 'React' },
+    { node: <RiClaudeFill style={{ color: 'white' }} />, title: 'Claude' },
+    { node: <SiTypescript style={{ color: 'white' }} />, title: 'TypeScript' },
+    { node: <FaPython style={{ color: 'white' }} />, title: 'Python' },
+    { node: <SiLangchain style={{ color: 'white' }} />, title: 'LangChain' },
+    { node: <RiGeminiFill style={{ color: 'white' }} />, title: 'Gemini' },
+    { src: 'https://raw.githubusercontent.com/letta-ai/letta/main/assets/Letta-logo-RGB_GreyonTransparent_cropped_small.png', alt: 'Letta', title: 'Letta' },
+    { node: <img src={livekitLogo} alt="LiveKit" style={{ height: '24px', width: 'auto', filter: 'brightness(0) invert(1)' }} />, title: 'LiveKit' },
+  ];
 
   useEffect(() => {
     // Extract query from URL hash
@@ -78,9 +97,31 @@ function Orchestration() {
         <div className="header-space">
           <HeaderDither />
           <div className="header-content">
-            <img src="/favicon.png" alt="Darwin Logo" className="header-logo" />
-            <span className="header-title">DARWIN</span>
-            <span className="header-subtitle">evolve your agents</span>
+            <div className="header-left">
+              <div className="header-text">
+                <span className="header-title">DARWIN // </span>
+                <span className="header-subtitle">evolve your agents.</span>
+              </div>
+              <div className="header-logo-loop">
+                <LogoLoop
+                  logos={logos}
+                  speed={60}
+                  direction="left"
+                  logoHeight={20}
+                  gap={24}
+                  pauseOnHover={false}
+                  fadeOut={true}
+                />
+              </div>
+            </div>
+            <div className="header-right">
+              {query && (
+                <div className="header-query">
+                  <span className="header-query-label">Query:</span>
+                  <span className="header-query-text">{query}</span>
+                </div>
+              )}
+            </div>
           </div>
         </div>
 

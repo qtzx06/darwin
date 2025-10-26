@@ -46,7 +46,7 @@
   position: fixed;
   top: 0;
   left: 0;
-  right: 30%;
+  right: 0;
   height: 90px;
   z-index: 120;
   overflow: visible;
@@ -57,17 +57,28 @@
   position: absolute;
   top: 20px;
   left: 20px;
+  right: 20px;
   display: flex;
   align-items: center;
-  gap: 10px;
+  justify-content: space-between;
+  gap: 20px;
   z-index: 10;
   pointer-events: auto;
 }
 
-.orchestration-container .header-logo {
-  width: 24px;
-  height: 24px;
-  object-fit: contain;
+.orchestration-container .header-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-shrink: 1;
+  min-width: 0;
+}
+
+.orchestration-container .header-text {
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+  flex-shrink: 0;
 }
 
 .orchestration-container .header-title {
@@ -90,6 +101,43 @@
   letter-spacing: 0.02em;
   text-shadow: 0 0 15px rgba(255, 255, 255, 0.3);
   opacity: 0.9;
+  margin-bottom: 2px;
+}
+
+.orchestration-container .header-logo-loop {
+  max-width: 300px;
+  flex-shrink: 1;
+  min-width: 0;
+}
+
+.orchestration-container .header-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+.orchestration-container .header-query {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  font-family: 'Geist Mono', monospace;
+  font-size: 0.75rem;
+  color: white;
+}
+
+.orchestration-container .header-query-label {
+  font-weight: 600;
+  opacity: 0.7;
+}
+
+.orchestration-container .header-query-text {
+  font-weight: 400;
+  opacity: 0.9;
+  max-width: 300px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 /* Bento Grid Layout */
@@ -186,18 +234,21 @@
 
   .orchestration-container .header-space {
     height: 80px;
-    right: 25%;
   }
 
   .orchestration-container .header-content {
     top: 18px;
     left: 18px;
-    gap: 8px;
+    right: 18px;
+    gap: 16px;
   }
 
-  .orchestration-container .header-logo {
-    width: 22px;
-    height: 22px;
+  .orchestration-container .header-left {
+    gap: 12px;
+  }
+
+  .orchestration-container .header-text {
+    gap: 8px;
   }
 
   .orchestration-container .header-title {
@@ -206,6 +257,19 @@
 
   .orchestration-container .header-subtitle {
     font-size: 0.7rem;
+    margin-bottom: 1.5px;
+  }
+
+  .orchestration-container .header-logo-loop {
+    max-width: 250px;
+  }
+
+  .orchestration-container .header-query {
+    font-size: 0.7rem;
+  }
+
+  .orchestration-container .header-query-text {
+    max-width: 250px;
   }
 
   .orchestration-container .bento-grid {
@@ -221,18 +285,23 @@
 
   .orchestration-container .header-space {
     height: 70px;
-    right: 30%;
   }
 
   .orchestration-container .header-content {
     top: 14px;
     left: 14px;
-    gap: 6px;
+    right: 14px;
+    gap: 12px;
+    flex-wrap: wrap;
   }
 
-  .orchestration-container .header-logo {
-    width: 20px;
-    height: 20px;
+  .orchestration-container .header-left {
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  .orchestration-container .header-text {
+    gap: 6px;
   }
 
   .orchestration-container .header-title {
@@ -241,6 +310,19 @@
 
   .orchestration-container .header-subtitle {
     font-size: 0.65rem;
+    margin-bottom: 1px;
+  }
+
+  .orchestration-container .header-logo-loop {
+    max-width: 180px;
+  }
+
+  .orchestration-container .header-query {
+    font-size: 0.65rem;
+  }
+
+  .orchestration-container .header-query-text {
+    max-width: 150px;
   }
 
   .orchestration-container .bento-grid {
