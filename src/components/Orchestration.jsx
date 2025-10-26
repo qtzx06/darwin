@@ -16,7 +16,7 @@ import { RiClaudeFill, RiGeminiFill } from 'react-icons/ri';
 import { SiTypescript, SiLangchain } from 'react-icons/si';
 import livekitLogo from '../assets/livekit-text.svg';
 import { getVoteCounts } from '../utils/suiClient';
-import { competitiveApi } from '../services/api';
+import { startCompetitiveBattle } from '../services/geminiService';
 
 function Orchestration() {
   const [query, setQuery] = useState('');
@@ -46,63 +46,83 @@ function Orchestration() {
   const [cachedProjectId, setCachedProjectId] = useState(null);
   const [agentCode, setAgentCode] = useState({
     speedrunner: null,
-    bloom: `import React, { useState } from 'react';
-
-export function TodoComponent() {
-  const [todos, setTodos] = useState([]);
-  const [input, setInput] = useState('');
-
-  return (
-    <div>
-      <h1>todos</h1>
-      <input
-        autoFocus
-        value={input}
-        onChange={e => setInput(e.target.value)}
-        onKeyPress={e => {
-          if (e.key === 'Enter' && input.trim()) {
-            setTodos([...todos, { id: Date.now(), text: input, done: false }]);
-            setInput('');
-          }
-        }}
-        placeholder="What needs to be done?"
-      />
-      <ul>
-        {todos.map(t => (
-          <li key={t.id}>
-            <input
-              type="checkbox"
-              checked={t.done}
-              onChange={() => setTodos(todos.map(x => x.id === t.id ? { ...x, done: !x.done } : x))}
-            />
-            <span style={{ textDecoration: t.done ? 'line-through' : 'none' }}>
-              {t.text}
-            </span>
-            <button onClick={() => setTodos(todos.filter(x => x.id !== t.id))}>×</button>
-          </li>
-        ))}
-      </ul>
-      {todos.length > 0 && (
-        <footer>
-          <span>{todos.filter(t => !t.done).length} left</span>
-          {todos.some(t => t.done) && (
-            <button onClick={() => setTodos(todos.filter(t => !t.done))}>clear completed</button>
-          )}
-        </footer>
-      )}
-    </div>
-  );
-}`,
+    bloom: null,
     solver: null,
     loader: null
   });
   const [previewCode, setPreviewCode] = useState(null);
+  const banterIntervalRef = useRef(null);
 
   // Debug: Log when previewCode changes
   useEffect(() => {
     console.log('Preview code state:', previewCode ? 'HAS CODE' : 'NULL');
   }, [previewCode]);
   const containerRef = useRef(null);
+
+  // Autonomous banter loop - agents randomly review each other's code
+  useEffect(() => {
+    const startAutonomousBanter = async () => {
+      const { generateRandomBanter, shouldAgentsSpontaneouslyBanter } = await import('../services/geminiService');
+
+      const runBanterCycle = async () => {
+        // Check if agents have code and should banter
+        const hasCode = Object.values(agentCode).some(code => code);
+        if (!hasCode || isBattleRunning) return;
+
+        const shouldBanter = await shouldAgentsSpontaneouslyBanter(chatMessages, agentCode);
+        if (!shouldBanter) return;
+
+        // Pick a random agent to speak
+        const agents = ['speedrunner', 'bloom', 'solver', 'loader'];
+        const activeAgents = agents.filter(id => agentCode[id]);
+        if (activeAgents.length === 0) return;
+
+        const randomAgent = activeAgents[Math.floor(Math.random() * activeAgents.length)];
+
+        try {
+          const banter = await generateRandomBanter(randomAgent, agentCode, chatMessages);
+
+          if (banter) {
+            const agentNames = {
+              speedrunner: 'SPEEDRUNNER',
+              bloom: 'BLOOM',
+              solver: 'SOLVER',
+              loader: 'LOADER'
+            };
+
+            setChatMessages(prev => [...prev, {
+              text: `[${agentNames[randomAgent]}] ${banter}`,
+              type: 'agent',
+              timestamp: Date.now() + Math.random()
+            }]);
+          }
+        } catch (error) {
+          console.error('Autonomous banter failed:', error);
+        }
+      };
+
+      // Run banter check every 12-20 seconds (randomized)
+      const scheduleNextBanter = () => {
+        const delay = 12000 + Math.random() * 8000; // 12-20s
+        banterIntervalRef.current = setTimeout(() => {
+          runBanterCycle();
+          scheduleNextBanter();
+        }, delay);
+      };
+
+      scheduleNextBanter();
+    };
+
+    if (agentsReady) {
+      startAutonomousBanter();
+    }
+
+    return () => {
+      if (banterIntervalRef.current) {
+        clearTimeout(banterIntervalRef.current);
+      }
+    };
+  }, [agentsReady, agentCode, chatMessages, isBattleRunning]);
 
   // Fetch blockchain vote counts on mount and every 10 seconds
   useEffect(() => {
@@ -144,49 +164,28 @@ export function TodoComponent() {
     }
   }, []);
 
-  // Preload agents when query is available
+  // Agents are always ready in frontend mode
   useEffect(() => {
-    if (!query || cachedProjectId) return;
+    if (query && !agentsReady) {
+      setChatMessages(prev => [...prev, {
+        text: '[SERVER] Agents initialized and ready',
+        type: 'server',
+        timestamp: Date.now()
+      }]);
+      setAgentsReady(true);
+    }
+  }, [query, agentsReady]);
 
-    const preloadAgents = async () => {
-      try {
-        console.log('🔄 Preloading agents...');
-        setChatMessages(prev => [...prev, {
-          text: '[SERVER] Preloading agents...',
-          type: 'server',
-          timestamp: Date.now()
-        }]);
-
-        // Submit project and create agents in background
-        const project = await competitiveApi.submitProject(query);
-        setChatMessages(prev => [...prev, {
-          text: `[SERVER] Project submitted: ${project.project_id}`,
-          type: 'server',
-          timestamp: Date.now() + 1
-        }]);
-
-        await competitiveApi.createAgents(project.project_id);
-        setChatMessages(prev => [...prev, {
-          text: '[SERVER] Agents created and ready',
-          type: 'server',
-          timestamp: Date.now() + 2
-        }]);
-
-        setCachedProjectId(project.project_id);
-        setAgentsReady(true);
-        console.log('✅ Agents ready!', project.project_id);
-      } catch (error) {
-        console.error('Failed to preload agents:', error);
-        setChatMessages(prev => [...prev, {
-          text: `[ERROR] Failed to preload agents: ${error.message}`,
-          type: 'error',
-          timestamp: Date.now() + 3
-        }]);
-      }
-    };
-
-    preloadAgents();
-  }, [query, cachedProjectId]);
+  // Auto-start battle when query is loaded and agents are ready
+  useEffect(() => {
+    if (query && agentsReady && !isBattleRunning) {
+      // Small delay to let the UI settle
+      const timer = setTimeout(() => {
+        handleBattleStart();
+      }, 500);
+      return () => clearTimeout(timer);
+    }
+  }, [query, agentsReady]);
 
   // Spotlight effect mouse tracking
   useEffect(() => {
@@ -229,6 +228,91 @@ export function TodoComponent() {
     setChatMessages(prev => [...prev, likeMessage]);
   };
 
+  const handleUserMessage = async (userMessage) => {
+    // Add user message to chat
+    const addChatMessage = (text, type = 'server') => {
+      setChatMessages(prev => [...prev, {
+        text,
+        type,
+        timestamp: Date.now() + Math.random()
+      }]);
+    };
+
+    addChatMessage(`[YOU] ${userMessage}`, 'user');
+
+    // Import the functions
+    const { analyzeFeedback, iterateOnCode, generateAgentReaction, shouldAgentsReact } = await import('../services/geminiService');
+
+    try {
+      // Silently analyze the feedback
+      const analysis = await analyzeFeedback(userMessage, agentCode);
+      console.log('Feedback analysis:', analysis);
+
+      // Check if agents should banter about this
+      const shouldReact = await shouldAgentsReact(userMessage, chatMessages);
+
+      const agentNames = {
+        speedrunner: 'SPEEDRUNNER',
+        bloom: 'BLOOM',
+        solver: 'SOLVER',
+        loader: 'LOADER'
+      };
+
+      // First: ALL agents react with short banter (in random order for chaos)
+      if (shouldReact) {
+        const allAgents = ['speedrunner', 'bloom', 'solver', 'loader'];
+        const shuffled = allAgents.sort(() => Math.random() - 0.5);
+
+        for (const agentId of shuffled) {
+          try {
+            const allCodes = Object.entries(agentCode).map(([id, code]) => ({ agentId: id, code }));
+            const reaction = await generateAgentReaction(agentId, userMessage, analysis, allCodes, chatMessages);
+
+            if (reaction) {
+              addChatMessage(`[${agentNames[agentId]}] ${reaction}`, 'agent');
+              await new Promise(resolve => setTimeout(resolve, 800)); // Stagger reactions
+            }
+          } catch (error) {
+            console.error(`Reaction failed for ${agentId}:`, error);
+          }
+        }
+      }
+
+      // Then: Target agents actually iterate on their code
+      const allCodes = Object.entries(agentCode).map(([id, code]) => ({ agentId: id, code }));
+
+      for (const targetAgentId of analysis.targetAgents) {
+        if (agentCode[targetAgentId]) {
+          try {
+            addChatMessage(`[${agentNames[targetAgentId]}] updating my code rq...`, 'agent');
+
+            const improvedCode = await iterateOnCode(
+              targetAgentId,
+              agentCode[targetAgentId],
+              analysis.suggestions,
+              allCodes
+            );
+
+            // Update the agent's code
+            setAgentCode(prev => ({
+              ...prev,
+              [targetAgentId]: improvedCode
+            }));
+
+            addChatMessage(`[${agentNames[targetAgentId]}] aight updated`, 'agent');
+
+            await new Promise(resolve => setTimeout(resolve, 800));
+          } catch (error) {
+            console.error(`Iteration failed for ${targetAgentId}:`, error);
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Failed to process user message:', error);
+      addChatMessage('[ERROR] failed to process that', 'error');
+    }
+  };
+
   const handleBattleStart = async () => {
     if (!query || isBattleRunning || !agentsReady) return;
 
@@ -237,53 +321,103 @@ export function TodoComponent() {
       setChatMessages(prev => [...prev, {
         text,
         type,
-        timestamp: Date.now() + Math.random() // Add randomness to prevent duplicate keys
+        timestamp: Date.now() + Math.random()
       }]);
     };
 
-    addChatMessage('[SERVER] AI battle started, agents generating code...');
+    addChatMessage('[SERVER] AI battle started, agents generating code in parallel...');
+
+    const agentProgress = {
+      speedrunner: { done: false, code: '' },
+      bloom: { done: false, code: '' },
+      solver: { done: false, code: '' },
+      loader: { done: false, code: '' }
+    };
 
     try {
-      // Use cached project ID (agents already created!)
-      const projectId = cachedProjectId;
-      console.log('Using cached project:', projectId);
-      addChatMessage(`[SERVER] Using project: ${projectId}`);
+      // Start competitive battle with all 4 agents
+      await startCompetitiveBattle(
+        query,
+        // onAgentChunk - called as tokens stream in
+        (agentId, chunk, fullText) => {
+          const agentNames = {
+            speedrunner: 'SPEEDRUNNER',
+            bloom: 'BLOOM',
+            solver: 'SOLVER',
+            loader: 'LOADER'
+          };
 
-      // Orchestrate project into subtasks
-      const orchestration = await competitiveApi.orchestrateProject(query);
-      console.log('Orchestration:', orchestration);
-      addChatMessage(`[SERVER] Orchestrated ${orchestration.subtasks?.length || 0} subtasks`);
+          // Update the agent's transcript with streaming text
+          setAgentCode(prev => ({
+            ...prev,
+            [agentId]: fullText
+          }));
 
-      if (orchestration.subtasks && orchestration.subtasks.length > 0) {
-        const firstSubtask = orchestration.subtasks[0];
+          agentProgress[agentId].code = fullText;
 
-        // Start work on first subtask
-        await competitiveApi.startWork(projectId, firstSubtask.id);
-        console.log('Work started on subtask:', firstSubtask.id);
-        addChatMessage(`[SERVER] Work started on subtask: ${firstSubtask.id}`);
+          // Log chunks to chat occasionally (every ~200 chars to avoid spam)
+          if (fullText.length % 200 === 0 && fullText.length > 0) {
+            addChatMessage(`[${agentNames[agentId]}] ${fullText.length} chars generated...`, 'agent');
+          }
+        },
+        // onAgentComplete - called when an agent finishes
+        (agentId, fullText) => {
+          agentProgress[agentId].done = true;
+          agentProgress[agentId].code = fullText;
 
-        // Get results from all agents
-        const agentNames = ['One', 'Two', 'Three', 'Four'];
-        addChatMessage('[SERVER] Collecting results from agents...');
-        const results = await competitiveApi.getResults(projectId, agentNames);
-        console.log('Agent results:', results);
+          // Set final code (no chat message)
+          setAgentCode(prev => ({
+            ...prev,
+            [agentId]: fullText
+          }));
+        },
+        // onBattleComplete - called when all agents finish
+        async (results) => {
+          addChatMessage('[SERVER] All agents finished! Starting banter phase...');
+          console.log('Battle results:', results);
 
-        if (results.agents && results.agents.length > 0) {
-          // Map agent names to our agent IDs
-          const agentMap = { 'One': 'speedrunner', 'Two': 'bloom', 'Three': 'solver', 'Four': 'loader' };
+          // Now have agents banter about each other's code (random order)
+          const allCodes = results.map(r => ({
+            agentId: r.agentId,
+            code: r.code
+          }));
 
-          const newAgentCode = {};
-          results.agents.forEach(agent => {
-            const agentId = agentMap[agent.agent_name];
-            if (agentId) {
-              newAgentCode[agentId] = agent.code;
+          const { generateAgentBanter } = await import('../services/geminiService');
+
+          const agentNames = {
+            speedrunner: 'SPEEDRUNNER',
+            bloom: 'BLOOM',
+            solver: 'SOLVER',
+            loader: 'LOADER'
+          };
+
+          // Shuffle for chaos
+          const shuffledResults = [...results].sort(() => Math.random() - 0.5);
+
+          for (const result of shuffledResults) {
+            if (result.code) {
+              try {
+                const banter = await generateAgentBanter(
+                  result.agentId,
+                  result.code,
+                  allCodes.filter(c => c.agentId !== result.agentId),
+                  query
+                );
+
+                if (banter) {
+                  addChatMessage(`[${agentNames[result.agentId]}] ${banter}`, 'agent');
+                }
+
+                await new Promise(resolve => setTimeout(resolve, 1000));
+              } catch (error) {
+                console.error(`Banter failed for ${result.agentId}:`, error);
+              }
             }
-          });
+          }
 
-          setAgentCode(newAgentCode);
-          addChatMessage('[SERVER] Battle complete, code generated for all agents');
+          addChatMessage('[SERVER] battle complete!');
         }
-      }
+      );
     } catch (error) {
       console.error('Battle error:', error);
       addChatMessage(`[ERROR] Battle failed: ${error.message}`, 'error');
@@ -412,7 +546,7 @@ export function TodoComponent() {
           />
 
           {/* Chat Input */}
-          <ChatInput externalMessages={chatMessages} />
+          <ChatInput externalMessages={chatMessages} onUserMessage={handleUserMessage} />
 
           {/* Transcript */}
           <TranscriptPanel />

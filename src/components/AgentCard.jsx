@@ -722,11 +722,7 @@ function AgentCard({ agentId, agentName, isExpanded, onExpand, onLike, onPreview
                   )}
                 </div>
                 <div className="agent-preview-side">
-                  {generatedCode ? (
-                    <CodeRenderer code={generatedCode} onClose={null} />
-                  ) : (
-                    <div className="preview-empty">No code generated</div>
-                  )}
+                  <CodeRenderer code={generatedCode} onClose={null} />
                 </div>
               </div>
             ) : (

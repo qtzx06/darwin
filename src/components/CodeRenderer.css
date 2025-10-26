@@ -148,5 +148,14 @@
   color: rgba(255, 255, 255, 0.5);
   text-align: center;
   padding: 40px;
-  font-size: 14px;
+  font-size: 12px;
+  font-family: 'Geist Mono', monospace;
+}
+
+.code-renderer-empty {
+  color: rgba(255, 255, 255, 0.3);
+  text-align: center;
+  padding: 40px;
+  font-size: 12px;
+  font-family: 'Geist Mono', monospace;
 }

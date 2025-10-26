@@ -38,7 +38,7 @@
   letter-spacing: 0.02em;
 }
 
-.orchestration-container .commentator-battle-button {
+.orchestration-container .commentator-volume-button {
   background: rgba(255, 255, 255, 0.1);
   border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: 6px;
@@ -53,35 +53,14 @@
   flex-shrink: 0;
 }
 
-.orchestration-container .commentator-battle-button:hover:not(:disabled) {
+.orchestration-container .commentator-volume-button:hover {
   background: rgba(255, 255, 255, 0.2);
   border-color: rgba(255, 255, 255, 0.3);
+  transform: scale(1.05);
 }
 
-.orchestration-container .commentator-battle-button:active:not(:disabled) {
+.orchestration-container .commentator-volume-button:active {
   transform: scale(0.95);
-}
-
-.orchestration-container .commentator-battle-button:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.orchestration-container .commentator-battle-button.running {
-  background: rgba(240, 176, 208, 0.15);
-  border-color: rgba(240, 176, 208, 0.3);
-  color: #f0b0d0;
-}
-
-.orchestration-container .commentator-battle-button.running:hover {
-  background: rgba(240, 176, 208, 0.15);
-  border-color: rgba(240, 176, 208, 0.3);
-}
-
-.orchestration-container .commentator-battle-button.loading {
-  background: rgba(255, 255, 255, 0.05);
-  border-color: rgba(255, 255, 255, 0.15);
-  color: rgba(255, 255, 255, 0.5);
 }
 
 .orchestration-container .commentator-headshot {

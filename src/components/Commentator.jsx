@@ -8,6 +8,7 @@ function Commentator({ query, onBattleStart, isRunning, agentsReady }) {
   const [isSoundActive, setIsSoundActive] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
   const [loadingMessageIndex, setLoadingMessageIndex] = useState(0);
+  const [isMuted, setIsMuted] = useState(false);
   const audioContextRef = useRef(null);
 
   const loadingMessages = [
@@ -60,6 +61,11 @@ function Commentator({ query, onBattleStart, isRunning, agentsReady }) {
     }
   };
 
+  const toggleMute = () => {
+    setIsMuted(!isMuted);
+    // You can add actual audio muting logic here if needed
+  };
+
   return (
     <div className="glass-card commentator-card">
       <div className="glass-filter"></div>
@@ -68,26 +74,15 @@ function Commentator({ query, onBattleStart, isRunning, agentsReady }) {
       <div className="glass-content">
         <div className="commentator-header">
           <div>
-            <h3>
-              {!agentsReady && query ? loadingMessages[loadingMessageIndex] : 'Start Hunger Games'}
-            </h3>
-            <div className="commentator-description">competitive code generation arena</div>
+            <h3>composer</h3>
+            <div className="commentator-description">autonomous agent orchestration</div>
           </div>
           <button
             type="button"
-            onClick={handleStart}
-            disabled={isRunning || !query || !agentsReady}
-            className={`commentator-battle-button ${isRunning ? 'running' : !agentsReady ? 'loading' : ''}`}
-            onMouseEnter={() => setIsHovered(true)}
-            onMouseLeave={() => setIsHovered(false)}
+            onClick={toggleMute}
+            className="commentator-volume-button"
           >
-            {isRunning ? (
-              <i className="fas fa-circle-notch fa-spin"></i>
-            ) : !agentsReady ? (
-              <i className="fas fa-circle-notch fa-spin"></i>
-            ) : (
-              <i className="fas fa-rocket"></i>
-            )}
+            <i className={isMuted ? "fas fa-volume-mute" : "fas fa-volume-up"}></i>
           </button>
         </div>
         <div className="commentator-headshot">

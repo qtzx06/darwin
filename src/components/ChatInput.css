@@ -147,6 +147,10 @@
   color: #7dd3fc;
 }
 
+.orchestration-container .chat-message-agent .chat-prefix {
+  color: #a78bfa;
+}
+
 .orchestration-container .chat-form {
   flex-shrink: 0;
 }
