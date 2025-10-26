@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@babel/standalone": "^7.28.5",
+    "@elevenlabs/elevenlabs-js": "^2.20.1",
     "@fontsource/geist-mono": "^5.2.7",
     "@google/genai": "^1.27.0",
     "@mysten/dapp-kit": "^0.19.6",
