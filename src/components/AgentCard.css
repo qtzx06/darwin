@@ -144,7 +144,7 @@
   justify-content: space-between;
   gap: 10px;
   position: relative;
-  z-index: 10;
+  z-index: 500;
 }
 
 /* Agent name */
@@ -189,7 +189,7 @@
 /* Agent thumbs up button */
 .orchestration-container .agent-thumbs {
   position: relative;
-  z-index: 300;
+  z-index: 500;
   background: rgba(255, 255, 255, 0.1);
   border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: 6px;

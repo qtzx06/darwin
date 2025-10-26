@@ -151,7 +151,7 @@ async function loadResources() {
 </async_loader>`
 };
 
-function AgentCard({ agentId, agentName, isExpanded, onExpand }) {
+function AgentCard({ agentId, agentName, isExpanded, onExpand, onLike }) {
   const cardRef = useRef(null);
 
   const handleMouseMove = (e) => {
@@ -189,9 +189,10 @@ function AgentCard({ agentId, agentName, isExpanded, onExpand }) {
     onExpand(agentId);
   };
 
-  const handleThumbsUp = () => {
+  const handleThumbsUp = (e) => {
+    e.stopPropagation(); // Prevent backdrop click
     console.log('Thumbs up:', agentId);
-    // TODO: Handle thumbs up action
+    onLike(agentName); // Send like message to chat
     onExpand(null); // Close the expanded card
   };
 

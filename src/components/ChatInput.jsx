@@ -1,9 +1,15 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import './ChatInput.css';
 
-function ChatInput() {
+function ChatInput({ externalMessages = [] }) {
   const [inputValue, setInputValue] = useState('');
   const [messages, setMessages] = useState([]);
+
+  useEffect(() => {
+    if (externalMessages.length > 0) {
+      setMessages(prev => [...prev, ...externalMessages.slice(prev.length - externalMessages.length)]);
+    }
+  }, [externalMessages]);
 
   const handleSubmit = (e) => {
     e.preventDefault();

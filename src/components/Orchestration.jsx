@@ -18,6 +18,7 @@ function Orchestration() {
   const [query, setQuery] = useState('');
   const [expandedAgent, setExpandedAgent] = useState(null);
   const [showFadeOverlay, setShowFadeOverlay] = useState(true);
+  const [chatMessages, setChatMessages] = useState([]);
   const containerRef = useRef(null);
 
   // Logo Loop data
@@ -66,6 +67,14 @@ function Orchestration() {
 
   const handleClickOutside = () => {
     setExpandedAgent(null);
+  };
+
+  const handleAgentLike = (agentName) => {
+    const likeMessage = {
+      text: `user liked ${agentName}'s work`,
+      timestamp: Date.now()
+    };
+    setChatMessages(prev => [...prev, likeMessage]);
   };
 
   useEffect(() => {
@@ -146,31 +155,35 @@ function Orchestration() {
             agentName="Speedrunner"
             isExpanded={expandedAgent === 'speedrunner'}
             onExpand={handleExpandAgent}
+            onLike={handleAgentLike}
           />
           <AgentCard
             agentId="bloom"
             agentName="Bloom"
             isExpanded={expandedAgent === 'bloom'}
             onExpand={handleExpandAgent}
+            onLike={handleAgentLike}
           />
           <AgentCard
             agentId="solver"
             agentName="Solver"
             isExpanded={expandedAgent === 'solver'}
             onExpand={handleExpandAgent}
+            onLike={handleAgentLike}
           />
           <AgentCard
             agentId="loader"
             agentName="Loader"
             isExpanded={expandedAgent === 'loader'}
             onExpand={handleExpandAgent}
+            onLike={handleAgentLike}
           />
 
           {/* Commentator */}
           <Commentator />
 
           {/* Chat Input */}
-          <ChatInput />
+          <ChatInput externalMessages={chatMessages} />
 
           {/* Transcript */}
           <TranscriptPanel />
