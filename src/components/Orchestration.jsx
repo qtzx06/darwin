@@ -14,6 +14,7 @@ import { RiClaudeFill, RiGeminiFill } from 'react-icons/ri';
 import { SiTypescript, SiLangchain } from 'react-icons/si';
 import livekitLogo from '../assets/livekit-text.svg';
 import { getVoteCounts } from '../utils/suiClient';
+import { competitiveApi } from '../services/api';
 
 function Orchestration() {
   const [query, setQuery] = useState('');
@@ -31,6 +32,15 @@ function Orchestration() {
     bloom: 0,
     solver: 0,
     loader: 0
+  });
+  const [isBattleRunning, setIsBattleRunning] = useState(false);
+  const [agentsReady, setAgentsReady] = useState(false);
+  const [cachedProjectId, setCachedProjectId] = useState(null);
+  const [agentCode, setAgentCode] = useState({
+    speedrunner: null,
+    bloom: null,
+    solver: null,
+    loader: null
   });
   const containerRef = useRef(null);
 
@@ -74,6 +84,29 @@ function Orchestration() {
     }
   }, []);
 
+  // Preload agents when query is available
+  useEffect(() => {
+    if (!query || cachedProjectId) return;
+
+    const preloadAgents = async () => {
+      try {
+        console.log('🔄 Preloading agents...');
+
+        // Submit project and create agents in background
+        const project = await competitiveApi.submitProject(query);
+        await competitiveApi.createAgents(project.project_id);
+
+        setCachedProjectId(project.project_id);
+        setAgentsReady(true);
+        console.log('✅ Agents ready!', project.project_id);
+      } catch (error) {
+        console.error('Failed to preload agents:', error);
+      }
+    };
+
+    preloadAgents();
+  }, [query, cachedProjectId]);
+
   // Spotlight effect mouse tracking
   useEffect(() => {
     const container = containerRef.current;
@@ -112,6 +145,64 @@ function Orchestration() {
       timestamp: Date.now()
     };
     setChatMessages(prev => [...prev, likeMessage]);
+  };
+
+  const handleBattleStart = async () => {
+    if (!query || isBattleRunning || !agentsReady) return;
+
+    setIsBattleRunning(true);
+    const addChatMessage = (text) => {
+      setChatMessages(prev => [...prev, {
+        text,
+        timestamp: Date.now() + Math.random() // Add randomness to prevent duplicate keys
+      }]);
+    };
+
+    addChatMessage('🔥 AI battle started! Agents are generating code...');
+
+    try {
+      // Use cached project ID (agents already created!)
+      const projectId = cachedProjectId;
+      console.log('Using cached project:', projectId);
+
+      // Orchestrate project into subtasks
+      const orchestration = await competitiveApi.orchestrateProject(query);
+      console.log('Orchestration:', orchestration);
+
+      if (orchestration.subtasks && orchestration.subtasks.length > 0) {
+        const firstSubtask = orchestration.subtasks[0];
+
+        // Start work on first subtask
+        await competitiveApi.startWork(projectId, firstSubtask.id);
+        console.log('Work started on subtask:', firstSubtask.id);
+
+        // Get results from all agents
+        const agentNames = ['One', 'Two', 'Three', 'Four'];
+        const results = await competitiveApi.getResults(projectId, agentNames);
+        console.log('Agent results:', results);
+
+        if (results.agents && results.agents.length > 0) {
+          // Map agent names to our agent IDs
+          const agentMap = { 'One': 'speedrunner', 'Two': 'bloom', 'Three': 'solver', 'Four': 'loader' };
+
+          const newAgentCode = {};
+          results.agents.forEach(agent => {
+            const agentId = agentMap[agent.agent_name];
+            if (agentId) {
+              newAgentCode[agentId] = agent.code;
+            }
+          });
+
+          setAgentCode(newAgentCode);
+          addChatMessage('✅ Battle complete! Check agent cards for generated code.');
+        }
+      }
+    } catch (error) {
+      console.error('Battle error:', error);
+      addChatMessage(`❌ Battle failed: ${error.message}`);
+    } finally {
+      setIsBattleRunning(false);
+    }
   };
 
   useEffect(() => {
@@ -194,6 +285,7 @@ function Orchestration() {
             onExpand={handleExpandAgent}
             onLike={handleAgentLike}
             voteCount={blockchainVotes.speedrunner}
+            generatedCode={agentCode.speedrunner}
           />
           <AgentCard
             agentId="bloom"
@@ -202,6 +294,7 @@ function Orchestration() {
             onExpand={handleExpandAgent}
             onLike={handleAgentLike}
             voteCount={blockchainVotes.bloom}
+            generatedCode={agentCode.bloom}
           />
           <AgentCard
             agentId="solver"
@@ -210,6 +303,7 @@ function Orchestration() {
             onExpand={handleExpandAgent}
             onLike={handleAgentLike}
             voteCount={blockchainVotes.solver}
+            generatedCode={agentCode.solver}
           />
           <AgentCard
             agentId="loader"
@@ -218,10 +312,16 @@ function Orchestration() {
             onExpand={handleExpandAgent}
             onLike={handleAgentLike}
             voteCount={blockchainVotes.loader}
+            generatedCode={agentCode.loader}
           />
 
-          {/* Commentator */}
-          <Commentator />
+          {/* Commentator with Battle Controls */}
+          <Commentator
+            query={query}
+            onBattleStart={handleBattleStart}
+            isRunning={isBattleRunning}
+            agentsReady={agentsReady}
+          />
 
           {/* Chat Input */}
           <ChatInput externalMessages={chatMessages} />

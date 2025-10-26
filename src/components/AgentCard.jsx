@@ -98,8 +98,7 @@ const TRANSCRIPTS = {
 };
 
 const EXPANDED_CONTENT = {
-  speedrunner: `<thinking>
-Analyzing execution pipeline...
+  speedrunner: `<thinking>Analyzing execution pipeline...
 - Optimize critical path: O(n) -> O(log n)
 - Implement parallel processing on batch operations
 - Cache frequently accessed data structures
@@ -108,9 +107,50 @@ Analyzing execution pipeline...
 Performance improvements:
   Initial load: 2.4s -> 0.6s (75% reduction)
   Response time: 450ms -> 180ms
+  Time to interactive: 3.2s -> 0.9s
+  First contentful paint: 1.8s -> 0.4s
+  Largest contentful paint: 2.6s -> 0.7s
 
 Bottleneck identified in render loop
 Applying memoization strategy...
+
+Database query optimization:
+- Index creation on frequently accessed columns
+- Query plan optimization: nested loops -> hash joins
+- Connection pool size: 10 -> 50
+- Query cache hit rate: 45% -> 89%
+
+Bundle size analysis:
+- Main bundle: 2.4MB -> 680KB (71% reduction)
+- Vendor bundle: 1.8MB -> 420KB
+- CSS bundle: 340KB -> 95KB
+- Total asset size: 4.54MB -> 1.19MB
+
+Code splitting implementation:
+- Route-based chunks: 8 created
+- Dynamic imports: 23 locations
+- Lazy loading components: 14 implemented
+- Initial bundle load: 680KB (down from 2.4MB)
+
+Compression strategy:
+- Gzip enabled: 60% size reduction
+- Brotli compression: additional 15% savings
+- Image optimization: WebP format, 78% smaller
+- Font subsetting: 42% reduction
+
+Caching strategy deployed:
+- Service worker installed
+- Cache-first for static assets
+- Network-first for API calls
+- Stale-while-revalidate for images
+- Cache hit rate: 87%
+
+Performance metrics after optimization:
+  Lighthouse score: 98/100
+  Core Web Vitals: all green
+  Time to interactive: 0.9s
+  Total blocking time: 120ms
+  Cumulative layout shift: 0.02
 </thinking>
 
 <code_execution>
@@ -124,9 +164,44 @@ function optimizeRender() {
     return result;
   }
 }
+
+function parallelProcess(tasks) {
+  const workers = new Array(navigator.hardwareConcurrency)
+    .fill(null)
+    .map(() => new Worker('worker.js'));
+
+  return Promise.all(
+    tasks.map((task, i) => {
+      const worker = workers[i % workers.length];
+      return new Promise(resolve => {
+        worker.postMessage(task);
+        worker.onmessage = e => resolve(e.data);
+      });
+    })
+  );
+}
+
+function debounce(fn, delay) {
+  let timeoutId;
+  return (...args) => {
+    clearTimeout(timeoutId);
+    timeoutId = setTimeout(() => fn(...args), delay);
+  };
+}
+
+const lazyLoadImage = (img) => {
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        img.src = img.dataset.src;
+        observer.unobserve(img);
+      }
+    });
+  });
+  observer.observe(img);
+};
 </code_execution>`,
-  bloom: `<thinking>
-Distributing data across neural layers...
+  bloom: `<thinking>Distributing data across neural layers...
 - Input dimensions: 1024x768
 - Hidden layers: [512, 256, 128, 64]
 - Activation: ReLU with dropout(0.3)
@@ -135,10 +210,45 @@ Analyzing particle distribution patterns:
   Cluster 1: 342 nodes (density: 0.82)
   Cluster 2: 189 nodes (density: 0.64)
   Cluster 3: 276 nodes (density: 0.71)
+  Cluster 4: 423 nodes (density: 0.89)
+  Cluster 5: 198 nodes (density: 0.56)
+  Cluster 6: 312 nodes (density: 0.77)
+  Cluster 7: 267 nodes (density: 0.68)
 
 Applying gradient descent optimization...
 Learning rate: 0.001
 Batch size: 32
+Momentum: 0.9
+Weight decay: 0.0001
+
+Initializing transformer architecture...
+- Attention heads: 8
+- Model dimension: 512
+- Feed-forward dimension: 2048
+- Number of layers: 12
+
+Training metrics after epoch 1:
+  Loss: 2.456
+  Accuracy: 67.3%
+  Validation loss: 2.589
+  Learning curve stabilizing...
+
+Training metrics after epoch 2:
+  Loss: 1.923
+  Accuracy: 73.8%
+  Validation loss: 2.102
+  Gradient norm: 0.043
+
+Training metrics after epoch 3:
+  Loss: 1.567
+  Accuracy: 78.2%
+  Validation loss: 1.834
+  Overfitting check: passed
+
+Computing attention patterns...
+Positional encodings applied...
+Self-attention mechanism converging...
+Cross-attention weights balanced...
 </thinking>
 
 <neural_network>
@@ -149,11 +259,53 @@ const network = {
       activation = relu(layer.weights * activation);
     });
     return activation;
+  },
+
+  backward: (error, learningRate) => {
+    let delta = error;
+    layers.reverse().forEach(layer => {
+      const gradient = layer.computeGradient(delta);
+      layer.updateWeights(gradient, learningRate);
+      delta = layer.backpropagate(delta);
+    });
+  },
+
+  train: (data, epochs) => {
+    for (let epoch = 0; epoch < epochs; epoch++) {
+      const predictions = this.forward(data);
+      const loss = computeLoss(predictions, data.labels);
+      this.backward(loss, 0.001);
+      console.log(\`Epoch \${epoch + 1}: Loss = \${loss}\`);
+    }
+  },
+
+  evaluate: (testData) => {
+    const predictions = this.forward(testData);
+    const accuracy = computeAccuracy(predictions, testData.labels);
+    return accuracy;
   }
 }
+
+// Advanced activation functions
+function relu(x) {
+  return Math.max(0, x);
+}
+
+function sigmoid(x) {
+  return 1 / (1 + Math.exp(-x));
+}
+
+function tanh(x) {
+  return Math.tanh(x);
+}
+
+function softmax(x) {
+  const exp = x.map(val => Math.exp(val));
+  const sum = exp.reduce((a, b) => a + b, 0);
+  return exp.map(val => val / sum);
+}
 </neural_network>`,
-  solver: `<thinking>
-Analyzing Rubik's cube state...
+  solver: `<thinking>Analyzing Rubik's cube state...
 Current configuration: F2 R U' D L2 B
 Solution depth: 18 moves (optimal: 20)
 
@@ -161,50 +313,165 @@ Heuristic search strategy:
 - Pattern database lookup: 12ms
 - A* algorithm applied
 - Pruning inefficient branches
+- Admissible heuristic verified
+- Consistency property confirmed
+
+State space analysis:
+  Total possible states: 43,252,003,274,489,856,000
+  Reachable states from current: 2,847,392
+  Pruned branches: 1,923,847
+  Active search nodes: 923,545
+  Memory usage: 47.3 MB
 
 Move sequence generation:
-  Step 1: F R U R' U' F'
-  Step 2: R U R' U R U2 R'
-  Step 3: U R U' L' U R' U' L
+  Step 1: F R U R' U' F' (cross completion)
+  Step 2: R U R' U R U2 R' (first pair)
+  Step 3: U R U' L' U R' U' L (second pair)
+  Step 4: F' U' L' U L F (third pair)
+  Step 5: R U R' U' R U R' (fourth pair)
+  Step 6: R U R' U R U2 R' (OLL)
+  Step 7: R U R' U' R' F R2 U' R' U' R U R' F' (PLL)
 
 Validating solution path...
+All moves legal: ✓
+Solution optimality: 18 moves (within 10% of optimal)
+Execution time: 47ms
+Pattern database hits: 142
+Cache efficiency: 94%
+
+Alternative solution paths explored:
+  Path A: 19 moves (rotation-heavy)
+  Path B: 20 moves (fewer rotations)
+  Path C: 18 moves (selected - balanced)
+
+Constraint satisfaction verification:
+- All corners positioned correctly
+- All edges oriented properly
+- Parity check: passed
+- Final state validation: complete
 </thinking>
 
 <algorithm>
 function solveCube(state) {
   const visited = new Set();
-  const queue = [{ state, moves: [] }];
+  const queue = [{ state, moves: [], cost: 0 }];
+  const heuristic = (s) => estimateMovesToSolution(s);
 
   while (queue.length > 0) {
-    const { state, moves } = queue.shift();
+    // Sort by f(n) = g(n) + h(n)
+    queue.sort((a, b) =>
+      (a.cost + heuristic(a.state)) -
+      (b.cost + heuristic(b.state))
+    );
+
+    const { state, moves, cost } = queue.shift();
     if (isSolved(state)) return moves;
 
     for (let move of possibleMoves) {
       const newState = applyMove(state, move);
-      if (!visited.has(hash(newState))) {
-        visited.add(hash(newState));
-        queue.push({ state: newState, moves: [...moves, move] });
+      const stateHash = hash(newState);
+
+      if (!visited.has(stateHash)) {
+        visited.add(stateHash);
+        queue.push({
+          state: newState,
+          moves: [...moves, move],
+          cost: cost + 1
+        });
       }
     }
   }
+  return null;
+}
+
+function estimateMovesToSolution(state) {
+  // Pattern database heuristic
+  const cornerDistance = getCornerDistance(state);
+  const edgeDistance = getEdgeDistance(state);
+  return Math.max(cornerDistance, edgeDistance);
+}
+
+function applyMove(state, move) {
+  const newState = JSON.parse(JSON.stringify(state));
+  switch(move) {
+    case 'F': rotateFace(newState, 'front', 1); break;
+    case 'B': rotateFace(newState, 'back', 1); break;
+    case 'L': rotateFace(newState, 'left', 1); break;
+    case 'R': rotateFace(newState, 'right', 1); break;
+    case 'U': rotateFace(newState, 'up', 1); break;
+    case 'D': rotateFace(newState, 'down', 1); break;
+  }
+  return newState;
 }
 </algorithm>`,
-  loader: `<thinking>
-Synchronizing concurrent operations...
+  loader: `<thinking>Synchronizing concurrent operations...
 - Active threads: 5
 - Queue size: 127 tasks
 - Memory usage: 42.3 MB / 256 MB
+- CPU utilization: 34%
+- Network bandwidth: 2.4 MB/s
 
 Loading sequence initialization:
   Phase 1: Asset prefetch (23 items)
+    - Images: 12 items (8.4 MB)
+    - Scripts: 7 items (2.1 MB)
+    - Styles: 4 items (840 KB)
   Phase 2: Dependency resolution
+    - npm packages: 247 resolved
+    - Peer dependencies: all satisfied
+    - Circular dependencies: 0 detected
   Phase 3: State hydration
+    - Redux store: initializing
+    - Local storage: 3.2 MB loaded
+    - Session storage: 847 KB loaded
   Phase 4: Event binding
+    - DOM listeners: 89 attached
+    - WebSocket connections: 3 active
+    - Service workers: 1 registered
 
 Torus ring coordination:
   Ring 0: rotation(0.02, 0.01, 0.03)
+    - Vertices: 2048
+    - Triangles: 4096
+    - Material: PBR with metalness 0.8
   Ring 1: rotation(-0.01, 0.02, -0.01)
+    - Vertices: 2048
+    - Triangles: 4096
+    - Material: Glass with refraction 1.5
   Ring 2: rotation(0.03, -0.02, 0.01)
+    - Vertices: 2048
+    - Triangles: 4096
+    - Material: Emissive with intensity 2.0
+
+Resource loading progress:
+  0-10%: Initializing core systems
+  10-25%: Loading critical assets
+  25-50%: Processing dependencies
+  50-75%: Hydrating application state
+  75-90%: Binding event listeners
+  90-100%: Finalizing and rendering
+
+Thread pool status:
+  Thread 1: Processing images (active)
+  Thread 2: Compiling shaders (active)
+  Thread 3: Parsing JSON (idle)
+  Thread 4: Decompressing assets (active)
+  Thread 5: Validating checksums (active)
+
+Network requests:
+  Completed: 187
+  In progress: 12
+  Failed: 0
+  Cached: 143
+  Average latency: 47ms
+
+Memory allocation:
+  Heap size: 42.3 MB
+  External memory: 18.7 MB
+  Used: 38.9 MB (92%)
+  Available: 217.1 MB
+
+All systems nominal, processes running smoothly...
 </thinking>
 
 <async_loader>
@@ -218,13 +485,96 @@ async function loadResources() {
   await Promise.all(promises);
   finalizeLoading();
 }
+
+class ResourceLoader {
+  constructor(options = {}) {
+    this.concurrency = options.concurrency || 5;
+    this.timeout = options.timeout || 30000;
+    this.retries = options.retries || 3;
+    this.queue = [];
+    this.activeRequests = 0;
+  }
+
+  async load(resources) {
+    this.queue = [...resources];
+    const results = [];
+
+    while (this.queue.length > 0 || this.activeRequests > 0) {
+      while (
+        this.activeRequests < this.concurrency &&
+        this.queue.length > 0
+      ) {
+        const resource = this.queue.shift();
+        this.activeRequests++;
+
+        this.loadResource(resource)
+          .then(result => results.push(result))
+          .finally(() => this.activeRequests--);
+      }
+
+      await new Promise(resolve => setTimeout(resolve, 10));
+    }
+
+    return results;
+  }
+
+  async loadResource(resource, attempt = 0) {
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(
+        () => controller.abort(),
+        this.timeout
+      );
+
+      const response = await fetch(resource.url, {
+        signal: controller.signal
+      });
+
+      clearTimeout(timeoutId);
+      return await response.json();
+    } catch (error) {
+      if (attempt < this.retries) {
+        return this.loadResource(resource, attempt + 1);
+      }
+      throw error;
+    }
+  }
+}
 </async_loader>`
 };
 
-function AgentCard({ agentId, agentName, isExpanded, onExpand, onLike, voteCount = 0 }) {
+function AgentCard({ agentId, agentName, isExpanded, onExpand, onLike, voteCount = 0, generatedCode = null }) {
   const cardRef = useRef(null);
   const [currentMessageIndex, setCurrentMessageIndex] = useState(0);
   const [visibleMessages, setVisibleMessages] = useState([0]); // Track which messages are visible
+  const [typedCode, setTypedCode] = useState('');
+  const [isTyping, setIsTyping] = useState(false);
+
+  // Live typing effect for generated code
+  useEffect(() => {
+    if (!generatedCode) {
+      setTypedCode('');
+      setIsTyping(false);
+      return;
+    }
+
+    setIsTyping(true);
+    setTypedCode('');
+    let currentIndex = 0;
+    const typingSpeed = 10; // milliseconds per character
+
+    const typeInterval = setInterval(() => {
+      if (currentIndex < generatedCode.length) {
+        setTypedCode(generatedCode.substring(0, currentIndex + 1));
+        currentIndex++;
+      } else {
+        setIsTyping(false);
+        clearInterval(typeInterval);
+      }
+    }, typingSpeed);
+
+    return () => clearInterval(typeInterval);
+  }, [generatedCode]);
 
   // Cycle through transcript messages (append one at a time, show 4 total)
   useEffect(() => {
@@ -359,8 +709,13 @@ function AgentCard({ agentId, agentName, isExpanded, onExpand, onLike, voteCount
             <div className="glass-overlay"></div>
             <div className="glass-specular"></div>
             <div className="agent-transcript-content">
-              {isExpanded ? (
-                <div dangerouslySetInnerHTML={{ __html: EXPANDED_CONTENT[agentId] }} />
+              {isExpanded && generatedCode ? (
+                <pre className="agent-generated-code">
+                  {typedCode}
+                  {isTyping && <span className="typing-cursor">▊</span>}
+                </pre>
+              ) : isExpanded ? (
+                <pre className="agent-generated-code" dangerouslySetInnerHTML={{ __html: EXPANDED_CONTENT[agentId] }} />
               ) : (
                 <>
                   {visibleMessages.map((msgIndex, idx) => (

@@ -1,16 +1,104 @@
-.commentator-headshot {
-  position: relative;
+.orchestration-container .commentator-card .glass-content {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
   width: 100%;
   height: 100%;
+}
+
+.orchestration-container .commentator-header {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.orchestration-container .commentator-header h3 {
+  color: rgba(255, 255, 255, 0.9);
+  margin: 0 0 4px 0;
+  font-family: 'BBH Sans Bartle', sans-serif;
+  font-size: 0.85rem;
+  text-transform: lowercase;
+  letter-spacing: 0.1em;
+  font-weight: 400;
+  text-align: left;
+  text-shadow: 0 0 20px rgba(255, 255, 255, 0.4);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.orchestration-container .commentator-description {
+  color: rgba(255, 255, 255, 0.7);
+  font-family: 'Geist Mono', monospace;
+  font-size: 0.65rem;
+  text-align: left;
+  font-weight: 400;
+  letter-spacing: 0.02em;
+}
+
+.orchestration-container .commentator-battle-button {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 6px;
+  padding: 8px 12px;
+  color: rgba(255, 255, 255, 0.8);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.orchestration-container .commentator-battle-button:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.orchestration-container .commentator-battle-button:active:not(:disabled) {
+  transform: scale(0.95);
+}
+
+.orchestration-container .commentator-battle-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.orchestration-container .commentator-battle-button.running {
+  background: rgba(240, 176, 208, 0.15);
+  border-color: rgba(240, 176, 208, 0.3);
+  color: #f0b0d0;
+}
+
+.orchestration-container .commentator-battle-button.running:hover {
+  background: rgba(240, 176, 208, 0.15);
+  border-color: rgba(240, 176, 208, 0.3);
+}
+
+.orchestration-container .commentator-battle-button.loading {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.15);
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.orchestration-container .commentator-headshot {
+  position: relative;
+  width: 100%;
+  flex: 1;
+  min-height: 0;
   border-radius: 8px;
   overflow: hidden;
   background: rgba(0, 0, 0, 0.3);
   border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-.commentator-headshot .liquidChrome-container {
+.orchestration-container .commentator-headshot .liquidChrome-container {
   position: absolute;
   inset: 0;
   width: 100%;
   height: 100%;
+  z-index: 0;
 }
