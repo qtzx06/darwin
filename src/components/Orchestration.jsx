@@ -1,6 +1,7 @@
 import { useEffect, useState, useRef } from 'react';
 import { motion } from 'framer-motion';
 import './Orchestration.css';
+import './PreviewCard.css';
 import IridescenceBackground from './IridescenceBackground';
 import AgentCard from './AgentCard';
 import Commentator from './Commentator';
@@ -8,6 +9,7 @@ import TranscriptPanel from './TranscriptPanel';
 import ChatInput from './ChatInput';
 import HeaderDither from './HeaderDither';
 import LogoLoop from './LogoLoop';
+import CodeRenderer from './CodeRenderer';
 import { TbBrandThreejs } from 'react-icons/tb';
 import { FaReact, FaPython } from 'react-icons/fa';
 import { RiClaudeFill, RiGeminiFill } from 'react-icons/ri';
@@ -20,7 +22,13 @@ function Orchestration() {
   const [query, setQuery] = useState('');
   const [expandedAgent, setExpandedAgent] = useState(null);
   const [showFadeOverlay, setShowFadeOverlay] = useState(true);
-  const [chatMessages, setChatMessages] = useState([]);
+  const [chatMessages, setChatMessages] = useState([
+    {
+      text: '[SERVER] Darwin systems initialized',
+      type: 'server',
+      timestamp: Date.now()
+    }
+  ]);
   const [voteCounts, setVoteCounts] = useState({
     speedrunner: 0,
     bloom: 0,
@@ -38,10 +46,62 @@ function Orchestration() {
   const [cachedProjectId, setCachedProjectId] = useState(null);
   const [agentCode, setAgentCode] = useState({
     speedrunner: null,
-    bloom: null,
+    bloom: `import React, { useState } from 'react';
+
+export function TodoComponent() {
+  const [todos, setTodos] = useState([]);
+  const [input, setInput] = useState('');
+
+  return (
+    <div>
+      <h1>todos</h1>
+      <input
+        autoFocus
+        value={input}
+        onChange={e => setInput(e.target.value)}
+        onKeyPress={e => {
+          if (e.key === 'Enter' && input.trim()) {
+            setTodos([...todos, { id: Date.now(), text: input, done: false }]);
+            setInput('');
+          }
+        }}
+        placeholder="What needs to be done?"
+      />
+      <ul>
+        {todos.map(t => (
+          <li key={t.id}>
+            <input
+              type="checkbox"
+              checked={t.done}
+              onChange={() => setTodos(todos.map(x => x.id === t.id ? { ...x, done: !x.done } : x))}
+            />
+            <span style={{ textDecoration: t.done ? 'line-through' : 'none' }}>
+              {t.text}
+            </span>
+            <button onClick={() => setTodos(todos.filter(x => x.id !== t.id))}>×</button>
+          </li>
+        ))}
+      </ul>
+      {todos.length > 0 && (
+        <footer>
+          <span>{todos.filter(t => !t.done).length} left</span>
+          {todos.some(t => t.done) && (
+            <button onClick={() => setTodos(todos.filter(t => !t.done))}>clear completed</button>
+          )}
+        </footer>
+      )}
+    </div>
+  );
+}`,
     solver: null,
     loader: null
   });
+  const [previewCode, setPreviewCode] = useState(null);
+
+  // Debug: Log when previewCode changes
+  useEffect(() => {
+    console.log('Preview code state:', previewCode ? 'HAS CODE' : 'NULL');
+  }, [previewCode]);
   const containerRef = useRef(null);
 
   // Fetch blockchain vote counts on mount and every 10 seconds
@@ -91,16 +151,37 @@ function Orchestration() {
     const preloadAgents = async () => {
       try {
         console.log('🔄 Preloading agents...');
+        setChatMessages(prev => [...prev, {
+          text: '[SERVER] Preloading agents...',
+          type: 'server',
+          timestamp: Date.now()
+        }]);
 
         // Submit project and create agents in background
         const project = await competitiveApi.submitProject(query);
+        setChatMessages(prev => [...prev, {
+          text: `[SERVER] Project submitted: ${project.project_id}`,
+          type: 'server',
+          timestamp: Date.now() + 1
+        }]);
+
         await competitiveApi.createAgents(project.project_id);
+        setChatMessages(prev => [...prev, {
+          text: '[SERVER] Agents created and ready',
+          type: 'server',
+          timestamp: Date.now() + 2
+        }]);
 
         setCachedProjectId(project.project_id);
         setAgentsReady(true);
         console.log('✅ Agents ready!', project.project_id);
       } catch (error) {
         console.error('Failed to preload agents:', error);
+        setChatMessages(prev => [...prev, {
+          text: `[ERROR] Failed to preload agents: ${error.message}`,
+          type: 'error',
+          timestamp: Date.now() + 3
+        }]);
       }
     };
 
@@ -141,8 +222,9 @@ function Orchestration() {
 
     // Send message to chat
     const likeMessage = {
-      text: `user liked ${agentName}'s work`,
-      timestamp: Date.now()
+      text: `[YOU] voted for ${agentName}`,
+      timestamp: Date.now(),
+      type: 'user'
     };
     setChatMessages(prev => [...prev, likeMessage]);
   };
@@ -151,23 +233,26 @@ function Orchestration() {
     if (!query || isBattleRunning || !agentsReady) return;
 
     setIsBattleRunning(true);
-    const addChatMessage = (text) => {
+    const addChatMessage = (text, type = 'server') => {
       setChatMessages(prev => [...prev, {
         text,
+        type,
         timestamp: Date.now() + Math.random() // Add randomness to prevent duplicate keys
       }]);
     };
 
-    addChatMessage('🔥 AI battle started! Agents are generating code...');
+    addChatMessage('[SERVER] AI battle started, agents generating code...');
 
     try {
       // Use cached project ID (agents already created!)
       const projectId = cachedProjectId;
       console.log('Using cached project:', projectId);
+      addChatMessage(`[SERVER] Using project: ${projectId}`);
 
       // Orchestrate project into subtasks
       const orchestration = await competitiveApi.orchestrateProject(query);
       console.log('Orchestration:', orchestration);
+      addChatMessage(`[SERVER] Orchestrated ${orchestration.subtasks?.length || 0} subtasks`);
 
       if (orchestration.subtasks && orchestration.subtasks.length > 0) {
         const firstSubtask = orchestration.subtasks[0];
@@ -175,9 +260,11 @@ function Orchestration() {
         // Start work on first subtask
         await competitiveApi.startWork(projectId, firstSubtask.id);
         console.log('Work started on subtask:', firstSubtask.id);
+        addChatMessage(`[SERVER] Work started on subtask: ${firstSubtask.id}`);
 
         // Get results from all agents
         const agentNames = ['One', 'Two', 'Three', 'Four'];
+        addChatMessage('[SERVER] Collecting results from agents...');
         const results = await competitiveApi.getResults(projectId, agentNames);
         console.log('Agent results:', results);
 
@@ -194,12 +281,12 @@ function Orchestration() {
           });
 
           setAgentCode(newAgentCode);
-          addChatMessage('✅ Battle complete! Check agent cards for generated code.');
+          addChatMessage('[SERVER] Battle complete, code generated for all agents');
         }
       }
     } catch (error) {
       console.error('Battle error:', error);
-      addChatMessage(`❌ Battle failed: ${error.message}`);
+      addChatMessage(`[ERROR] Battle failed: ${error.message}`, 'error');
     } finally {
       setIsBattleRunning(false);
     }
@@ -293,6 +380,7 @@ function Orchestration() {
             isExpanded={expandedAgent === 'bloom'}
             onExpand={handleExpandAgent}
             onLike={handleAgentLike}
+            onPreview={(code) => setPreviewCode(code)}
             voteCount={blockchainVotes.bloom}
             generatedCode={agentCode.bloom}
           />

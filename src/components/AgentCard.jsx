@@ -6,6 +6,7 @@ import BloomOrb from './BloomOrb';
 import SolverOrb from './SolverOrb';
 import LoaderOrb from './LoaderOrb';
 import DecryptedText from './DecryptedText';
+import CodeRenderer from './CodeRenderer';
 import { voteForAgent } from '../utils/suiClient';
 
 const PERSONALITIES = {
@@ -543,7 +544,7 @@ class ResourceLoader {
 </async_loader>`
 };
 
-function AgentCard({ agentId, agentName, isExpanded, onExpand, onLike, voteCount = 0, generatedCode = null }) {
+function AgentCard({ agentId, agentName, isExpanded, onExpand, onLike, onPreview, voteCount = 0, generatedCode = null }) {
   const cardRef = useRef(null);
   const [currentMessageIndex, setCurrentMessageIndex] = useState(0);
   const [visibleMessages, setVisibleMessages] = useState([0]); // Track which messages are visible
@@ -708,35 +709,49 @@ function AgentCard({ agentId, agentName, isExpanded, onExpand, onLike, voteCount
             <div className="glass-filter"></div>
             <div className="glass-overlay"></div>
             <div className="glass-specular"></div>
-            <div className="agent-transcript-content">
-              {isExpanded && generatedCode ? (
-                <pre className="agent-generated-code">
-                  {typedCode}
-                  {isTyping && <span className="typing-cursor">▊</span>}
-                </pre>
-              ) : isExpanded ? (
-                <pre className="agent-generated-code" dangerouslySetInnerHTML={{ __html: EXPANDED_CONTENT[agentId] }} />
-              ) : (
-                <>
-                  {visibleMessages.map((msgIndex, idx) => (
-                    <div key={`${msgIndex}-${idx}`}>
-                      <DecryptedText
-                        text={TRANSCRIPTS[agentId][msgIndex]}
-                        speed={agentId === 'speedrunner' ? 20 : 30}
-                        sequential={true}
-                        revealDirection="start"
-                        animateOn="view"
-                      />
+            {isExpanded ? (
+              <div className="agent-split-view">
+                <div className="agent-code-side">
+                  {generatedCode ? (
+                    <pre className="agent-generated-code">
+                      {typedCode}
+                      {isTyping && <span className="typing-cursor">▊</span>}
+                    </pre>
+                  ) : (
+                    <pre className="agent-generated-code" dangerouslySetInnerHTML={{ __html: EXPANDED_CONTENT[agentId] }} />
+                  )}
+                </div>
+                <div className="agent-preview-side">
+                  {generatedCode ? (
+                    <CodeRenderer code={generatedCode} onClose={null} />
+                  ) : (
+                    <div className="preview-empty">No code generated</div>
+                  )}
+                </div>
+              </div>
+            ) : (
+              <div className="agent-transcript-content">(
+                  <>
+                    {visibleMessages.map((msgIndex, idx) => (
+                      <div key={`${msgIndex}-${idx}`}>
+                        <DecryptedText
+                          text={TRANSCRIPTS[agentId][msgIndex]}
+                          speed={agentId === 'speedrunner' ? 20 : 30}
+                          sequential={true}
+                          revealDirection="start"
+                          animateOn="view"
+                        />
+                      </div>
+                    ))}
+                    <div className="loading-dots">
+                      <span>.</span>
+                      <span>.</span>
+                      <span>.</span>
                     </div>
-                  ))}
-                  <div className="loading-dots">
-                    <span>.</span>
-                    <span>.</span>
-                    <span>.</span>
-                  </div>
-                </>
-              )}
-            </div>
+                  </>
+                )}
+              </div>
+            )}
           </div>
         </div>
       </div>

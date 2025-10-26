@@ -14,7 +14,11 @@ function ChatInput({ externalMessages = [] }) {
   const handleSubmit = (e) => {
     e.preventDefault();
     if (inputValue.trim()) {
-      const newMessage = { text: inputValue, timestamp: Date.now() };
+      const newMessage = {
+        text: `[YOU] ${inputValue}`,
+        type: 'user',
+        timestamp: Date.now()
+      };
       setMessages(prev => [...prev, newMessage]);
       setInputValue('');
     }
@@ -41,11 +45,20 @@ function ChatInput({ externalMessages = [] }) {
           <div className="glass-specular"></div>
           <div className="chat-content-wrapper">
             <div className="chat-messages">
-              {messages.map((msg) => (
-                <div key={msg.timestamp} className="chat-message">
-                  {msg.text}
-                </div>
-              ))}
+              {messages.map((msg) => {
+                // Extract [PREFIX] from message text
+                const match = msg.text.match(/^\[([^\]]+)\]\s*(.*)/);
+                const prefix = match ? match[1] : '';
+                const content = match ? match[2] : msg.text;
+
+                return (
+                  <div key={msg.timestamp} className={`chat-message chat-message-${msg.type || 'server'}`}>
+                    {prefix && <span className="chat-prefix">[{prefix}]</span>}
+                    {prefix && ' '}
+                    {content}
+                  </div>
+                );
+              })}
             </div>
             <form onSubmit={handleSubmit} className="chat-form">
               <input
