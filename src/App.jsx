@@ -4,7 +4,6 @@ import './App.css';
 import Loading from './components/Loading';
 import GlassSearchBar from './components/GlassSearchBar';
 import DecryptedText from './components/DecryptedText';
-import Cubes from './components/Cubes';
 import Dither from './components/Dither';
 import LogoLoop from './components/LogoLoop';
 import { TbBrandThreejs } from 'react-icons/tb';
@@ -127,22 +126,9 @@ function App() {
                 colorNum={6}
                 waveAmplitude={0.3}
                 waveFrequency={5}
-                waveSpeed={0.04}
+                waveSpeed={-0.04}
                 pixelSize={4}
                 mouseRadius={0.3}
-              />
-            </div>
-            <div className="cubes-wrapper">
-              <Cubes
-                gridSize={8}
-                maxAngle={60}
-                radius={4}
-                borderStyle="1px dashed #444444"
-                faceColor="#000000"
-                rippleColor="#ffffff"
-                rippleSpeed={1.5}
-                autoAnimate={true}
-                rippleOnClick={true}
               />
             </div>
           </motion.div>
@@ -163,19 +149,6 @@ function App() {
                 waveSpeed={0.04}
                 pixelSize={4}
                 mouseRadius={0.3}
-              />
-            </div>
-            <div className="cubes-wrapper">
-              <Cubes
-                gridSize={8}
-                maxAngle={60}
-                radius={4}
-                borderStyle="1px dashed #444444"
-                faceColor="#000000"
-                rippleColor="#ffffff"
-                rippleSpeed={1.5}
-                autoAnimate={true}
-                rippleOnClick={true}
               />
             </div>
           </motion.div>

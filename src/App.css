@@ -118,7 +118,11 @@
 }
 
 .side-card-left .cubes-wrapper {
-  transform: scaleX(-1);
+  transform: scaleX(-1) translateX(150px);
+}
+
+.side-card-right .cubes-wrapper {
+  transform: translateX(150px);
 }
 
 .side-card-right {
