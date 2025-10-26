@@ -6,6 +6,7 @@ import BloomOrb from './BloomOrb';
 import SolverOrb from './SolverOrb';
 import LoaderOrb from './LoaderOrb';
 import DecryptedText from './DecryptedText';
+import { voteForAgent } from '../utils/suiClient';
 
 const PERSONALITIES = {
   speedrunner: 'fast, competitive, efficiency-obsessed',
@@ -290,11 +291,24 @@ function AgentCard({ agentId, agentName, isExpanded, onExpand, onLike, voteCount
     onExpand(agentId);
   };
 
-  const handleThumbsUp = (e) => {
+  const handleThumbsUp = async (e) => {
     e.stopPropagation(); // Prevent backdrop click
     console.log('Thumbs up:', agentId);
-    onLike(agentName, agentId); // Send like message to chat with agentId
-    onExpand(null); // Close the expanded card
+
+    try {
+      // Map agentId to numeric value for blockchain
+      const agentMap = { speedrunner: 0, bloom: 1, solver: 2, loader: 3 };
+      const agentNumericId = agentMap[agentId];
+
+      // Submit vote to blockchain via sponsored transaction
+      await voteForAgent(agentNumericId);
+
+      onLike(agentName, agentId); // Send like message to chat with agentId
+      onExpand(null); // Close the expanded card
+    } catch (error) {
+      console.error('Failed to submit vote:', error);
+      alert('Failed to vote. Please try again.');
+    }
   };
 
   return (

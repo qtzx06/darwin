@@ -9,31 +9,27 @@ export const PACKAGE_ID = '0xcf1f3a68ade5af6ecd417e8f71cc3d11ca19cfa7d5d07244962
 export const REGISTRY_ID = '0x28ab822cc91b6daf3c6e6f9ba087713ec956b9369d4222f13d196f6532f82a4b';
 
 /**
- * Vote for an agent on-chain
+ * Vote for an agent on-chain (sponsored by backend)
  * @param {number} agentId - 0=speedrunner, 1=bloom, 2=solver, 3=loader
- * @param {object} wallet - Connected wallet object (from wallet adapter)
  */
-export async function voteForAgent(agentId, wallet) {
+export async function voteForAgent(agentId) {
   try {
-    const tx = new Transaction();
-
-    tx.moveCall({
-      target: `${PACKAGE_ID}::agent_votes::vote`,
-      arguments: [
-        tx.object(REGISTRY_ID),
-        tx.pure.u8(agentId)
-      ]
+    const response = await fetch('http://localhost:3001/api/vote', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ agentId }),
     });
 
-    const result = await wallet.signAndExecuteTransaction({
-      transaction: tx,
-      options: {
-        showEffects: true,
-      }
-    });
+    const data = await response.json();
 
-    console.log('Vote transaction successful:', result);
-    return result;
+    if (!response.ok) {
+      throw new Error(data.error || 'Failed to vote');
+    }
+
+    console.log('Vote transaction successful:', data);
+    return data;
   } catch (error) {
     console.error('Vote transaction failed:', error);
     throw error;
