@@ -126,6 +126,8 @@
   flex-direction: column;
   gap: 10px;
   min-width: 0;
+  position: relative;
+  z-index: 5;
 }
 
 /* Agent header - name and personality */
@@ -135,6 +137,14 @@
   align-items: flex-start;
   gap: 4px;
   flex-shrink: 0;
+}
+
+.orchestration-container .glass-card.expanded .agent-header {
+  flex-direction: row;
+  justify-content: space-between;
+  gap: 10px;
+  position: relative;
+  z-index: 500;
 }
 
 /* Agent name */
@@ -174,6 +184,28 @@
 
 .orchestration-container .glass-card.expanded .agent-personality {
   font-size: 0.7rem;
+}
+
+/* Agent thumbs up button */
+.orchestration-container .agent-thumbs {
+  position: relative;
+  z-index: 500;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 6px;
+  padding: 8px 12px;
+  color: rgba(255, 255, 255, 0.8);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 10px;
+  pointer-events: auto;
+  flex-shrink: 0;
+}
+
+.orchestration-container .agent-thumbs:hover {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.3);
+  transform: scale(1.05);
 }
 
 /* Agent live transcript boxes */

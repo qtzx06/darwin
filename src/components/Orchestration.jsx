@@ -17,6 +17,8 @@ import livekitLogo from '../assets/livekit-text.svg';
 function Orchestration() {
   const [query, setQuery] = useState('');
   const [expandedAgent, setExpandedAgent] = useState(null);
+  const [showFadeOverlay, setShowFadeOverlay] = useState(true);
+  const [chatMessages, setChatMessages] = useState([]);
   const containerRef = useRef(null);
 
   // Logo Loop data
@@ -67,6 +69,14 @@ function Orchestration() {
     setExpandedAgent(null);
   };
 
+  const handleAgentLike = (agentName) => {
+    const likeMessage = {
+      text: `user liked ${agentName}'s work`,
+      timestamp: Date.now()
+    };
+    setChatMessages(prev => [...prev, likeMessage]);
+  };
+
   useEffect(() => {
     const handleEscape = (e) => {
       if (e.key === 'Escape') setExpandedAgent(null);
@@ -75,16 +85,33 @@ function Orchestration() {
     return () => window.removeEventListener('keydown', handleEscape);
   }, []);
 
+  useEffect(() => {
+    // Fade out the black overlay after component mounts
+    const timer = setTimeout(() => {
+      setShowFadeOverlay(false);
+    }, 100); // Small delay to ensure it renders first
+    return () => clearTimeout(timer);
+  }, []);
+
   return (
     <motion.div
       ref={containerRef}
       className="orchestration-container"
-      initial={{ opacity: 0 }}
+      initial={{ opacity: 1 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       transition={{ duration: 0.5 }}
     >
       <IridescenceBackground />
+
+      {/* Black fade overlay */}
+      <motion.div
+        className="fade-overlay"
+        initial={{ opacity: 1 }}
+        animate={{ opacity: showFadeOverlay ? 1 : 0 }}
+        transition={{ duration: 1.5, ease: "easeOut" }}
+        style={{ pointerEvents: showFadeOverlay ? 'auto' : 'none' }}
+      />
 
       {/* Backdrop for clicking outside */}
       {expandedAgent && (
@@ -128,31 +155,35 @@ function Orchestration() {
             agentName="Speedrunner"
             isExpanded={expandedAgent === 'speedrunner'}
             onExpand={handleExpandAgent}
+            onLike={handleAgentLike}
           />
           <AgentCard
             agentId="bloom"
             agentName="Bloom"
             isExpanded={expandedAgent === 'bloom'}
             onExpand={handleExpandAgent}
+            onLike={handleAgentLike}
           />
           <AgentCard
             agentId="solver"
             agentName="Solver"
             isExpanded={expandedAgent === 'solver'}
             onExpand={handleExpandAgent}
+            onLike={handleAgentLike}
           />
           <AgentCard
             agentId="loader"
             agentName="Loader"
             isExpanded={expandedAgent === 'loader'}
             onExpand={handleExpandAgent}
+            onLike={handleAgentLike}
           />
 
           {/* Commentator */}
           <Commentator />
 
           {/* Chat Input */}
-          <ChatInput />
+          <ChatInput externalMessages={chatMessages} />
 
           {/* Transcript */}
           <TranscriptPanel />
