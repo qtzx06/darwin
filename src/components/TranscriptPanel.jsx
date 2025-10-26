@@ -1,13 +1,18 @@
 import { useState } from 'react';
 import './TranscriptPanel.css';
 
-function TranscriptPanel() {
-  const [isMuted, setIsMuted] = useState(false);
+function TranscriptPanel({ geminiLiveRef }) {
+  const [isMicMuted, setIsMicMuted] = useState(true); // Start with mic muted
 
-  const handleMuteToggle = () => {
-    setIsMuted(!isMuted);
-    console.log('Mute toggled:', !isMuted);
-    // TODO: Handle audio mute/unmute
+  const handleMicToggle = async () => {
+    const newMuted = !isMicMuted;
+    setIsMicMuted(newMuted);
+
+    // Toggle microphone via Gemini Live
+    if (geminiLiveRef?.current) {
+      await geminiLiveRef.current.setMicMuted(newMuted);
+      console.log(`[TranscriptPanel] Microphone ${newMuted ? 'muted' : 'unmuted'}`);
+    }
   };
 
   return (
@@ -21,8 +26,8 @@ function TranscriptPanel() {
             <h3>Transcription</h3>
             <div className="transcript-description">live audio commentary stream</div>
           </div>
-          <button onClick={handleMuteToggle} className="transcript-mute">
-            <i className={`fas fa-microphone${isMuted ? '-slash' : ''}`}></i>
+          <button onClick={handleMicToggle} className="transcript-mute">
+            <i className={`fas fa-microphone${isMicMuted ? '-slash' : ''}`}></i>
           </button>
         </div>
         <div className="transcript-box">

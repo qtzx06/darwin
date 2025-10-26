@@ -1,9 +1,11 @@
+import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
 import { SuiClient, getFullnodeUrl } from '@mysten/sui/client';
 import { Transaction } from '@mysten/sui/transactions';
 import { Ed25519Keypair } from '@mysten/sui/keypairs/ed25519';
 import { decodeSuiPrivateKey } from '@mysten/sui/cryptography';
+import { AccessToken } from 'livekit-server-sdk';
 
 const app = express();
 app.use(cors());
@@ -76,6 +78,48 @@ app.post('/api/vote', async (req, res) => {
       error: 'Failed to submit vote',
       details: error.message
     });
+  }
+});
+
+// LiveKit token generation endpoint
+app.post('/api/livekit/token', (req, res) => {
+  try {
+    const { roomName, participantName } = req.body;
+
+    if (!roomName || !participantName) {
+      return res.status(400).json({ error: 'roomName and participantName are required' });
+    }
+
+    const apiKey = process.env.VITE_LIVEKIT_API_KEY;
+    const apiSecret = process.env.VITE_LIVEKIT_API_SECRET;
+
+    if (!apiKey || !apiSecret) {
+      return res.status(500).json({ error: 'LiveKit credentials not configured' });
+    }
+
+    // Create access token
+    const at = new AccessToken(apiKey, apiSecret, {
+      identity: participantName,
+      ttl: '1h',
+    });
+
+    at.addGrant({
+      room: roomName,
+      roomJoin: true,
+      canPublish: true,
+      canSubscribe: true,
+      canPublishData: true,
+    });
+
+    const token = await at.toJwt();
+
+    console.log(`Generated LiveKit token for ${participantName} in room ${roomName}`);
+    console.log(`Token type: ${typeof token}, Token preview: ${token.substring(0, 50)}...`);
+
+    res.json({ token });
+  } catch (error) {
+    console.error('Failed to generate LiveKit token:', error);
+    res.status(500).json({ error: 'Failed to generate token', details: error.message });
   }
 });
 

@@ -3,6 +3,112 @@ import { GoogleGenAI } from '@google/genai';
 const API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
 const ai = new GoogleGenAI({ apiKey: API_KEY });
 
+// Cache management for system instructions
+const agentCaches = {
+  speedrunner: null,
+  bloom: null,
+  solver: null,
+  loader: null
+};
+
+// Create or get cache for an agent
+async function getOrCreateCache(agentId, systemInstruction) {
+  try {
+    // If we already have a cache, use it
+    if (agentCaches[agentId]?.name) {
+      console.log(`[${agentId}] Using existing cache:`, agentCaches[agentId].name);
+      return agentCaches[agentId].name;
+    }
+
+    // Create new cache with the system instruction + padding to meet 2048 token minimum
+    console.log(`[${agentId}] Creating new cache...`);
+
+    // Add padding content to reach minimum token count (2048 tokens)
+    const paddingText = `
+Additional context and guidelines:
+
+React Best Practices:
+- Always use functional components with hooks
+- Keep components pure and predictable
+- Use proper prop types and validation
+- Implement error boundaries when needed
+- Optimize renders with useMemo and useCallback when appropriate
+- Use proper key props in lists
+- Avoid inline function definitions in JSX when possible
+- Keep state close to where it's used
+- Use composition over inheritance
+- Follow the single responsibility principle
+
+Performance Guidelines:
+- Minimize bundle size by code splitting
+- Lazy load components when appropriate
+- Use React.memo for expensive components
+- Debounce/throttle expensive operations
+- Optimize images and assets
+- Use proper caching strategies
+- Minimize re-renders
+- Profile and measure performance
+- Use production builds for deployment
+- Implement proper loading states
+
+Accessibility Standards:
+- Use semantic HTML elements
+- Provide proper ARIA labels
+- Ensure keyboard navigation works
+- Maintain proper heading hierarchy
+- Use sufficient color contrast
+- Provide alt text for images
+- Test with screen readers
+- Support reduced motion preferences
+- Make interactive elements focusable
+- Provide clear focus indicators
+
+Code Quality:
+- Write clean, readable code
+- Use meaningful variable names
+- Keep functions small and focused
+- Add comments for complex logic
+- Follow consistent formatting
+- Handle errors gracefully
+- Write self-documenting code
+- Use proper error messages
+- Implement proper validation
+- Test edge cases
+
+Security Considerations:
+- Sanitize user input
+- Validate data on both client and server
+- Use secure communication protocols
+- Implement proper authentication
+- Protect against XSS attacks
+- Avoid exposing sensitive data
+- Use environment variables for secrets
+- Keep dependencies updated
+- Follow OWASP guidelines
+- Implement proper CORS policies`.repeat(3); // Repeat to reach minimum tokens
+
+    const cache = await ai.caches.create({
+      model: 'gemini-2.5-flash-lite',
+      config: {
+        contents: [{
+          role: 'user',
+          parts: [{ text: paddingText }]
+        }],
+        systemInstruction: systemInstruction,
+        ttl: '3600s' // 1 hour TTL
+      }
+    });
+
+    agentCaches[agentId] = cache;
+    console.log(`[${agentId}] Cache created:`, cache.name);
+    return cache.name;
+  } catch (error) {
+    console.error(`[${agentId}] Failed to create cache:`, error);
+    // If cache creation fails, just return null and fallback to non-cached requests
+    return null;
+  }
+}
+
 const AGENT_PERSONALITIES = {
   speedrunner: {
     name: 'Speedrunner',
@@ -142,6 +248,9 @@ export async function generateCodeWithAgent(agentId, userPrompt, chatHistory, on
   try {
     console.log(`[${personality.name}] Starting code generation...`);
 
+    // Get or create cache for this agent's system instruction
+    const cacheName = await getOrCreateCache(agentId, personality.systemInstruction);
+
     // Build conversation history for context
     const contents = chatHistory.map(msg => ({
       role: msg.type === 'user' ? 'user' : 'model',
@@ -154,17 +263,26 @@ export async function generateCodeWithAgent(agentId, userPrompt, chatHistory, on
       parts: [{ text: userPrompt }]
     });
 
-    console.log(`[${personality.name}] Sending request to Gemini...`);
+    console.log(`[${personality.name}] Sending request to Gemini with cache...`);
 
-    const response = await ai.models.generateContentStream({
-      model: 'gemini-2.5-flash-preview-09-2025',
+    // Use cached content if available, otherwise fallback to regular generation
+    const requestConfig = {
+      model: 'gemini-2.5-flash-lite',
       contents,
-      systemInstruction: personality.systemInstruction,
       generationConfig: {
         temperature: agentId === 'bloom' ? 0.9 : agentId === 'speedrunner' ? 0.7 : 0.8,
         maxOutputTokens: 2048,
       }
-    });
+    };
+
+    // Add cache if available
+    if (cacheName) {
+      requestConfig.config = { cachedContent: cacheName };
+    } else {
+      requestConfig.systemInstruction = personality.systemInstruction;
+    }
+
+    const response = await ai.models.generateContentStream(requestConfig);
 
     console.log(`[${personality.name}] Response received, starting streaming...`);
 
@@ -201,66 +319,60 @@ export async function generateCodeWithAgent(agentId, userPrompt, chatHistory, on
 }
 
 export async function analyzeFeedback(userMessage, agentCodes) {
-  try {
-    console.log('[ANALYZER] Processing user feedback:', userMessage);
+  console.log('[ANALYZER] Processing user feedback:', userMessage);
 
-    const agentSummary = Object.entries(agentCodes)
-      .map(([agentId, code]) => {
-        const name = AGENT_PERSONALITIES[agentId]?.name || agentId;
-        return `${name}: ${code ? code.substring(0, 200) + '...' : 'No code yet'}`;
-      })
-      .join('\n\n');
+  const lowerMsg = userMessage.toLowerCase();
 
-    const analysisPrompt = `You are an expert code reviewer analyzing user feedback on AI-generated React components.
+  // Simple keyword-based detection (NO API CALLS - instant and free!)
+  const praise = [];
+  const critique = [];
+  const targetAgents = [];
 
-User's message: "${userMessage}"
+  // Check for praise keywords
+  const praiseWords = ['like', 'love', 'good', 'great', 'nice', 'best', 'better', 'prefer', 'awesome', 'fire', 'sick', 'dope', 'w ', ' w'];
+  const critiqueWords = ['bad', 'ugly', 'hate', 'worst', 'worse', 'sucks', 'trash', 'mid', 'ass', 'shit', 'L ', ' L'];
 
-Current agent code summaries:
-${agentSummary}
+  // Check each agent
+  const agents = {
+    speedrunner: ['speedrunner', 'speed', 'fast', 'runner'],
+    bloom: ['bloom', 'bloomer'],
+    solver: ['solver', 'solve'],
+    loader: ['loader', 'load']
+  };
 
-Analyze this feedback and return a JSON object with:
-{
-  "targetAgents": ["speedrunner", "bloom", "solver", "loader"], // which agents should respond (can be multiple or all)
-  "feedback": "specific actionable feedback for the agents",
-  "praise": ["agent1", "agent2"], // which agents were praised (if any)
-  "critique": ["agent3"], // which agents were critiqued (if any)
-  "suggestions": "specific improvements to implement"
-}
+  for (const [agentId, keywords] of Object.entries(agents)) {
+    const mentioned = keywords.some(kw => lowerMsg.includes(kw));
 
-Return ONLY valid JSON, no markdown or extra text.`;
+    if (mentioned) {
+      targetAgents.push(agentId);
 
-    const response = await ai.models.generateContent({
-      model: 'gemini-2.0-flash-exp',
-      contents: [{
-        role: 'user',
-        parts: [{ text: analysisPrompt }]
-      }],
-      generationConfig: {
-        temperature: 0.3,
-        maxOutputTokens: 500,
+      // Check if it's praise or critique
+      const hasPraise = praiseWords.some(pw => lowerMsg.includes(pw));
+      const hasCritique = critiqueWords.some(cw => lowerMsg.includes(cw));
+
+      if (hasPraise && !hasCritique) {
+        praise.push(agentId);
+      } else if (hasCritique) {
+        critique.push(agentId);
       }
-    });
-
-    const text = response.text || '{}';
-    console.log('[ANALYZER] Raw response:', text);
-
-    // Strip markdown code fences if present
-    const cleanText = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
-
-    const analysis = JSON.parse(cleanText);
-    console.log('[ANALYZER] Parsed analysis:', analysis);
-
-    return analysis;
-  } catch (error) {
-    console.error('Feedback analysis failed:', error);
-    return {
-      targetAgents: ['speedrunner', 'bloom', 'solver', 'loader'],
-      feedback: userMessage,
-      praise: [],
-      critique: [],
-      suggestions: userMessage
-    };
+    }
   }
+
+  // If no specific agent mentioned, target all
+  if (targetAgents.length === 0) {
+    targetAgents.push('speedrunner', 'bloom', 'solver', 'loader');
+  }
+
+  const analysis = {
+    targetAgents,
+    feedback: userMessage,
+    praise,
+    critique,
+    suggestions: userMessage
+  };
+
+  console.log('[ANALYZER] Analysis (keyword-based):', analysis);
+  return analysis;
 }
 
 export async function iterateOnCode(agentId, currentCode, feedback, otherAgentCodes) {
@@ -268,6 +380,9 @@ export async function iterateOnCode(agentId, currentCode, feedback, otherAgentCo
 
   try {
     console.log(`[${personality.name}] Iterating based on feedback...`);
+
+    // Get or create cache for this agent
+    const cacheName = await getOrCreateCache(agentId, personality.systemInstruction);
 
     const otherSummaries = otherAgentCodes
       .filter(({ agentId: otherId }) => otherId !== agentId)
@@ -298,18 +413,26 @@ REMEMBER:
 
 Generate the IMPROVED component:`;
 
-    const response = await ai.models.generateContentStream({
-      model: 'gemini-2.0-flash-exp',
+    const requestConfig = {
+      model: 'gemini-2.5-flash-lite',
       contents: [{
         role: 'user',
         parts: [{ text: iterationPrompt }]
       }],
-      systemInstruction: personality.systemInstruction,
       generationConfig: {
         temperature: 0.8,
         maxOutputTokens: 2048,
       }
-    });
+    };
+
+    // Add cache if available
+    if (cacheName) {
+      requestConfig.config = { cachedContent: cacheName };
+    } else {
+      requestConfig.systemInstruction = personality.systemInstruction;
+    }
+
+    const response = await ai.models.generateContentStream(requestConfig);
 
     let fullText = '';
     for await (const chunk of response) {
