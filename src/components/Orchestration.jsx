@@ -59,7 +59,7 @@ function Orchestration() {
   const [previewCode, setPreviewCode] = useState(null);
   const [transcripts, setTranscripts] = useState([]); // Voice transcripts
   const banterIntervalRef = useRef(null);
-  const geminiLiveRef = useRef(null); // Store Gemini Live ref from Commentator
+  const elevenLabsRef = useRef(null); // Store ElevenLabs ref from Commentator
 
   // Debug: Log when previewCode changes
   useEffect(() => {
@@ -814,28 +814,18 @@ function Orchestration() {
             isRunning={isBattleRunning}
             agentsReady={agentsReady}
             chatMessages={chatMessages}
-            onComposerMessage={(message) => {
-              // Add to chat
-              setChatMessages(prev => [...prev, {
-                text: `[COMPOSER] ${message}`,
-                type: 'agent',
-                timestamp: Date.now()
-              }]);
+            onElevenLabsReady={(ref) => {
+              elevenLabsRef.current = ref.current;
+              console.log('[Orchestration] ElevenLabs ref received');
 
-              // Add to transcripts
-              setTranscripts(prev => [...prev, { speaker: 'composer', text: message, timestamp: Date.now() }]);
-            }}
-            onUserMessage={handleUserMessage}
-            onGeminiLiveReady={(ref) => {
-              geminiLiveRef.current = ref.current;
-              console.log('[Orchestration] Gemini Live ref received');
-
-              // Set up transcript callbacks
+              // Set up user transcript callback
               if (ref.current) {
-                // When user speaks
                 ref.current.onUserTranscript = (text) => {
                   console.log('[Orchestration] User transcript:', text);
                   setTranscripts(prev => [...prev, { speaker: 'user', text, timestamp: Date.now() }]);
+
+                  // Also send user speech to agents as a message
+                  handleUserMessage(text);
                 };
               }
             }}
@@ -845,7 +835,7 @@ function Orchestration() {
           <ChatInput externalMessages={chatMessages} onUserMessage={handleUserMessage} />
 
           {/* Transcript */}
-          <TranscriptPanel geminiLiveRef={geminiLiveRef} transcripts={transcripts} />
+          <TranscriptPanel elevenLabsRef={elevenLabsRef} transcripts={transcripts} />
         </div>
       </div>
     </motion.div>

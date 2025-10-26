@@ -2,17 +2,21 @@ import { useState, useEffect, useRef } from 'react';
 import './Commentator.css';
 import NeuroShaderCanvas from './NeuroShaderCanvas';
 import CommentatorOrb from './CommentatorOrb';
-import { VapiVoiceManager } from '../services/vapiService';
+import { ElevenLabsVoiceManager } from '../services/elevenlabsService';
+import { CommentatorGeminiService } from '../services/commentatorGeminiService';
 
-function Commentator({ query, onBattleStart, isRunning, agentsReady, chatMessages = [], onComposerMessage, onUserMessage, onVapiReady }) {
+function Commentator({ query, onBattleStart, isRunning, agentsReady, chatMessages = [], onElevenLabsReady }) {
   const [analyser, setAnalyser] = useState(null);
   const [isSoundActive, setIsSoundActive] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
   const [loadingMessageIndex, setLoadingMessageIndex] = useState(0);
   const [isOutputMuted, setIsOutputMuted] = useState(false); // Voice output (start unmuted)
-  const [vapiConnected, setVapiConnected] = useState(false);
-  const vapiRef = useRef(null);
-  const assistantId = import.meta.env.VITE_VAPI_ASSISTANT_ID;
+  const [elevenLabsReady, setElevenLabsReady] = useState(false);
+  const [hasSpokenIntro, setHasSpokenIntro] = useState(false);
+  const elevenLabsRef = useRef(null);
+  const commentatorGeminiRef = useRef(null);
+  const lastMessageCountRef = useRef(0); // Track message count to avoid repeats
+  const commentaryIntervalRef = useRef(null);
 
   const loadingMessages = [
     'initializing agents...',
@@ -25,73 +29,115 @@ function Commentator({ query, onBattleStart, isRunning, agentsReady, chatMessage
     'calibrating systems...'
   ];
 
-  // Initialize VAPI connection when agents are ready
+  // Initialize ElevenLabs and Gemini when agents are ready
   useEffect(() => {
-    const initVapi = async () => {
-      if (!agentsReady || vapiConnected || !assistantId) {
+    const initServices = async () => {
+      if (!agentsReady || elevenLabsReady) {
         return;
       }
 
       try {
-        console.log('[Commentator] Initializing VAPI...');
+        console.log('[Commentator] Initializing services...');
 
-        // Create VAPI manager if it doesn't exist
-        if (!vapiRef.current) {
-          vapiRef.current = new VapiVoiceManager();
+        // Create ElevenLabs manager
+        if (!elevenLabsRef.current) {
+          elevenLabsRef.current = new ElevenLabsVoiceManager();
+        }
+
+        // Create Commentator Gemini service
+        if (!commentatorGeminiRef.current) {
+          commentatorGeminiRef.current = new CommentatorGeminiService();
         }
 
         // Set up callbacks
-        vapiRef.current.onTranscript = (text) => {
-          console.log('[Commentator] Composer says:', text);
-          if (onComposerMessage) {
-            onComposerMessage(text);
-          }
-
-          // Check if Composer is giving commands to agents
-          if (text.toLowerCase().includes('make') || text.toLowerCase().includes('change') || text.toLowerCase().includes('add')) {
-            console.log('[Commentator] Composer might be giving a command, processing...');
-            if (onUserMessage) {
-              onUserMessage(text);
-            }
-          }
-        };
-
-        vapiRef.current.onUserTranscript = (text) => {
-          console.log('[Commentator] User says:', text);
-        };
-
-        vapiRef.current.onSpeechStart = () => {
+        elevenLabsRef.current.onSpeechStart = () => {
           setIsSoundActive(true);
         };
 
-        vapiRef.current.onSpeechEnd = () => {
+        elevenLabsRef.current.onSpeechEnd = () => {
           setIsSoundActive(false);
         };
 
-        // Initialize VAPI
-        await vapiRef.current.initialize(assistantId);
+        // Initialize ElevenLabs
+        await elevenLabsRef.current.initialize();
 
-        setVapiConnected(true);
-        console.log('[Commentator] VAPI initialized successfully');
+        // Get analyser for visualization
+        const analyserNode = elevenLabsRef.current.getAnalyser();
+        setAnalyser(analyserNode);
 
-        // Notify parent that VAPI is ready
-        if (onVapiReady) {
-          onVapiReady(vapiRef);
+        setElevenLabsReady(true);
+        console.log('[Commentator] Services initialized successfully');
+
+        // Notify parent that ElevenLabs is ready
+        if (onElevenLabsReady) {
+          onElevenLabsReady(elevenLabsRef);
         }
       } catch (error) {
-        console.error('[Commentator] Failed to initialize VAPI:', error);
+        console.error('[Commentator] Failed to initialize services:', error);
       }
     };
 
-    initVapi();
+    initServices();
 
     return () => {
       // Cleanup on unmount
-      if (vapiRef.current) {
-        vapiRef.current.stop();
+      if (elevenLabsRef.current) {
+        elevenLabsRef.current.dispose();
+      }
+      if (commentaryIntervalRef.current) {
+        clearInterval(commentaryIntervalRef.current);
       }
     };
-  }, [agentsReady, assistantId]);
+  }, [agentsReady]);
+
+  // Speak welcome intro when battle starts
+  useEffect(() => {
+    if (isRunning && !hasSpokenIntro && elevenLabsReady && query) {
+      setHasSpokenIntro(true);
+
+      // Get welcome intro
+      const intro = commentatorGeminiRef.current.getWelcomeIntro(query);
+      console.log('[Commentator] Speaking intro:', intro);
+      elevenLabsRef.current.speak(intro);
+    }
+  }, [isRunning, hasSpokenIntro, elevenLabsReady, query]);
+
+  // Generate and speak commentary from EVERY chat update
+  useEffect(() => {
+    if (!elevenLabsReady || !elevenLabsRef.current || !commentatorGeminiRef.current || !isRunning) {
+      return;
+    }
+
+    // Only generate commentary when there are NEW messages
+    if (chatMessages.length === lastMessageCountRef.current || chatMessages.length === 0) {
+      return;
+    }
+
+    const generateAndSpeak = async () => {
+      try {
+        // Generate natural commentary from recent messages
+        const commentary = await commentatorGeminiRef.current.generateCommentary(chatMessages);
+
+        if (commentary) {
+          console.log('[Commentator] Speaking commentary:', commentary);
+
+          // Speak immediately, even if already speaking (queue it)
+          if (elevenLabsRef.current.isSpeaking()) {
+            console.log('[Commentator] Already speaking, will queue this one');
+          }
+
+          elevenLabsRef.current.speak(commentary);
+        }
+
+        lastMessageCountRef.current = chatMessages.length;
+      } catch (error) {
+        console.error('[Commentator] Failed to generate commentary:', error);
+      }
+    };
+
+    // Generate commentary immediately for every new message
+    generateAndSpeak();
+  }, [chatMessages, elevenLabsReady, isRunning]);
 
   // Cycle loading messages
   useEffect(() => {
@@ -113,10 +159,10 @@ function Commentator({ query, onBattleStart, isRunning, agentsReady, chatMessage
     const newMuted = !isOutputMuted;
     setIsOutputMuted(newMuted);
 
-    // Toggle Gemini's voice output
-    if (geminiLiveRef.current) {
-      await geminiLiveRef.current.setOutputMuted(newMuted);
-      console.log(`[Commentator] Gemini voice ${newMuted ? 'muted' : 'unmuted'}`);
+    // Toggle ElevenLabs voice output
+    if (elevenLabsRef.current) {
+      elevenLabsRef.current.setMuted(newMuted);
+      console.log(`[Commentator] ElevenLabs voice ${newMuted ? 'muted' : 'unmuted'}`);
     }
   };
 

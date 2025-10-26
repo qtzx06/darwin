@@ -1,16 +1,16 @@
 import { useState } from 'react';
 import './TranscriptPanel.css';
 
-function TranscriptPanel({ geminiLiveRef, transcripts = [] }) {
+function TranscriptPanel({ elevenLabsRef, transcripts = [] }) {
   const [isMicMuted, setIsMicMuted] = useState(true); // Start with mic muted
 
   const handleMicToggle = async () => {
     const newMuted = !isMicMuted;
     setIsMicMuted(newMuted);
 
-    // Toggle microphone via Gemini Live
-    if (geminiLiveRef?.current) {
-      await geminiLiveRef.current.setMicMuted(newMuted);
+    // Toggle microphone via ElevenLabs
+    if (elevenLabsRef?.current) {
+      await elevenLabsRef.current.setMicMuted(newMuted);
       console.log(`[TranscriptPanel] Microphone ${newMuted ? 'muted' : 'unmuted'}`);
     }
   };
