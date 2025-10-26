@@ -139,7 +139,7 @@ React to the NEW UPDATE with SHORT commentary (max 12 words). Make it hyped:`;
         systemInstruction: this.systemInstruction
       });
 
-      const commentary = response.text.trim();
+      const commentary = response.text.trim().toUpperCase();
 
       console.log('[Commentator Gemini] Generated:', commentary);
       return commentary;
