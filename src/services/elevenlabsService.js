@@ -19,7 +19,7 @@ export class ElevenLabsVoiceManager {
     this.onUserTranscript = null; // Callback for user's speech transcription
 
     // Voice ID - using a fun energetic voice for the composer
-    this.voiceId = 'Anr9GtYh2VRXxiPplzxM'; // Custom voice from library
+    this.voiceId = 'gnPxliFHTp6OK6tcoA6i'; // Custom voice from library
 
     // Recording state
     this.mediaRecorder = null;
@@ -249,25 +249,35 @@ export class ElevenLabsVoiceManager {
   }
 
   /**
-   * Transcribe audio using ElevenLabs STT API
+   * Transcribe audio using ElevenLabs STT API (direct fetch)
    */
   async transcribeAudio(audioBlob) {
     try {
       console.log('[ElevenLabs] Transcribing audio blob of size:', audioBlob.size);
 
-      // Use the SDK's speechToText.convert method
-      // Create a File object from the Blob
-      const audioFile = new File([audioBlob], 'recording.webm', { type: 'audio/webm' });
+      // Use direct fetch since SDK is buggy
+      const formData = new FormData();
+      formData.append('file', audioBlob, 'recording.webm');
+      formData.append('model_id', 'scribe_v1');
 
-      const response = await this.client.speechToText.convert({
-        audio: audioFile,
-        model: 'scribe_v1'
+      const response = await fetch('https://api.elevenlabs.io/v1/speech-to-text', {
+        method: 'POST',
+        headers: {
+          'xi-api-key': API_KEY
+        },
+        body: formData
       });
 
-      console.log('[ElevenLabs] Transcription response:', response);
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`STT API error: ${response.status} - ${errorText}`);
+      }
+
+      const result = await response.json();
+      console.log('[ElevenLabs] Transcription response:', result);
 
       // Extract text from response
-      const transcript = response.text;
+      const transcript = result.text;
 
       if (transcript && this.onUserTranscript) {
         console.log('[ElevenLabs] Transcript:', transcript);
