@@ -1,7 +1,7 @@
 import { GoogleGenAI } from '@google/genai';
 
 const API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
-const ai = new GoogleGenAI({ apiKey: API_KEY });
+const ai = API_KEY ? new GoogleGenAI({ apiKey: API_KEY }) : null;
 
 // Cache management for system instructions
 const agentCaches = {
@@ -13,6 +13,11 @@ const agentCaches = {
 
 // Create or get cache for an agent
 async function getOrCreateCache(agentId, systemInstruction) {
+  if (!ai) {
+    console.warn('Gemini API not initialized - missing API key');
+    return null;
+  }
+  
   try {
     // If we already have a cache, use it
     if (agentCaches[agentId]?.name) {

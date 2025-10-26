@@ -1,0 +1,51 @@
+.sui-wallet-button-container {
+  position: fixed;
+  top: 2rem;
+  right: 2rem;
+  z-index: 1000;
+}
+
+/* Override dApp Kit button styles to match your theme */
+.sui-wallet-button-container button {
+  background: rgba(255, 255, 255, 0.05) !important;
+  backdrop-filter: blur(10px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  border-radius: 12px !important;
+  padding: 0.75rem 1.5rem !important;
+  color: #fff !important;
+  font-family: 'Geist Mono', monospace !important;
+  font-size: 0.9rem !important;
+  font-weight: 500 !important;
+  cursor: pointer !important;
+  transition: all 0.3s ease !important;
+  text-transform: lowercase !important;
+}
+
+.sui-wallet-button-container button:hover {
+  background: rgba(255, 255, 255, 0.1) !important;
+  border-color: rgba(255, 255, 255, 0.4) !important;
+  transform: translateY(-2px) !important;
+  box-shadow: 0 4px 12px rgba(255, 255, 255, 0.1) !important;
+}
+
+.sui-wallet-button-container button:active {
+  transform: translateY(0) !important;
+}
+
+/* Wallet modal styling */
+[data-dapp-kit] {
+  font-family: 'Geist Mono', monospace !important;
+}
+
+/* Mobile responsive */
+@media (max-width: 768px) {
+  .sui-wallet-button-container {
+    top: 1rem;
+    right: 1rem;
+  }
+  
+  .sui-wallet-button-container button {
+    padding: 0.5rem 1rem !important;
+    font-size: 0.8rem !important;
+  }
+}
