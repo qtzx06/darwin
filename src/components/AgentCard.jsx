@@ -544,37 +544,13 @@ class ResourceLoader {
 </async_loader>`
 };
 
-function AgentCard({ agentId, agentName, isExpanded, onExpand, onLike, onPreview, voteCount = 0, generatedCode = null }) {
+function AgentCard({ agentId, agentName, isExpanded, onExpand, onLike, onPreview, voteCount = 0, generatedCode = null, statusMessage = '' }) {
   const cardRef = useRef(null);
   const [currentMessageIndex, setCurrentMessageIndex] = useState(0);
   const [visibleMessages, setVisibleMessages] = useState([0]); // Track which messages are visible
-  const [typedCode, setTypedCode] = useState('');
-  const [isTyping, setIsTyping] = useState(false);
-
-  // Live typing effect for generated code
+  // No typing animation, just show code immediately
   useEffect(() => {
-    if (!generatedCode) {
-      setTypedCode('');
-      setIsTyping(false);
-      return;
-    }
-
-    setIsTyping(true);
-    setTypedCode('');
-    let currentIndex = 0;
-    const typingSpeed = 10; // milliseconds per character
-
-    const typeInterval = setInterval(() => {
-      if (currentIndex < generatedCode.length) {
-        setTypedCode(generatedCode.substring(0, currentIndex + 1));
-        currentIndex++;
-      } else {
-        setIsTyping(false);
-        clearInterval(typeInterval);
-      }
-    }, typingSpeed);
-
-    return () => clearInterval(typeInterval);
+    // Code appears instantly when generated
   }, [generatedCode]);
 
   // Cycle through transcript messages (append one at a time, show 4 total)
@@ -714,8 +690,7 @@ function AgentCard({ agentId, agentName, isExpanded, onExpand, onLike, onPreview
                 <div className="agent-code-side">
                   {generatedCode ? (
                     <pre className="agent-generated-code">
-                      {typedCode}
-                      {isTyping && <span className="typing-cursor">▊</span>}
+                      {generatedCode}
                     </pre>
                   ) : (
                     <pre className="agent-generated-code" dangerouslySetInnerHTML={{ __html: EXPANDED_CONTENT[agentId] }} />
@@ -726,25 +701,21 @@ function AgentCard({ agentId, agentName, isExpanded, onExpand, onLike, onPreview
                 </div>
               </div>
             ) : (
-              <div className="agent-transcript-content">(
-                  <>
-                    {visibleMessages.map((msgIndex, idx) => (
-                      <div key={`${msgIndex}-${idx}`}>
-                        <DecryptedText
-                          text={TRANSCRIPTS[agentId][msgIndex]}
-                          speed={agentId === 'speedrunner' ? 20 : 30}
-                          sequential={true}
-                          revealDirection="start"
-                          animateOn="view"
-                        />
-                      </div>
-                    ))}
-                    <div className="loading-dots">
-                      <span>.</span>
-                      <span>.</span>
-                      <span>.</span>
-                    </div>
-                  </>
+              <div className="agent-transcript-content">
+                {visibleMessages.map((msgIndex, idx) => (
+                  <div key={`${msgIndex}-${idx}`} className="transcript-message">
+                    {TRANSCRIPTS[agentId][msgIndex]}
+                  </div>
+                ))}
+                <div className="loading-dots">
+                  <span>.</span>
+                  <span>.</span>
+                  <span>.</span>
+                </div>
+                {statusMessage && (
+                  <div className="agent-status-message">
+                    {statusMessage}
+                  </div>
                 )}
               </div>
             )}

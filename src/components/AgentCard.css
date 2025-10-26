@@ -342,6 +342,23 @@
   }
 }
 
+/* Transcript message */
+.orchestration-container .transcript-message {
+  display: block;
+  margin-bottom: 8px;
+  line-height: 1.5;
+  width: 100%;
+}
+
+/* Agent status message */
+.orchestration-container .agent-status-message {
+  margin-top: 8px;
+  color: #f0b0d0;
+  font-size: 9px;
+  font-family: 'Geist Mono', monospace;
+  font-weight: 500;
+}
+
 /* Generated code display */
 .orchestration-container .agent-generated-code {
   font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;

@@ -50,6 +50,12 @@ function Orchestration() {
     solver: null,
     loader: null
   });
+  const [agentStatus, setAgentStatus] = useState({
+    speedrunner: '',
+    bloom: '',
+    solver: '',
+    loader: ''
+  });
   const [previewCode, setPreviewCode] = useState(null);
   const banterIntervalRef = useRef(null);
 
@@ -241,7 +247,7 @@ function Orchestration() {
     addChatMessage(`[YOU] ${userMessage}`, 'user');
 
     // Import the functions
-    const { analyzeFeedback, iterateOnCode, generateAgentReaction, shouldAgentsReact } = await import('../services/geminiService');
+    const { analyzeFeedback, iterateOnCode, generateAgentReaction, shouldAgentsReact, generateAgentChatMessage } = await import('../services/geminiService');
 
     try {
       // Silently analyze the feedback
@@ -284,7 +290,12 @@ function Orchestration() {
       for (const targetAgentId of analysis.targetAgents) {
         if (agentCode[targetAgentId]) {
           try {
-            addChatMessage(`[${agentNames[targetAgentId]}] updating my code rq...`, 'agent');
+            // Generate conversational "working on it" message and show in transcript
+            const workingMsg = await generateAgentChatMessage(targetAgentId, 'starting to update code based on feedback', chatMessages);
+            setAgentStatus(prev => ({
+              ...prev,
+              [targetAgentId]: workingMsg
+            }));
 
             const improvedCode = await iterateOnCode(
               targetAgentId,
@@ -299,7 +310,20 @@ function Orchestration() {
               [targetAgentId]: improvedCode
             }));
 
-            addChatMessage(`[${agentNames[targetAgentId]}] aight updated`, 'agent');
+            // Generate conversational "done" message and show in transcript
+            const doneMsg = await generateAgentChatMessage(targetAgentId, 'finished updating code', chatMessages);
+            setAgentStatus(prev => ({
+              ...prev,
+              [targetAgentId]: doneMsg
+            }));
+
+            // Clear status after a moment
+            setTimeout(() => {
+              setAgentStatus(prev => ({
+                ...prev,
+                [targetAgentId]: ''
+              }));
+            }, 3000);
 
             await new Promise(resolve => setTimeout(resolve, 800));
           } catch (error) {
@@ -354,11 +378,6 @@ function Orchestration() {
           }));
 
           agentProgress[agentId].code = fullText;
-
-          // Log chunks to chat occasionally (every ~200 chars to avoid spam)
-          if (fullText.length % 200 === 0 && fullText.length > 0) {
-            addChatMessage(`[${agentNames[agentId]}] ${fullText.length} chars generated...`, 'agent');
-          }
         },
         // onAgentComplete - called when an agent finishes
         (agentId, fullText) => {
@@ -507,6 +526,7 @@ function Orchestration() {
             onLike={handleAgentLike}
             voteCount={blockchainVotes.speedrunner}
             generatedCode={agentCode.speedrunner}
+            statusMessage={agentStatus.speedrunner}
           />
           <AgentCard
             agentId="bloom"
@@ -517,6 +537,7 @@ function Orchestration() {
             onPreview={(code) => setPreviewCode(code)}
             voteCount={blockchainVotes.bloom}
             generatedCode={agentCode.bloom}
+            statusMessage={agentStatus.bloom}
           />
           <AgentCard
             agentId="solver"
@@ -526,6 +547,7 @@ function Orchestration() {
             onLike={handleAgentLike}
             voteCount={blockchainVotes.solver}
             generatedCode={agentCode.solver}
+            statusMessage={agentStatus.solver}
           />
           <AgentCard
             agentId="loader"
@@ -535,6 +557,7 @@ function Orchestration() {
             onLike={handleAgentLike}
             voteCount={blockchainVotes.loader}
             generatedCode={agentCode.loader}
+            statusMessage={agentStatus.loader}
           />
 
           {/* Commentator with Battle Controls */}

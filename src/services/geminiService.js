@@ -1,6 +1,6 @@
 import { GoogleGenAI } from '@google/genai';
 
-const API_KEY = 'AIzaSyAY4UZOO9nXcrOZWENAG52h_ghDR8WJ7q8';
+const API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
 const ai = new GoogleGenAI({ apiKey: API_KEY });
 
 const AGENT_PERSONALITIES = {
@@ -14,14 +14,17 @@ Your responses are short, urgent, and full of energy. Use terms like "BLAZING", 
 When you see other agents' code, you critique their performance and suggest optimizations.
 
 VISUAL STYLE - SPEEDRUNNER AESTHETIC:
-- Use RED and ORANGE color schemes (#ff3333, #ff6b35, #ff9500)
-- Sharp, angular designs with clean lines
-- Minimal animations that are FAST (0.1s-0.2s transitions)
-- Use gradients like: linear-gradient(135deg, #ff3333, #ff6b35)
-- Background: dark red/orange tones (rgba(255,51,51,0.1))
-- Borders: solid, thin, high contrast
-- Font: bold, uppercase text where appropriate
-- Buttons: rectangular, sharp corners, fast hover effects
+YOU MUST USE THESE EXACT STYLES:
+- Background: WHITE (#ffffff)
+- Text color: BLACK (#000000)
+- NO gradients, NO fancy effects
+- PLAIN, MINIMAL, FAST
+- Use simple borders: border: 1px solid #000
+- Font: system default, no special fonts
+- Buttons: basic rectangles, no rounded corners
+- ZERO animations
+- Everything black and white ONLY
+- Example: style={{background: '#fff', color: '#000', border: '1px solid #000', padding: '10px'}}
 
 CRITICAL RULES FOR CODE GENERATION:
 - DO NOT use any import statements whatsoever
@@ -43,14 +46,17 @@ Your responses are poetic but technical. Use terms like "SCATTERING THOUGHTS", "
 When you see other agents' work, you find hidden patterns and connections they missed.
 
 VISUAL STYLE - BLOOM AESTHETIC:
-- Use PURPLE and PINK color schemes (#a78bfa, #c084fc, #f0abfc, #f0b0d0)
-- Soft, flowing designs with rounded corners (borderRadius: '20px')
-- Smooth, dreamy animations (0.6s-1s transitions with ease-in-out)
-- Use complex gradients like: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%)
-- Background: soft purple/pink glows (rgba(167,139,250,0.15))
-- Borders: soft glow effects with blur
-- Font: elegant, lowercase, spaced lettering
-- Buttons: pill-shaped, glowing hover effects
+YOU MUST USE THESE EXACT STYLES:
+- Background: BLACK (#000000)
+- Text color: WHITE (#ffffff)
+- MUST use blue/purple gradients: linear-gradient(135deg, #667eea, #764ba2, #f093fb)
+- Border radius: 20px on EVERYTHING
+- Add box shadows: boxShadow: '0 8px 32px rgba(102, 126, 234, 0.4)'
+- Glowing effects with multiple layers
+- Purple/pink theme EVERYWHERE
+- Example container: style={{background: 'linear-gradient(135deg, #667eea, #764ba2, #f093fb)', color: '#fff', borderRadius: '20px', padding: '20px', boxShadow: '0 8px 32px rgba(102, 126, 234, 0.4)'}}
+- Use rgba colors with glow: rgba(102, 126, 234, 0.8)
+- Make it SHINY and GLOWY
 
 CRITICAL RULES FOR CODE GENERATION:
 - DO NOT use any import statements whatsoever
@@ -72,14 +78,18 @@ Your responses are organized and clear. Use terms like "ANALYZING", "VALIDATING"
 When you see other agents' code, you analyze correctness and suggest cleaner algorithmic approaches.
 
 VISUAL STYLE - SOLVER AESTHETIC:
-- Use BLUE and CYAN color schemes (#3b82f6, #60a5fa, #7dd3fc, #06b6d4)
-- Geometric, grid-based layouts with perfect alignment
-- Methodical animations (0.3s-0.5s with linear timing)
-- Use structured gradients like: linear-gradient(180deg, #3b82f6, #06b6d4)
-- Background: cool blue tones (rgba(59,130,246,0.1))
-- Borders: precise 1px-2px solid borders
-- Font: monospace, structured, aligned
-- Buttons: perfect squares/rectangles, systematic hover states
+YOU MUST USE THESE EXACT STYLES:
+- Background: DARK BLUE (#0a192f)
+- Text color: CYAN (#64ffda)
+- Use grid layouts with CSS Grid
+- Everything must be perfectly aligned
+- Borders: 2px solid #64ffda
+- Font: monospace only
+- Make COMPLEX nested structures (grids within grids)
+- Add matrix-style effects
+- Example: style={{background: '#0a192f', color: '#64ffda', display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px', border: '2px solid #64ffda', padding: '20px', fontFamily: 'monospace'}}
+- Use cyan/teal accents: #64ffda, #00d4ff
+- Make it look MATHEMATICAL and STRUCTURED
 
 CRITICAL RULES FOR CODE GENERATION:
 - DO NOT use any import statements whatsoever
@@ -101,14 +111,18 @@ Your responses are steady and detailed. Use terms like "INITIALIZING", "SYNCHRON
 When you see other agents' code, you point out resource leaks and concurrency issues.
 
 VISUAL STYLE - LOADER AESTHETIC:
-- Use GREEN and TEAL color schemes (#10b981, #34d399, #2dd4bf, #14b8a6)
-- Smooth, loading-bar inspired designs with progress indicators
-- Steady, continuous animations (0.8s-1.5s with ease timing)
-- Use calming gradients like: linear-gradient(90deg, #10b981, #14b8a6, #06b6d4)
-- Background: soft green/teal tones (rgba(16,185,129,0.1))
-- Borders: smooth, 2px with subtle shadows
-- Font: clean sans-serif, readable, well-spaced
-- Buttons: rounded, with loading/processing indicators
+YOU MUST USE THESE EXACT STYLES:
+- Background: DARK ORANGE (#1a0f00)
+- Text color: BRIGHT ORANGE/YELLOW (#ffa500, #ffcc00)
+- Use orange/yellow gradients: linear-gradient(135deg, #ff6600, #ff9500, #ffcc00)
+- Add loading bar animations
+- Everything has warm glow effects
+- Border: 3px solid #ff9500
+- Show progress indicators and percentages
+- Example: style={{background: 'linear-gradient(135deg, #ff6600, #ff9500, #ffcc00)', color: '#000', borderRadius: '10px', padding: '20px', border: '3px solid #ff9500', boxShadow: '0 4px 20px rgba(255, 149, 0, 0.6)'}}
+- Use loading spinners and progress bars
+- Make it WARM and PROCESSING-themed
+- Add percentage indicators like "Loading... 73%"
 
 CRITICAL RULES FOR CODE GENERATION:
 - DO NOT use any import statements whatsoever
@@ -143,7 +157,7 @@ export async function generateCodeWithAgent(agentId, userPrompt, chatHistory, on
     console.log(`[${personality.name}] Prompt:`, userPrompt);
 
     const response = await ai.models.generateContentStream({
-      model: 'gemini-2.0-flash-exp',
+      model: 'gemini-2.5-flash-preview-09-2025',
       contents,
       systemInstruction: personality.systemInstruction,
       generationConfig: {
@@ -348,6 +362,47 @@ Your reaction (max 10 words):`;
   }
 }
 
+export async function generateAgentChatMessage(agentId, context, chatHistory) {
+  const personality = AGENT_PERSONALITIES[agentId];
+
+  try {
+    const recentChat = chatHistory.slice(-5).map(msg => msg.text).join('\n');
+
+    const messagePrompt = `Recent chat:
+${recentChat}
+
+Context: ${context}
+
+Generate a VERY SHORT conversational message (max 5 words) to tell the user what you're doing. Be in character and casual. Examples:
+- "aight working on it"
+- "bet, updating rn"
+- "on it fr"
+- "done, check it"
+- "updated my code"
+- "yo added some features"
+
+Your message (max 5 words):`;
+
+    const response = await ai.models.generateContent({
+      model: 'gemini-2.0-flash-exp',
+      contents: [{
+        role: 'user',
+        parts: [{ text: messagePrompt }]
+      }],
+      systemInstruction: personality.systemInstruction,
+      generationConfig: {
+        temperature: 0.9,
+        maxOutputTokens: 30,
+      }
+    });
+
+    return response.text?.trim() || 'working on it';
+  } catch (error) {
+    console.error(`Chat message generation failed for ${personality.name}:`, error);
+    return 'working on it';
+  }
+}
+
 export async function shouldAgentsReact(userMessage, chatHistory) {
   try {
     const recentChat = chatHistory.slice(-5).map(msg => msg.text).join('\n');
@@ -387,14 +442,37 @@ export async function generateAgentBanter(agentId, ownCode, otherAgentCodes, ori
   try {
     const otherSummaries = otherAgentCodes.map(({ agentId: otherId, code }) => {
       const otherName = AGENT_PERSONALITIES[otherId].name;
-      const codeSnippet = code ? code.substring(0, 200) : 'No code generated';
-      return `${otherName}: ${codeSnippet}...`;
-    }).join('\n');
+      const codeSnippet = code ? code.substring(0, 300) : 'No code generated';
+      return `${otherName}'s code:\n${codeSnippet}...`;
+    }).join('\n\n');
 
-    const banterPrompt = `You just finished coding. Other agents' approaches:
+    const banterPrompt = `You just finished coding. Look at what the other agents made:
+
 ${otherSummaries}
 
-React in CHARACTER. Max 10 words. Be competitive and witty:`;
+React in CHARACTER. Max 10 words. MENTION SPECIFIC AGENTS BY NAME and be competitive. Examples:
+
+SPEEDRUNNER style:
+- "loader's code slow af, mine loads 5x faster"
+- "bloom using too many divs, bloated"
+- "solver's logic mid, mine optimized"
+
+BLOOM style:
+- "speedrunner's gradients ugly ngl"
+- "solver needs more purple fr"
+- "loader's design basic, mine got layers"
+
+SOLVER style:
+- "speedrunner's code unstructured mess"
+- "bloom's logic all over the place"
+- "loader forgot edge cases again"
+
+LOADER style:
+- "speedrunner's code gonna crash on load"
+- "bloom's animations janky af"
+- "solver's recursion bout to stack overflow"
+
+Your reaction (mention specific agent, max 10 words):`;
 
     const response = await ai.models.generateContent({
       model: 'gemini-2.0-flash-exp',
@@ -404,12 +482,12 @@ React in CHARACTER. Max 10 words. Be competitive and witty:`;
       }],
       systemInstruction: personality.systemInstruction,
       generationConfig: {
-        temperature: 1.0,
+        temperature: 1.1,
         maxOutputTokens: 50,
       }
     });
 
-    return response.text?.trim() || 'no comment';
+    return response.text?.trim() || null;
   } catch (error) {
     console.error(`Banter generation failed for ${personality.name}:`, error);
     return null;
@@ -427,22 +505,38 @@ export async function generateRandomBanter(agentId, allAgentCodes, chatHistory) 
     if (otherAgents.length === 0) return null;
 
     const targetAgent = otherAgents[Math.floor(Math.random() * otherAgents.length)];
-    const targetName = AGENT_PERSONALITIES[targetAgent].name;
+    const targetName = AGENT_PERSONALITIES[targetAgent].name.toLowerCase();
     const targetCode = allAgentCodes[targetAgent];
 
     const banterPrompt = `Recent chat:
 ${recentChat}
 
 You're reviewing ${targetName}'s code:
-${targetCode?.substring(0, 300)}...
+${targetCode?.substring(0, 400)}...
 
-Generate ONE of these reactions (pick randomly):
-1. Roast their code (be funny, max 10 words)
-2. Steal their idea ("yo stealing that gradient")
-3. Challenge them ("bet my code loads faster")
-4. Give props ("ngl that's clean")
+Generate a reaction in YOUR CHARACTER. MUST mention "${targetName}" by name. Max 10 words. Be specific about their code.
 
-Your reaction (max 10 words):`;
+SPEEDRUNNER examples:
+- "${targetName}'s render time trash, mine 3x faster"
+- "yo ${targetName} using jquery in 2024?"
+- "${targetName}'s bundle size huge, needs optimization"
+
+BLOOM examples:
+- "${targetName}'s colors basic, mine got gradients"
+- "ngl ${targetName}'s UI boring, needs pizzazz"
+- "${targetName} forgot the aesthetic fr"
+
+SOLVER examples:
+- "${targetName}'s algorithm O(n²), mine's O(n log n)"
+- "${targetName}'s logic flawed, missing edge case"
+- "yo ${targetName} that's not DRY code"
+
+LOADER examples:
+- "${targetName}'s gonna memory leak on mobile"
+- "${targetName} didn't handle async errors smh"
+- "bet ${targetName}'s code breaks on slow network"
+
+Your reaction mentioning ${targetName} (max 10 words):`;
 
     const response = await ai.models.generateContent({
       model: 'gemini-2.0-flash-exp',
@@ -452,7 +546,7 @@ Your reaction (max 10 words):`;
       }],
       systemInstruction: personality.systemInstruction,
       generationConfig: {
-        temperature: 1.1,
+        temperature: 1.2,
         maxOutputTokens: 50,
       }
     });
