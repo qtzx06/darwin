@@ -68,15 +68,15 @@ function render() {
 
   if (running || invalidate) {
     if (!invalidate) {
-      time += dt * 0.3; // Slow down time by 70%
+      time += dt * 0.1; // Slow down time by 90%
 
       // Mouse-based rotation
-      targetRotationX = mouseY * 0.5; // Reduced multiplier for subtler effect
-      targetRotationY = -mouseX * 0.5;
+      targetRotationX = mouseY * 0.3; // Even more subtle effect
+      targetRotationY = -mouseX * 0.3;
 
       // Smooth lerp to target rotation
-      group.rotation.x += (targetRotationX - group.rotation.x) * 0.05;
-      group.rotation.y += (targetRotationY - group.rotation.y) * 0.05;
+      group.rotation.x += (targetRotationX - group.rotation.x) * 0.03;
+      group.rotation.y += (targetRotationY - group.rotation.y) * 0.03;
     }
     step(renderer, time / 1000, dt / 16);
 

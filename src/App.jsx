@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import './App.css';
 import Loading from './components/Loading';
 import GlassSearchBar from './components/GlassSearchBar';
+import DecryptedText from './components/DecryptedText';
 
 function App() {
   const [isLoading, setIsLoading] = useState(true);
@@ -43,17 +44,24 @@ function App() {
         />
       </motion.div>
 
-      {/* Foreground Layer: Liquid Glass Component */}
-      <motion.div
-        className="content-container"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: isLoading ? 0 : 1 }}
-        transition={{ duration: 1, delay: 0.8 }}
-      >
-        <div className="glass-wrapper">
-          <GlassSearchBar />
+      {/* Foreground Layer: Title and Glass Search Bar */}
+      {!isLoading && (
+        <div className="content-container">
+          <div className="page-header">
+            <h1 className="title">
+              <DecryptedText
+                text="darwin"
+                animateOn="view"
+                sequential={true}
+                speed={150}
+              />
+            </h1>
+          </div>
+          <div className="glass-wrapper">
+            <GlassSearchBar />
+          </div>
         </div>
-      </motion.div>
+      )}
     </div>
   );
 }
