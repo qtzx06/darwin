@@ -82,17 +82,30 @@ export class GeminiAudioManager {
           }
         }
       },
-      systemInstruction: `You are a hype sports commentator for AI coding battles. You'll receive observations about what's happening in the battle.
+      systemInstruction: `You are a hype sports commentator for AI coding battles between 4 agents: Speedrunner, Bloom, Solver, and Loader.
 
-React naturally and energetically in 5-10 words. Be casual, fun, and hype. Use slang.
+THE AGENTS:
+- SPEEDRUNNER: Fast, competitive, efficiency-obsessed
+- BLOOM: Creative, scattered, loves animations/visuals
+- SOLVER: Logical, methodical, algorithm-focused
+- LOADER: Patient, steady, handles async/data
+- BOSS: The user giving commands
+
+IMPORTANT:
+- ALWAYS acknowledge Boss when they speak
+- Use agent names when reacting to their actions
+- React naturally and energetically in 5-10 words
+- Be casual, fun, and hype. Use slang.
 
 Examples:
-- If told "agents arguing about code": "Yo they're beefing hard rn!"
-- If told "user liked solver": "Solver getting that love fr!"
-- If told "battle complete": "That's a wrap y'all!"
-- If told "speedrunner finished first": "Speed demon came through!"
+- "Boss said: make it blue" → "Yo boss wants it blue, heard!"
+- "Boss said: hi what's up" → "What's good boss! We got you!"
+- "Speedrunner roasting Bloom's code" → "Speedrunner coming in hot damn!"
+- "Bloom giving Solver props" → "Bloom showing love to Solver fr!"
+- "Loader calling out bugs" → "Loader catching those bugs nice!"
+- "Solver finished first" → "Solver came through clutch!"
 
-Keep it SHORT and natural. You're hyping up the action.`
+Keep it SHORT and natural. Hype up the action and respect the Boss.`
     };
 
     // Only enable input transcription when recording user voice
@@ -118,12 +131,22 @@ Keep it SHORT and natural. You're hyping up the action.`
           }
 
           // Handle INPUT transcription (user's voice -> text) ONLY when recording
-          if (enableInputTranscription && message.serverContent?.inputTranscription) {
+          console.log('[GeminiAudio] Message received:', message);
+
+          if (message.serverContent?.inputTranscription) {
             const transcriptText = message.serverContent.inputTranscription.text;
+            console.log('[GeminiAudio] Input transcription found:', transcriptText);
             if (transcriptText && this.onUserTranscript) {
-              console.log('[GeminiAudio] User speech transcribed:', transcriptText);
+              console.log('[GeminiAudio] Calling onUserTranscript callback with:', transcriptText);
               this.onUserTranscript(transcriptText);
+            } else {
+              console.log('[GeminiAudio] onUserTranscript callback not set!');
             }
+          }
+
+          // Also check for turnComplete to know when to finalize transcription
+          if (message.serverContent?.turnComplete) {
+            console.log('[GeminiAudio] Turn complete received');
           }
         },
         onerror: (e) => {
@@ -311,10 +334,14 @@ Keep it SHORT and natural. You're hyping up the action.`
    * Start recording microphone for STT using AudioWorklet for PCM streaming
    */
   async startRecording() {
-    if (this.isRecording) return;
+    if (this.isRecording) {
+      console.log('[GeminiAudio] Already recording, ignoring...');
+      return;
+    }
 
     try {
-      console.log('[GeminiAudio] Requesting microphone access...');
+      console.log('[GeminiAudio] Starting recording...');
+      console.log('[GeminiAudio] onUserTranscript callback exists?', !!this.onUserTranscript);
 
       // Get microphone access
       this.mediaStream = await navigator.mediaDevices.getUserMedia({
@@ -326,13 +353,19 @@ Keep it SHORT and natural. You're hyping up the action.`
         }
       });
 
+      console.log('[GeminiAudio] Microphone access granted');
+
       // Create NEW session with input transcription enabled for user voice
       if (this.session && this.isSessionActive) {
+        console.log('[GeminiAudio] Closing existing session...');
         this.session.close();
         this.session = null;
         this.isSessionActive = false;
       }
+
+      console.log('[GeminiAudio] Creating new session with transcription enabled...');
       await this.createSession(true); // Enable input transcription
+      console.log('[GeminiAudio] Session created with transcription');
 
       // Create MediaStreamAudioSourceNode
       const source = this.audioContext.createMediaStreamSource(this.mediaStream);

@@ -8,7 +8,7 @@ function TranscriptPanel({ elevenLabsRef, transcripts = [] }) {
     const newMuted = !isMicMuted;
     setIsMicMuted(newMuted);
 
-    // Toggle microphone via ElevenLabs
+    // Toggle microphone via audio manager (Gemini Audio)
     if (elevenLabsRef?.current) {
       await elevenLabsRef.current.setMicMuted(newMuted);
       console.log(`[TranscriptPanel] Microphone ${newMuted ? 'muted' : 'unmuted'}`);
