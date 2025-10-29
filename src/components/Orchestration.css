@@ -9,6 +9,7 @@
   overflow-y: auto;
   z-index: 100;
   font-family: 'Geist Mono', monospace;
+  overscroll-behavior: contain;
 }
 
 /* Global spotlight effect */
@@ -274,6 +275,8 @@
   .orchestration-container .bento-container {
     padding: 16px;
     padding-top: 70px;
+    min-height: 100vh;
+    height: auto;
   }
 
   .orchestration-container .header-space {
@@ -314,27 +317,33 @@
     gap: 8px;
     max-width: 100%;
     margin: 0 auto;
+    height: auto;
+    min-height: 0;
   }
 
   /* Mobile layout adjustments - single column */
   .orchestration-container .bento-grid > .glass-card:nth-child(1) {
     grid-column: 1;
     grid-row: auto;
+    min-height: 180px;
   }
 
   .orchestration-container .bento-grid > .glass-card:nth-child(2) {
     grid-column: 1;
     grid-row: auto;
+    min-height: 180px;
   }
 
   .orchestration-container .bento-grid > .glass-card:nth-child(3) {
     grid-column: 1;
     grid-row: auto;
+    min-height: 180px;
   }
 
   .orchestration-container .bento-grid > .glass-card:nth-child(4) {
     grid-column: 1;
     grid-row: auto;
+    min-height: 180px;
   }
 
   .orchestration-container .bento-grid > .commentator-card {
@@ -399,28 +408,27 @@
 
   /* Smaller agent cards */
   .orchestration-container .glass-card {
-    padding: 6px;
-    min-height: 0;
+    padding: 10px;
   }
 
-  /* Zoom out effect - scale down everything */
+  /* Zoom out effect - scale down everything slightly */
   .orchestration-container .bento-grid {
-    transform: scale(0.85);
+    transform: scale(0.95);
     transform-origin: top center;
   }
 
   /* Smaller agent headshot */
   .orchestration-container .agent-headshot {
-    width: 50px !important;
+    width: 60px !important;
   }
 
-  /* Make agent cards narrower */
+  /* Make agent cards better spaced */
   .orchestration-container .glass-card .glass-content {
-    gap: 6px;
+    gap: 8px;
   }
 
   .orchestration-container .agent-info {
-    gap: 6px;
+    gap: 8px;
     min-width: 0;
   }
 
@@ -488,7 +496,14 @@
   }
 
   /* Prevent horizontal overflow but allow tilt/halo */
-  .orchestration-container .bento-container,
+  .orchestration-container .bento-container {
+    max-width: 100vw;
+    overflow-x: hidden;
+    overflow-y: auto;
+    padding-left: 4px;
+    padding-right: 4px;
+  }
+
   .orchestration-container .bento-grid {
     max-width: 100%;
     overflow: visible;
@@ -496,6 +511,7 @@
 
   .orchestration-container .glass-card {
     max-width: 100%;
+    overflow: hidden;
   }
 
   /* Hide scrollbars on mobile */
@@ -508,14 +524,16 @@
     scrollbar-width: none;
   }
 
-  /* Zoom out more on smaller screens */
-  .orchestration-container .bento-grid {
-    transform: scale(0.75);
-  }
+  /* Remove duplicate scale - already set above at 0.95 */
 
   /* Reduce side padding even more */
   .orchestration-container .bento-container {
     padding: 2px;
     padding-top: 70px;
+  }
+
+  /* Ensure agent transcript has proper height */
+  .orchestration-container .agent-transcript {
+    min-height: 80px;
   }
 }

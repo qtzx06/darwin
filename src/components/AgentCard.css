@@ -587,4 +587,57 @@
   .orchestration-container .glass-card.expanded .agent-personality {
     font-size: 0.65rem;
   }
+
+  /* Hide wallet and balance on mobile, keep only thumbs up */
+  .orchestration-container .agent-balance,
+  .orchestration-container .agent-tip-btn {
+    display: none !important;
+  }
+
+  /* Mobile split view - make preview expandable */
+  .orchestration-container .agent-split-view {
+    flex-direction: column;
+    padding: 8px;
+    gap: 8px;
+  }
+
+  .orchestration-container .agent-code-side {
+    max-height: 30vh;
+    overflow-y: auto;
+  }
+
+  .orchestration-container .agent-preview-side {
+    max-width: 100%;
+    min-height: 200px;
+    flex: 1;
+    position: relative;
+    transition: all 0.3s ease;
+  }
+
+  /* When preview is expanded on mobile, hide code and make preview full */
+  .orchestration-container .agent-preview-side.preview-fullwidth {
+    min-height: 60vh;
+    flex: 1;
+  }
+
+  /* Hide code section when preview is fullwidth */
+  .orchestration-container .agent-split-view:has(.preview-fullwidth) .agent-code-side {
+    display: none;
+  }
+
+  /* Make expanded card taller on mobile */
+  .orchestration-container .glass-card.expanded {
+    min-height: 70vh;
+  }
+
+  /* Ensure split view takes full height when expanded */
+  .orchestration-container .glass-card.expanded .agent-transcript {
+    flex: 1;
+    min-height: 0;
+  }
+
+  .orchestration-container .glass-card.expanded .agent-split-view {
+    height: 100%;
+    min-height: 0;
+  }
 }

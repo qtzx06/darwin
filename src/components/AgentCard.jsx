@@ -775,11 +775,24 @@ function AgentCard({ agentId, agentName, isExpanded, onExpand, onLike, onPreview
                   className={`agent-preview-side ${isPreviewExpanded ? 'preview-fullwidth' : ''}`}
                   onClick={(e) => {
                     e.stopPropagation();
+                    e.preventDefault();
                     if (generatedCode) {
+                      console.log('Preview clicked, toggling from', isPreviewExpanded, 'to', !isPreviewExpanded);
                       setIsPreviewExpanded(!isPreviewExpanded);
                     }
                   }}
-                  style={{ cursor: generatedCode ? 'pointer' : 'default' }}
+                  onTouchEnd={(e) => {
+                    e.stopPropagation();
+                    e.preventDefault();
+                    if (generatedCode) {
+                      console.log('Preview touched, toggling from', isPreviewExpanded, 'to', !isPreviewExpanded);
+                      setIsPreviewExpanded(!isPreviewExpanded);
+                    }
+                  }}
+                  style={{
+                    cursor: generatedCode ? 'pointer' : 'default',
+                    touchAction: 'manipulation'
+                  }}
                 >
                   <CodeRenderer code={generatedCode} onClose={null} />
                 </div>

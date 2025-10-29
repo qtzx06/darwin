@@ -6,9 +6,12 @@ function ChatInput({ externalMessages = [], onUserMessage }) {
   const [messages, setMessages] = useState([]);
   const messagesEndRef = useRef(null);
 
-  // Auto-scroll to bottom when new messages arrive
+  // Auto-scroll to bottom when new messages arrive (disabled on mobile)
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    // Only auto-scroll on desktop (>768px), not on mobile
+    if (window.innerWidth > 768) {
+      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }
   }, [messages]);
 
   useEffect(() => {
