@@ -64,3 +64,24 @@ export async function getVoteCounts() {
     return { speedrunner: 0, bloom: 0, solver: 0, loader: 0 };
   }
 }
+
+/**
+ * Get SUI balance for a wallet address
+ * @param {string} address - Sui wallet address
+ * @returns {Promise<number>} Balance in SUI (converted from MIST)
+ */
+export async function getWalletBalance(address) {
+  try {
+    const balance = await suiClient.getBalance({
+      owner: address,
+      coinType: '0x2::sui::SUI'
+    });
+
+    // Convert from MIST to SUI (1 SUI = 1,000,000,000 MIST)
+    const suiBalance = parseInt(balance.totalBalance) / 1_000_000_000;
+    return suiBalance;
+  } catch (error) {
+    console.error('Failed to fetch wallet balance:', error);
+    return 0;
+  }
+}

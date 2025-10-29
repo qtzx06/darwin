@@ -545,7 +545,7 @@ class ResourceLoader {
 </async_loader>`
 };
 
-function AgentCard({ agentId, agentName, isExpanded, onExpand, onLike, onPreview, voteCount = 0, generatedCode = null, statusMessage = '' }) {
+function AgentCard({ agentId, agentName, isExpanded, onExpand, onLike, onPreview, voteCount = 0, balance = 0, generatedCode = null, statusMessage = '' }) {
   const cardRef = useRef(null);
   const [currentMessageIndex, setCurrentMessageIndex] = useState(0);
   const [visibleMessages, setVisibleMessages] = useState([0]); // Track which messages are visible
@@ -671,13 +671,16 @@ function AgentCard({ agentId, agentName, isExpanded, onExpand, onLike, onPreview
     onExpand(null); // Close the expanded card
   };
 
+  const [copied, setCopied] = useState(false);
+
   const handleTipClick = async (e) => {
     e.stopPropagation(); // Prevent backdrop click
     const walletAddress = agentWallets[agentId];
     try {
       await navigator.clipboard.writeText(walletAddress);
-      // Could add a toast notification here if you want
       console.log('Wallet address copied:', walletAddress);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
     } catch (error) {
       console.error('Failed to copy address:', error);
     }
@@ -720,9 +723,28 @@ function AgentCard({ agentId, agentName, isExpanded, onExpand, onLike, onPreview
               </div>
             </div>
             {isExpanded && (
-              <div style={{ display: 'flex', gap: '0.5rem' }}>
+              <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                <div className="agent-balance" title={`${balance.toFixed(4)} SUI`}>
+                  <i className="fas fa-coins"></i>
+                  {balance.toFixed(2)} SUI
+                  <i
+                    className="fas fa-external-link-alt"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      window.open(`https://devnet.suivision.xyz/account/${agentWallets[agentId]}`, '_blank');
+                    }}
+                    title="View wallet on Sui Explorer"
+                    style={{ cursor: 'pointer' }}
+                  ></i>
+                </div>
                 <button onClick={handleTipClick} className="agent-tip-btn" title="Click to copy wallet address">
+                  <i className="fas fa-wallet"></i>
                   {agentWallets[agentId].slice(0, 6)}...{agentWallets[agentId].slice(-4)}
+                  {copied ? (
+                    <i className="fas fa-check"></i>
+                  ) : (
+                    <i className="fas fa-copy"></i>
+                  )}
                 </button>
                 <button onClick={handleThumbsUp} className="agent-thumbs">
                   <i className="fas fa-thumbs-up"></i>

@@ -15,8 +15,9 @@ import { FaReact, FaPython } from 'react-icons/fa';
 import { RiClaudeFill, RiGeminiFill } from 'react-icons/ri';
 import { SiTypescript, SiLangchain } from 'react-icons/si';
 import livekitLogo from '../assets/livekit-text.svg';
-import { getVoteCounts } from '../utils/suiClient';
+import { getVoteCounts, getWalletBalance } from '../utils/suiClient';
 import { startCompetitiveBattle } from '../services/geminiService';
+import agentWallets from '../utils/agentWallets.json';
 
 function Orchestration() {
   const [query, setQuery] = useState('');
@@ -36,6 +37,12 @@ function Orchestration() {
     loader: 0
   });
   const [blockchainVotes, setBlockchainVotes] = useState({
+    speedrunner: 0,
+    bloom: 0,
+    solver: 0,
+    loader: 0
+  });
+  const [agentBalances, setAgentBalances] = useState({
     speedrunner: 0,
     bloom: 0,
     solver: 0,
@@ -255,10 +262,28 @@ function Orchestration() {
       }
     };
 
-    fetchVotes(); // Initial fetch
-    const interval = setInterval(fetchVotes, 10000); // Fetch every 10 seconds
+    const fetchBalances = async () => {
+      try {
+        const balances = {};
+        for (const [agentId, walletAddress] of Object.entries(agentWallets)) {
+          const balance = await getWalletBalance(walletAddress);
+          balances[agentId] = balance;
+        }
+        setAgentBalances(balances);
+      } catch (error) {
+        console.error('Failed to fetch agent balances:', error);
+      }
+    };
 
-    return () => clearInterval(interval);
+    fetchVotes(); // Initial fetch
+    fetchBalances(); // Initial balance fetch
+    const voteInterval = setInterval(fetchVotes, 10000); // Fetch votes every 10 seconds
+    const balanceInterval = setInterval(fetchBalances, 15000); // Fetch balances every 15 seconds
+
+    return () => {
+      clearInterval(voteInterval);
+      clearInterval(balanceInterval);
+    };
   }, []);
 
   // Logo Loop data
@@ -1041,6 +1066,7 @@ function Orchestration() {
             onExpand={handleExpandAgent}
             onLike={handleAgentLike}
             voteCount={blockchainVotes.speedrunner}
+            balance={agentBalances.speedrunner}
             generatedCode={agentCode.speedrunner}
             statusMessage={agentStatus.speedrunner}
           />
@@ -1052,6 +1078,7 @@ function Orchestration() {
             onLike={handleAgentLike}
             onPreview={(code) => setPreviewCode(code)}
             voteCount={blockchainVotes.bloom}
+            balance={agentBalances.bloom}
             generatedCode={agentCode.bloom}
             statusMessage={agentStatus.bloom}
           />
@@ -1062,6 +1089,7 @@ function Orchestration() {
             onExpand={handleExpandAgent}
             onLike={handleAgentLike}
             voteCount={blockchainVotes.solver}
+            balance={agentBalances.solver}
             generatedCode={agentCode.solver}
             statusMessage={agentStatus.solver}
           />
@@ -1072,6 +1100,7 @@ function Orchestration() {
             onExpand={handleExpandAgent}
             onLike={handleAgentLike}
             voteCount={blockchainVotes.loader}
+            balance={agentBalances.loader}
             generatedCode={agentCode.loader}
             statusMessage={agentStatus.loader}
           />
