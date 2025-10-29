@@ -8,6 +8,7 @@ import LoaderOrb from './LoaderOrb';
 import DecryptedText from './DecryptedText';
 import CodeRenderer from './CodeRenderer';
 import { voteForAgent } from '../utils/suiClient';
+import agentWallets from '../utils/agentWallets.json';
 
 const PERSONALITIES = {
   speedrunner: 'fast, competitive, efficiency-obsessed',
@@ -657,6 +658,18 @@ function AgentCard({ agentId, agentName, isExpanded, onExpand, onLike, onPreview
     }
   };
 
+  const handleTipClick = async (e) => {
+    e.stopPropagation(); // Prevent backdrop click
+    const walletAddress = agentWallets[agentId];
+    try {
+      await navigator.clipboard.writeText(walletAddress);
+      // Could add a toast notification here if you want
+      console.log('Wallet address copied:', walletAddress);
+    } catch (error) {
+      console.error('Failed to copy address:', error);
+    }
+  };
+
   return (
     <div
       ref={cardRef}
@@ -694,10 +707,15 @@ function AgentCard({ agentId, agentName, isExpanded, onExpand, onLike, onPreview
               </div>
             </div>
             {isExpanded && (
-              <button onClick={handleThumbsUp} className="agent-thumbs">
-                <i className="fas fa-thumbs-up"></i>
-                <span className="vote-count">{voteCount}</span>
-              </button>
+              <div style={{ display: 'flex', gap: '0.5rem' }}>
+                <button onClick={handleTipClick} className="agent-tip-btn" title="Click to copy wallet address">
+                  {agentWallets[agentId].slice(0, 6)}...{agentWallets[agentId].slice(-4)}
+                </button>
+                <button onClick={handleThumbsUp} className="agent-thumbs">
+                  <i className="fas fa-thumbs-up"></i>
+                  <span className="vote-count">{voteCount}</span>
+                </button>
+              </div>
             )}
           </div>
           <div className="agent-transcript">

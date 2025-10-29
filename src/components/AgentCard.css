@@ -222,6 +222,32 @@
   transform: scale(1.05);
 }
 
+/* Agent tip button (wallet address) */
+.orchestration-container .agent-tip-btn {
+  position: relative;
+  z-index: 500;
+  background: rgba(240, 176, 208, 0.1);
+  border: 1px solid rgba(240, 176, 208, 0.3);
+  border-radius: 6px;
+  padding: 8px 12px;
+  color: #f0b0d0;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-family: 'Geist Mono', monospace;
+  font-size: 11px;
+  pointer-events: auto;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.orchestration-container .agent-tip-btn:hover {
+  background: rgba(240, 176, 208, 0.2);
+  border-color: rgba(240, 176, 208, 0.5);
+  transform: scale(1.05);
+}
+
 /* Agent thumbs up button */
 .orchestration-container .agent-thumbs {
   position: relative;

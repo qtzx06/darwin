@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Darwin is a React + Vite landing page featuring advanced visual effects including FBO particle animations, liquid glass morphism effects, and interactive 3D cube grids. The site showcases a modern aesthetic with purple/lilac color theming and smooth animations throughout.
+Darwin is a React + Vite application featuring a multi-agent AI coding battle system. The landing page includes advanced visual effects with FBO particle animations, liquid glass morphism, and interactive elements. The main orchestration page showcases 4 AI agents (Speedrunner, Bloom, Solver, Loader) competing to build React components based on user prompts, with live voice commentary.
 
 ## Development Commands
 
@@ -15,101 +15,205 @@ Darwin is a React + Vite landing page featuring advanced visual effects includin
 
 ## Architecture
 
-### Core Structure
+### Two-Page Application
 
-The app has a single-page landing design (`App.jsx`) that orchestrates multiple visual components layered on top of each other:
+1. **Landing Page** (`App.jsx`) - Search interface with visual effects
+2. **Orchestration Page** (`Orchestration.jsx`) - AI agent battle interface with live coding
 
-1. **Background Layer** - Wisp FBO particle animation (iframe at `/wisp/index.html`)
-2. **Side Panels** - Left/right dither effects with animated patterns
-3. **Center Content** - Title, search bar, logo carousel, footer
+### Landing Page Components
 
-### Key Visual Components
+**WebglNoise** (`src/components/WebglNoise.jsx`)
+- Three.js particle orb animation for loading screen
+- Uses NormalBlending with radial gradient texture (white → light pink → medium pink → red)
+- IcosahedronGeometry with animated particles
 
 **Wisp Animation** (`/public/wisp/`)
-- Three.js-based FBO particle system with custom shaders
+- Three.js-based FBO particle system background
 - Implements zoom-in animation triggered by search submission
 - Listens for `postMessage` events to trigger zoom effect
-- Located in separate iframe for performance isolation
 
 **GlassSearchBar** (`src/components/GlassSearchBar.jsx`)
 - Liquid glass morphism effect using SVG filters (`#glass-distortion`)
 - Three-layer rendering: glass-filter, glass-overlay, glass-specular
-- Uses `feTurbulence` and `feDisplacementMap` for distortion
 - Integrated with Framer Motion for smooth transitions
+- Suggestions: "landing page for cal hacks", "cool 404 error page", "beautifully designed coming soon page"
 
 **Dither** (`src/components/Dither.jsx`)
 - WebGL shader-based dithered wave animation for side panels
-- Uses Three.js with custom vertex/fragment shaders
-- Left and right panels have opposite animation directions (`waveSpeed`)
+- Left and right panels have opposite animation directions
 - Post-processing with custom RetroEffect using Bayer matrix dithering
 
-**DecryptedText** (`src/components/DecryptedText.jsx`)
-- Character-by-character decryption animation from Evolve component library
-- Used for "darwin" title with sequential reveal
-
-**LogoLoop** (`src/components/LogoLoop.jsx`)
-- Infinite horizontal scrolling carousel
-- Supports both React icon nodes and image sources
-- Uses CSS mask for edge fade effects
-- ResizeObserver-based responsive behavior
-
 **DevpostCard** (`src/components/DevpostCard.jsx`)
-- Fixed footer with centered logo and links
-- Easter egg: clicking logo shows "*quack!*" text above it
-- Uses CSS Grid for perfect center alignment
+- Footer with links to GitHub (https://github.com/qtzx06/darwin) and Devpost (https://devpost.com/software/darwin-w6fez0)
+- Easter egg: clicking logo shows "*quack!*" text
 
-### Styling Approach
+### Orchestration Page Components
 
-- **Fonts**: BBH Sans Bartle for title, Geist Mono for all UI text
-- **Color Scheme**: Purple/lilac/pink tones (`#f0b0d0` for accents)
-- **Glass Effects**: Multiple layered divs with `backdrop-filter: blur()` and SVG distortion filters
-- **Animations**: Framer Motion for page transitions, GSAP for 3D cube interactions
+**Agent System** (`src/components/AgentCard.jsx`)
+- 4 AI agents: Speedrunner, Bloom, Solver, Loader
+- Each generates React code using Gemini 2.5 Flash
+- Agents have distinct personalities and coding approaches
+- Code displays with typing animation
+- Live transcript showing agent thoughts
+- Glass card styling with transparent backgrounds (0.4 opacity for cards, 0.5 for transcripts)
+
+**Commentator** (`src/components/Commentator.jsx`)
+- Voice AI using Gemini Native Audio (gemini-2.5-flash-native-audio-preview-09-2025)
+- Charon voice for deep male commentary
+- React to agent banter and user input
+- Two-stage system: Text observation → Natural voice reaction
+- Mute/unmute voice output
+
+**Voice Transcription** (`src/services/geminiAudioService.js`)
+- Uses Gemini API for audio transcription (not Live API)
+- MediaRecorder collects audio chunks → batch transcription
+- Converts casual speech to actionable instructions
+- Shows in chat as "[MANAGER] Boss said: {instruction}"
+
+**Manager Feedback System**
+- Auto-generates feedback every 4 agent banter messages
+- Hardcoded messages like "make it blue", "speedrunner optimize this", etc.
+- Appears as [MANAGER] in chat (blue color #9dc4ff)
+- Triggers agent code iterations
+
+**Chat System** (`src/components/ChatInput.jsx`)
+- Message types: user, agent, manager, voice
+- Color coding: [MANAGER] (blue), Boss said (from voice), agent messages (purple)
+- All user/manager messages trigger agent iterations via `handleUserMessage`
+
+**Preview System** (`src/components/CodeRenderer.jsx`)
+- Live preview of agent-generated code
+- ErrorBoundary catches runtime errors
+- Renders in iframe for isolation
+
+**Transcript Panel** (`src/components/TranscriptPanel.jsx`)
+- Shows voice transcriptions: [YOU] for user, [MANAGER] for commentator
+- Mic button to toggle recording
+- Scrollable with hidden scrollbar
+
+### Gemini Integration
+
+**geminiService.js**
+- Agent code generation using Gemini 2.5 Flash
+- System prompts define agent personalities
+- Agents know about window.* globals (Motion, Lucide, ReactSpring, THREE, gsap, Chart)
+- `analyzeFeedback` - keyword-based analysis of user feedback
+- `iterateOnCode` - agents improve code based on feedback
+
+**geminiAudioService.js**
+- Gemini Native Audio Live API for voice output
+- Audio chunk queue for sequential playback
+- PCM audio processing (24kHz output)
+- Batch audio transcription using generateContent API
+
+**commentatorGeminiService.js**
+- Generates short observations (max 15 words) of chat events
+- Understands agent names and Boss
+- Converts events into natural commentary for voice AI
 
 ### State Management
 
-The app uses minimal React state:
-- `isLoading` - Controls loading screen visibility
-- `isZooming` - Triggers zoom animation and fades out all content
-- `showOverlay` - Black overlay during zoom transition
+**Orchestration.jsx** manages:
+- `agentCode` - Generated code for each agent
+- `agentStatus` - Status messages (working, done, etc.)
+- `chatMessages` - All chat messages with types
+- `transcripts` - Voice transcription history
+- `isBattleRunning` - Whether agents are generating
+- `expandedAgent` - Which agent card is expanded
+- `processedManagerMessages` - Tracks processed messages to prevent duplicates
 
-### Navigation Flow
+### Message Flow
 
-1. Loading screen displays for 1.5s
-2. Landing page fades in with staggered animations
-3. Search submission triggers:
-   - Zoom-in animation on wisp (via postMessage)
-   - Fade out of all UI elements (0.8s)
-   - Black overlay fade (1.5s)
-   - Navigation to `#orchestration` with query parameter
+1. **User types in chat** → Shows as [MANAGER] → Triggers iteration
+2. **User speaks via mic** → Gemini transcribes → Shows as "[MANAGER] Boss said: {instruction}" → Triggers iteration
+3. **Manager auto-feedback** (every 4 banter) → Shows as [MANAGER] → Triggers iteration
+4. **Agent iteration** → `analyzeFeedback` analyzes → Targets specific agents → `iterateOnCode` improves code
+
+### Styling Approach
+
+- **Fonts**: BBH Sans Bartle for headers, Geist Mono for all UI text
+- **Color Scheme**:
+  - Pink/coral accents (#f0b0d0, #FF69B4)
+  - Manager messages: blue (#9dc4ff)
+  - Agent messages: purple (#a78bfa)
+  - User messages: pink (#f0b0d0)
+- **Glass Effects**:
+  - Transparent black backgrounds (0.4-0.5 opacity)
+  - backdrop-filter: blur()
+  - Three-layer rendering (filter, overlay, specular)
+- **Animations**: Framer Motion for transitions, GSAP for 3D effects
+
+### Navigation
+
+1. Landing page → User enters query → Battle starts
+2. Orchestration page → Click "DARWIN //" header to return to landing page
+3. URL format: `#orchestration?query={user_query}`
+
+### Agent Banter System
+
+- Autonomous banter between agents every 6-9 seconds after battle complete
+- Agents roast each other's code
+- Personality-based banter (e.g., Speedrunner brags about speed, Bloom focuses on aesthetics)
+
+### Important Implementation Details
+
+**useCallback Dependencies**
+- `handleUserMessage` must include `agentCode`, `setChatMessages`, `setAgentStatus`, `setAgentCode` in dependencies to see latest state
+
+**Message Processing**
+- Use `processedManagerMessages` ref to track which messages have been processed
+- Prevents infinite loops and duplicate iterations
+- Each manager/voice message has unique `messageId` or `timestamp`
+
+**Audio Blending**
+- Use `NormalBlending` for particles (not AdditiveBlending which washes to white)
+- Radial gradients in particle textures for multi-color effects
+
+**Error Handling**
+- ErrorBoundary in CodeRenderer catches CSS rules access errors
+- Graceful fallbacks for Gemini API failures
+
+**Agent Iteration**
+- Only iterates if agent has code: `if (agentCode[targetAgentId])`
+- Sequential processing with 2s delays to avoid rate limits
+- Shows working messages during iteration
+
+**DARWIN Logo**
+- Outline text with transparent fill
+- Subtle glow: `text-shadow: 0 0 15px rgba(255, 255, 255, 0.15), 0 0 30px rgba(240, 176, 208, 0.1)`
+- Drop shadow for depth
 
 ### Mobile Responsiveness
 
 - Title font reduces from 3rem to 2rem
 - Side dither panels hidden on mobile
-- Logo loop and search bar scale to full width with padding
-- Footer adjusts layout and spacing
+- Glass cards adapt layout
+- Touch-friendly button sizes
 
-## Important Implementation Details
+## Common Tasks
 
-### SVG Filter Reuse
-The `#glass-distortion` SVG filter defined in `index.html` is reused across multiple components (GlassSearchBar, potentially DevpostCard). Do not duplicate this filter definition.
+### Adding New Manager Messages
+Update the `managerMessages` array in the banter effect (Orchestration.jsx ~lines 185-206)
 
-### Image Imports in Vite
-Assets in `src/assets/` must be imported as modules (e.g., `import livekitLogo from './assets/livekit-text.svg'`). Public assets go in `/public` and are referenced with absolute paths.
+### Changing Voice
+Modify `voiceName` in `geminiAudioService.js` createSession config (currently "Charon")
 
-### Three.js/React Integration
-- Use `@react-three/fiber` for React integration
-- Post-processing effects via `@react-three/postprocessing`
-- Always set `dpr={1}` on Canvas components for consistent rendering
-- Custom shaders use `useRef` for uniform management
+### Adjusting Glass Transparency
+Modify `--bg-color` variables in component CSS files:
+- AgentCard.css: 0.4 for cards, 0.5 for transcripts
+- ChatInput.css: 0.5
+- TranscriptPanel.css: 0.5
+- PreviewCard.css: 0.5
 
-### Animation Synchronization
-All fade transitions use `duration: 0.8, ease: "easeOut"` for consistency. The `isZooming` state controls synchronized fade-out of all elements.
+### Agent Personalities
+Defined in geminiService.js system prompts:
+- Speedrunner: Fast, competitive, efficiency-obsessed
+- Bloom: Creative, scattered, loves animations/visuals
+- Solver: Logical, methodical, algorithm-focused
+- Loader: Patient, steady, handles async/data
 
-### Component Class Naming
-To avoid CSS conflicts between similar components (e.g., glass effects), use unique class prefixes:
-- GlassSearchBar: `.glass-search`, `.glass-content`
-- DevpostCard: `.devpost-glass`, `.devpost-content`, `.footer-*`
-
-### Logo Loop Image Filtering
-The LogoLoop component applies `filter: brightness(0) invert(1)` to all images to convert them to white, matching the site's aesthetic.
+### Debugging Voice Issues
+- Check console for `[GeminiAudio]` logs
+- Verify `onUserTranscript` callback is set
+- Ensure AudioContext is resumed (requires user gesture)
+- Check if session is active: `this.isSessionActive`
