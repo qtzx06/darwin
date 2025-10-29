@@ -548,9 +548,28 @@ function AgentCard({ agentId, agentName, isExpanded, onExpand, onLike, onPreview
   const cardRef = useRef(null);
   const [currentMessageIndex, setCurrentMessageIndex] = useState(0);
   const [visibleMessages, setVisibleMessages] = useState([0]); // Track which messages are visible
-  // No typing animation, just show code immediately
+  const [displayedCode, setDisplayedCode] = useState('');
+  const [isTyping, setIsTyping] = useState(false);
+
+  // Typing animation for generated code
   useEffect(() => {
-    // Code appears instantly when generated
+    if (!generatedCode) return;
+
+    setDisplayedCode('');
+    setIsTyping(true);
+    let currentIndex = 0;
+
+    const typingInterval = setInterval(() => {
+      if (currentIndex < generatedCode.length) {
+        setDisplayedCode(generatedCode.slice(0, currentIndex + 1));
+        currentIndex++;
+      } else {
+        setIsTyping(false);
+        clearInterval(typingInterval);
+      }
+    }, 5); // Type 1 character every 5ms
+
+    return () => clearInterval(typingInterval);
   }, [generatedCode]);
 
   // Cycle through transcript messages (append one at a time, show 4 total)
@@ -690,7 +709,8 @@ function AgentCard({ agentId, agentName, isExpanded, onExpand, onLike, onPreview
                 <div className="agent-code-side">
                   {generatedCode ? (
                     <pre className="agent-generated-code">
-                      {generatedCode}
+                      {displayedCode}
+                      {isTyping && <span className="typing-cursor">▋</span>}
                     </pre>
                   ) : (
                     <pre className="agent-generated-code" dangerouslySetInnerHTML={{ __html: EXPANDED_CONTENT[agentId] }} />

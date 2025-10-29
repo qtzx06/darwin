@@ -30,7 +30,7 @@ const WebglNoise = () => {
         this.material = new THREE.PointsMaterial({
           map: this.dot(),
           blending: THREE.AdditiveBlending,
-          color: 0xAAAAAA, // Dimmed white color
+          color: 0xFF6B9D, // Pink/reddish color (#FF6B9D)
           opacity: 0.7,
           transparent: true,
           depthTest: false
@@ -42,7 +42,7 @@ const WebglNoise = () => {
         this.add(this.mesh);
       }
 
-      dot(size = 32, color = "#FFFFFF") {
+      dot(size = 32, color = "#FF6B9D") {
         const sizeH = size * 0.5;
 
         const canvas = document.createElement("canvas");

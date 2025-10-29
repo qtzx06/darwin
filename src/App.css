@@ -48,18 +48,19 @@
 
 .title {
   font-size: 3rem;
-  color: white;
+  color: transparent;
   text-align: center;
   margin: 0;
   line-height: 1;
   font-weight: 400;
-  text-shadow: 0 0 35px rgba(255, 255, 255, 0.5);
+  -webkit-text-stroke: 1px rgba(255, 255, 255, 0.95);
+  text-stroke: 1px rgba(255, 255, 255, 0.95);
+  text-shadow: 0 0 35px rgba(255, 255, 255, 0.4);
   font-family: "BBH Sans Bartle", sans-serif;
   text-transform: lowercase;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   letter-spacing: 0.15em;
-  opacity: 0.95;
 }
 
 .subheader {

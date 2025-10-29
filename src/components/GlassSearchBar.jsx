@@ -3,9 +3,9 @@ import './GlassSearchBar.css';
 import DecryptedText from './DecryptedText';
 
 const queries = [
-  "make a landing page for cal hacks",
-  "build me a 404 error page",
-  "design a 'coming soon' page",
+  "a landing page for cal hacks",
+  "a sick 404 error page",
+  "a beautiful coming soon page",
 ].map(q => q.toLowerCase());
 
 const GlassSearchBar = ({ onSubmit }) => {

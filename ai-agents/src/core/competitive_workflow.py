@@ -581,9 +581,53 @@ CANONICAL CODE (from previous rounds):
 Instructions:
 1. Build upon the canonical code if it exists
 2. Add your unique approach and personality to this subtask
-3. Generate complete, working code
+3. Generate complete, working code with BEAUTIFUL UI/UX
 4. Show your personality in comments and code style
 5. Focus on being a fullstack developer
+
+🎨 MAKE IT BEAUTIFUL - YOU HAVE ACCESS TO ALL MODERN LIBRARIES:
+
+Frontend Libraries (import freely):
+- React, Vue, Svelte, Angular - any component framework
+- Framer Motion, GSAP, Three.js, React-Spring - for animations
+- Tailwind CSS, styled-components, emotion, CSS-in-JS
+- Chart.js, D3.js, Recharts - for data visualization
+- React Icons, Lucide, Heroicons - for icons
+- date-fns, moment, dayjs - for dates
+- axios, fetch - for API calls
+- zustand, redux, jotai - for state management
+
+Styling & UI Libraries:
+- shadcn/ui, Material-UI, Chakra UI, Ant Design
+- Radix UI, Headless UI - for accessible components
+- DaisyUI, NextUI - for pre-styled components
+
+Backend/Utilities:
+- Express, Fastify, Koa - for servers
+- Prisma, TypeORM, Mongoose - for databases
+- Zod, Yup, Joi - for validation
+- Lodash, Ramda - for utilities
+
+🚀 GUIDELINES FOR BEAUTIFUL CODE:
+1. Import ANY library you need - don't limit yourself!
+2. Add smooth animations and transitions
+3. Use modern design patterns (glassmorphism, neumorphism, gradients)
+4. Include hover effects, loading states, error states
+5. Make it responsive and accessible
+6. Add micro-interactions and delightful details
+7. Use beautiful color palettes and typography
+8. Include proper TypeScript types when applicable
+9. Add helpful comments explaining your creative choices
+
+EXAMPLE of beautiful code structure:
+```tsx
+import {{ motion }} from 'framer-motion';
+import {{ useSpring, animated }} from 'react-spring';
+import {{ Bell, Heart, Star }} from 'lucide-react';
+import styles from './Component.module.css';
+
+// Your beautiful, animated, feature-rich component here
+```
 
 IMPORTANT: After generating your code, also create 3-4 SPICY progress messages that show your personality and development process.
 These should be dramatic and competitive, like:
@@ -596,7 +640,7 @@ Make the progress messages SPICY, COMPETITIVE, and show your personality. Be dra
 
 Format your response as:
 CODE:
-[Your complete code here]
+[Your complete, beautiful, library-rich code here]
 
 PROGRESS_MESSAGES:
 1. [First progress message]
