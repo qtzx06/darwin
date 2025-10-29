@@ -360,9 +360,9 @@ function Orchestration() {
       }]);
     };
 
-    // Only add to chat if not skipped (manager messages are already in chat)
+    // Only add to chat if not skipped (manager/voice messages are already in chat)
     if (!skipAddingToChat) {
-      addChatMessage(`[YOU] ${userMessage}`, 'user');
+      addChatMessage(`[MANAGER] ${userMessage}`, 'user');
     }
 
     // Import the functions
@@ -578,7 +578,7 @@ function Orchestration() {
     }
   }, [agentCode, setChatMessages, setAgentStatus, setAgentCode]);
 
-  // Watch for manager and user messages and trigger iteration
+  // Watch for manager, user, and voice messages and trigger iteration
   useEffect(() => {
     const lastMessage = chatMessages[chatMessages.length - 1];
 
@@ -588,24 +588,31 @@ function Orchestration() {
         // Mark as processed
         processedManagerMessages.current.add(lastMessage.messageId);
 
-        const messageText = lastMessage.text.replace('[MANAGER]', '').trim();
-        console.log('[Manager] Triggering iteration for message:', messageText);
+        // Check if it's a voice message (contains "Boss said:")
+        let messageText;
+        if (lastMessage.text.includes('Boss said:')) {
+          messageText = lastMessage.text.replace('[MANAGER] Boss said:', '').trim();
+          console.log('[Boss Voice] Triggering iteration for message:', messageText);
+        } else {
+          messageText = lastMessage.text.replace('[MANAGER]', '').trim();
+          console.log('[Manager] Triggering iteration for message:', messageText);
+        }
 
         // Trigger iteration (skip adding to chat since it's already there as [MANAGER])
         handleUserMessage(messageText, true);
       }
     }
 
-    // Check if it's a user message (from voice or typing) and trigger iteration
+    // Check if it's a user message (from typing) and trigger iteration
     if (lastMessage && lastMessage.type === 'user' && lastMessage.timestamp) {
       if (!processedManagerMessages.current.has(lastMessage.timestamp)) {
         // Mark as processed
         processedManagerMessages.current.add(lastMessage.timestamp);
 
-        const messageText = lastMessage.text.replace('[YOU]', '').trim();
-        console.log('[User] Triggering iteration for message:', messageText);
+        const messageText = lastMessage.text.replace('[MANAGER]', '').trim();
+        console.log('[Manager typed] Triggering iteration for message:', messageText);
 
-        // Trigger iteration (skip adding to chat since it's already there as [YOU])
+        // Trigger iteration (skip adding to chat since it's already there)
         handleUserMessage(messageText, true);
       }
     }
@@ -963,21 +970,23 @@ Only output the instruction, nothing else:`
                     const instruction = response.text.trim();
                     console.log('[Orchestration] Converted speech to instruction:', instruction);
 
-                    // Add instruction to chat as "Boss said: ..."
+                    // Add instruction to chat as "[MANAGER] Boss said: ..."
                     const messageId = `voice_${Date.now()}`;
                     setChatMessages(prev => [...prev, {
-                      text: `Boss said: ${instruction}`,
-                      type: 'voice',
+                      text: `[MANAGER] Boss said: ${instruction}`,
+                      type: 'manager',
                       timestamp: Date.now(),
                       messageId: messageId
                     }]);
                   } catch (error) {
                     console.error('[Orchestration] Failed to convert speech:', error);
                     // Fallback: just use the original text
+                    const messageId = `voice_${Date.now()}`;
                     setChatMessages(prev => [...prev, {
-                      text: `[YOU] ${text}`,
-                      type: 'user',
-                      timestamp: Date.now()
+                      text: `[MANAGER] Boss said: ${text}`,
+                      type: 'manager',
+                      timestamp: Date.now(),
+                      messageId: messageId
                     }]);
                   }
                 };
