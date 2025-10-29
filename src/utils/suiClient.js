@@ -5,8 +5,8 @@ import { Transaction } from '@mysten/sui/transactions';
 export const suiClient = new SuiClient({ url: getFullnodeUrl('devnet') });
 
 // Deployed contract IDs
-export const PACKAGE_ID = '0xcf1f3a68ade5af6ecd417e8f71cc3d11ca19cfa7d5d07244962161a83f21118e';
-export const REGISTRY_ID = '0x28ab822cc91b6daf3c6e6f9ba087713ec956b9369d4222f13d196f6532f82a4b';
+export const PACKAGE_ID = '0x302f582a43a8d22bc2a030ab76e3253f79618217a7a6576ad8a91b6075a85ae8';
+export const REGISTRY_ID = '0x44e13769132e791fca5067ddb0d13d3f50ea1488d4c5a89453227fe7b11b15b9';
 
 /**
  * Vote for an agent on-chain (sponsored by backend)
