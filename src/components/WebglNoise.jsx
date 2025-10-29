@@ -29,9 +29,9 @@ const WebglNoise = () => {
 
         this.material = new THREE.PointsMaterial({
           map: this.dot(),
-          blending: THREE.AdditiveBlending,
-          color: 0xFF6B9D, // Pink/reddish color (#FF6B9D)
-          opacity: 0.7,
+          blending: THREE.NormalBlending,
+          color: 0xFFFFFF, // White to not tint the gradient
+          opacity: 0.8,
           transparent: true,
           depthTest: false
         });
@@ -42,7 +42,7 @@ const WebglNoise = () => {
         this.add(this.mesh);
       }
 
-      dot(size = 32, color = "#FF6B9D") {
+      dot(size = 32) {
         const sizeH = size * 0.5;
 
         const canvas = document.createElement("canvas");
@@ -51,10 +51,17 @@ const WebglNoise = () => {
         const ctx = canvas.getContext("2d");
         if (!ctx) return new THREE.CanvasTexture(canvas);
 
+        // Create radial gradient with white, pink, and red
+        const gradient = ctx.createRadialGradient(sizeH, sizeH, 0, sizeH, sizeH, sizeH);
+        gradient.addColorStop(0, '#FFFFFF');    // White center
+        gradient.addColorStop(0.4, '#FFB6C1');  // Light pink
+        gradient.addColorStop(0.7, '#FF6B9D');  // Medium pink
+        gradient.addColorStop(1, '#FF0000');    // Bright red outer
+
         const circle = new Path2D();
         circle.arc(sizeH, sizeH, sizeH, 0, 2 * Math.PI);
 
-        ctx.fillStyle = color;
+        ctx.fillStyle = gradient;
         ctx.fill(circle);
 
         return new THREE.CanvasTexture(canvas);

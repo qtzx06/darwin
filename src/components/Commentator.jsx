@@ -237,7 +237,7 @@ function Commentator({ query, onBattleStart, isRunning, agentsReady, chatMessage
       <div className="glass-content">
         <div className="commentator-header">
           <div>
-            <h3>composer</h3>
+            <h3>commentator</h3>
             <div className="commentator-description">autonomous agent orchestration</div>
           </div>
           <button
