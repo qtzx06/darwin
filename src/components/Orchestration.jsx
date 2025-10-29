@@ -60,6 +60,7 @@ function Orchestration() {
   const [transcripts, setTranscripts] = useState([]); // Voice transcripts
   const banterIntervalRef = useRef(null);
   const elevenLabsRef = useRef(null); // Store ElevenLabs ref from Commentator
+  const managerFeedbackIntervalRef = useRef(null); // Manager feedback interval
 
   // Debug: Log when previewCode changes
   useEffect(() => {
@@ -294,6 +295,8 @@ function Orchestration() {
   };
 
   const handleUserMessage = async (userMessage) => {
+    console.log('[Orchestration] handleUserMessage called with:', userMessage);
+
     // Add user message to chat
     const addChatMessage = (text, type = 'server') => {
       setChatMessages(prev => [...prev, {
@@ -311,7 +314,14 @@ function Orchestration() {
     try {
       // Silently analyze the feedback
       const analysis = await analyzeFeedback(userMessage, agentCode);
-      console.log('Feedback analysis:', analysis);
+      console.log('[Orchestration] Feedback analysis:', analysis);
+      console.log('[Orchestration] Target agents:', analysis.targetAgents);
+      console.log('[Orchestration] Current agent code status:', {
+        speedrunner: !!agentCode.speedrunner,
+        bloom: !!agentCode.bloom,
+        solver: !!agentCode.solver,
+        loader: !!agentCode.loader
+      });
 
       // Agent reactions to user feedback (with spacing to avoid rate limits)
       const agentNames = {
@@ -428,11 +438,17 @@ function Orchestration() {
       // Then: Target agents actually iterate on their code
       const allCodes = Object.entries(agentCode).map(([id, code]) => ({ agentId: id, code }));
 
+      console.log('[Orchestration] Starting agent iteration loop...');
+      console.log('[Orchestration] Number of target agents:', analysis.targetAgents.length);
+
       // Process agents ONE AT A TIME with delays to avoid rate limiting
       for (let i = 0; i < analysis.targetAgents.length; i++) {
         const targetAgentId = analysis.targetAgents[i];
+        console.log(`[Orchestration] Processing agent ${i + 1}/${analysis.targetAgents.length}: ${targetAgentId}`);
+        console.log(`[Orchestration] Agent ${targetAgentId} has code:`, !!agentCode[targetAgentId]);
 
         if (agentCode[targetAgentId]) {
+          console.log(`[Orchestration] ✅ ${targetAgentId} has code, starting iteration...`);
           try {
             // Add delay BEFORE starting this agent (except for the first one)
             if (i > 0) {
@@ -495,6 +511,8 @@ function Orchestration() {
           } catch (error) {
             console.error(`Iteration failed for ${targetAgentId}:`, error);
           }
+        } else {
+          console.log(`[Orchestration] ⚠️ Skipping ${targetAgentId} - no code available yet`);
         }
       }
     } catch (error) {
@@ -816,17 +834,30 @@ function Orchestration() {
             chatMessages={chatMessages}
             onElevenLabsReady={(ref) => {
               elevenLabsRef.current = ref.current;
-              console.log('[Orchestration] ElevenLabs ref received');
+              console.log('[Orchestration] Audio manager ref received:', !!ref.current);
 
-              // Set up user transcript callback
+              // Set up callbacks
               if (ref.current) {
+                // User transcript callback (when user speaks via mic)
+                console.log('[Orchestration] Setting onUserTranscript callback');
                 ref.current.onUserTranscript = (text) => {
-                  console.log('[Orchestration] User transcript:', text);
+                  console.log('[Orchestration] ✅ User transcript:', text);
                   setTranscripts(prev => [...prev, { speaker: 'user', text, timestamp: Date.now() }]);
 
                   // Also send user speech to agents as a message
                   handleUserMessage(text);
                 };
+
+                // Commentator transcript callback (when commentator speaks)
+                console.log('[Orchestration] Setting onCommentatorTranscript callback');
+                ref.current.onCommentatorTranscript = (text) => {
+                  console.log('[Orchestration] ✅ Commentator transcript:', text);
+
+                  // Add to transcript panel ONLY (not to chat)
+                  setTranscripts(prev => [...prev, { speaker: 'commentator', text, timestamp: Date.now() }]);
+                };
+
+                console.log('[Orchestration] Callbacks set successfully');
               }
             }}
           />

@@ -58,6 +58,8 @@ function Commentator({ query, onBattleStart, isRunning, agentsReady, chatMessage
           setIsSoundActive(false);
         };
 
+        // Set up commentator transcript callback (handled by parent via onElevenLabsReady)
+
         // Initialize Gemini Audio
         await audioManagerRef.current.initialize();
 

@@ -17,6 +17,7 @@ export class GeminiAudioManager {
     this.onSpeechStart = null;
     this.onSpeechEnd = null;
     this.onUserTranscript = null;
+    this.onCommentatorTranscript = null; // NEW: callback for commentator speech
 
     // Live API session
     this.session = null;
@@ -38,6 +39,9 @@ export class GeminiAudioManager {
     this.isProcessingQueue = false;
     this.currentTurnAudioChunks = [];
     this.hasStartedSpeech = false;
+
+    // Track what commentator is saying
+    this.currentObservation = null;
   }
 
   /**
@@ -68,7 +72,7 @@ export class GeminiAudioManager {
   /**
    * Create a Live API session
    */
-  async createSession(enableInputTranscription = false) {
+  async createSession() {
     if (this.session && this.isSessionActive) {
       return this.session;
     }
@@ -108,13 +112,6 @@ Examples:
 Keep it SHORT and natural. Hype up the action and respect the Boss.`
     };
 
-    // Only enable input transcription when recording user voice
-    if (enableInputTranscription) {
-      config.inputAudioTranscription = {};
-    }
-
-    const responseQueue = [];
-
     this.session = await this.ai.live.connect({
       model: this.model,
       callbacks: {
@@ -123,30 +120,9 @@ Keep it SHORT and natural. Hype up the action and respect the Boss.`
           this.isSessionActive = true;
         },
         onmessage: (message) => {
-          responseQueue.push(message);
-
           // Handle audio data (model speaking)
           if (message.data) {
             this.handleAudioResponse(message.data);
-          }
-
-          // Handle INPUT transcription (user's voice -> text) ONLY when recording
-          console.log('[GeminiAudio] Message received:', message);
-
-          if (message.serverContent?.inputTranscription) {
-            const transcriptText = message.serverContent.inputTranscription.text;
-            console.log('[GeminiAudio] Input transcription found:', transcriptText);
-            if (transcriptText && this.onUserTranscript) {
-              console.log('[GeminiAudio] Calling onUserTranscript callback with:', transcriptText);
-              this.onUserTranscript(transcriptText);
-            } else {
-              console.log('[GeminiAudio] onUserTranscript callback not set!');
-            }
-          }
-
-          // Also check for turnComplete to know when to finalize transcription
-          if (message.serverContent?.turnComplete) {
-            console.log('[GeminiAudio] Turn complete received');
           }
         },
         onerror: (e) => {
@@ -263,9 +239,12 @@ Keep it SHORT and natural. Hype up the action and respect the Boss.`
       // Clear any leftover chunks from previous turn
       this.currentTurnAudioChunks = [];
 
-      // Create session WITHOUT input transcription for commentator reactions
+      // Store observation for transcript callback
+      this.currentObservation = observationText;
+
+      // Create session
       if (!this.session || !this.isSessionActive) {
-        await this.createSession(false); // NO input transcription
+        await this.createSession();
       }
 
       // Send observation as a conversational turn - Gemini will REACT to it naturally
@@ -280,6 +259,12 @@ Keep it SHORT and natural. Hype up the action and respect the Boss.`
       });
 
       console.log('[GeminiAudio] Observation sent, waiting for natural voice reaction...');
+
+      // Trigger commentator transcript callback with the observation
+      // (this represents what the commentator is saying in response)
+      if (this.onCommentatorTranscript) {
+        this.onCommentatorTranscript(observationText);
+      }
 
     } catch (error) {
       console.error('[GeminiAudio] Failed to react:', error);
@@ -331,7 +316,7 @@ Keep it SHORT and natural. Hype up the action and respect the Boss.`
   }
 
   /**
-   * Start recording microphone for STT using AudioWorklet for PCM streaming
+   * Start recording microphone - collects audio chunks for batch transcription
    */
   async startRecording() {
     if (this.isRecording) {
@@ -341,13 +326,12 @@ Keep it SHORT and natural. Hype up the action and respect the Boss.`
 
     try {
       console.log('[GeminiAudio] Starting recording...');
-      console.log('[GeminiAudio] onUserTranscript callback exists?', !!this.onUserTranscript);
 
       // Get microphone access
       this.mediaStream = await navigator.mediaDevices.getUserMedia({
         audio: {
           channelCount: 1,
-          sampleRate: 16000, // Gemini requires 16kHz
+          sampleRate: 16000,
           echoCancellation: true,
           noiseSuppression: true
         }
@@ -355,59 +339,30 @@ Keep it SHORT and natural. Hype up the action and respect the Boss.`
 
       console.log('[GeminiAudio] Microphone access granted');
 
-      // Create NEW session with input transcription enabled for user voice
-      if (this.session && this.isSessionActive) {
-        console.log('[GeminiAudio] Closing existing session...');
-        this.session.close();
-        this.session = null;
-        this.isSessionActive = false;
-      }
+      // Reset audio chunks
+      this.audioChunks = [];
 
-      console.log('[GeminiAudio] Creating new session with transcription enabled...');
-      await this.createSession(true); // Enable input transcription
-      console.log('[GeminiAudio] Session created with transcription');
+      // Use MediaRecorder to collect audio (will produce WebM/Opus or similar)
+      this.mediaRecorder = new MediaRecorder(this.mediaStream, {
+        mimeType: 'audio/webm;codecs=opus'
+      });
 
-      // Create MediaStreamAudioSourceNode
-      const source = this.audioContext.createMediaStreamSource(this.mediaStream);
-
-      // We'll use ScriptProcessorNode for now (deprecated but widely supported)
-      // In production, use AudioWorklet for better performance
-      const processor = this.audioContext.createScriptProcessor(4096, 1, 1);
-
-      processor.onaudioprocess = (e) => {
-        if (!this.isRecording) return;
-
-        const inputData = e.inputBuffer.getChannelData(0);
-
-        // Convert Float32 to Int16 PCM
-        const pcmData = new Int16Array(inputData.length);
-        for (let i = 0; i < inputData.length; i++) {
-          const s = Math.max(-1, Math.min(1, inputData[i]));
-          pcmData[i] = s < 0 ? s * 0x8000 : s * 0x7FFF;
-        }
-
-        // Convert to base64
-        const buffer = new Uint8Array(pcmData.buffer);
-        const base64 = btoa(String.fromCharCode(...buffer));
-
-        // Send to Gemini in real-time
-        if (this.session && this.isSessionActive) {
-          this.session.sendRealtimeInput({
-            audio: {
-              data: base64,
-              mimeType: 'audio/pcm;rate=16000'
-            }
-          });
+      this.mediaRecorder.ondataavailable = (event) => {
+        if (event.data.size > 0) {
+          this.audioChunks.push(event.data);
+          console.log('[GeminiAudio] Audio chunk collected:', event.data.size, 'bytes');
         }
       };
 
-      source.connect(processor);
-      processor.connect(this.audioContext.destination);
+      this.mediaRecorder.onstop = async () => {
+        console.log('[GeminiAudio] Recording stopped, processing audio...');
+        await this.transcribeRecording();
+      };
 
-      this.audioWorkletNode = processor;
+      this.mediaRecorder.start();
       this.isRecording = true;
       this.isMicMuted = false;
-      console.log('[GeminiAudio] Recording started with real-time streaming');
+      console.log('[GeminiAudio] Recording started');
     } catch (error) {
       console.error('[GeminiAudio] Failed to start recording:', error);
       throw error;
@@ -415,17 +370,85 @@ Keep it SHORT and natural. Hype up the action and respect the Boss.`
   }
 
   /**
-   * Stop recording
+   * Transcribe the recorded audio using Gemini API
+   */
+  async transcribeRecording() {
+    if (this.audioChunks.length === 0) {
+      console.log('[GeminiAudio] No audio chunks to transcribe');
+      return;
+    }
+
+    try {
+      console.log('[GeminiAudio] Transcribing', this.audioChunks.length, 'chunks...');
+
+      // Combine all chunks into a single blob
+      const audioBlob = new Blob(this.audioChunks, { type: 'audio/webm;codecs=opus' });
+      console.log('[GeminiAudio] Total audio size:', audioBlob.size, 'bytes');
+
+      // Convert blob to base64
+      const base64Audio = await this.blobToBase64(audioBlob);
+
+      // Send to Gemini for transcription
+      const response = await this.ai.models.generateContent({
+        model: 'gemini-2.5-flash',
+        contents: [{
+          role: 'user',
+          parts: [
+            {
+              inlineData: {
+                mimeType: 'audio/webm',
+                data: base64Audio
+              }
+            },
+            {
+              text: 'Generate a transcript of the speech. Only return the transcript text, nothing else.'
+            }
+          ]
+        }]
+      });
+
+      const transcript = response.text.trim();
+      console.log('[GeminiAudio] ✅ Transcription:', transcript);
+
+      // Call callback with transcript
+      if (this.onUserTranscript && transcript) {
+        this.onUserTranscript(transcript);
+      }
+    } catch (error) {
+      console.error('[GeminiAudio] Transcription failed:', error);
+    }
+  }
+
+  /**
+   * Convert blob to base64
+   */
+  async blobToBase64(blob) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const base64 = reader.result.split(',')[1]; // Remove data:audio/webm;base64, prefix
+        resolve(base64);
+      };
+      reader.onerror = reject;
+      reader.readAsDataURL(blob);
+    });
+  }
+
+  /**
+   * Stop recording and trigger transcription
    */
   stopRecording() {
     if (!this.isRecording) return;
 
     try {
-      if (this.audioWorkletNode) {
-        this.audioWorkletNode.disconnect();
-        this.audioWorkletNode = null;
+      console.log('[GeminiAudio] Stopping recording...');
+
+      // Stop MediaRecorder (this will trigger onstop and transcription)
+      if (this.mediaRecorder && this.mediaRecorder.state !== 'inactive') {
+        this.mediaRecorder.stop();
       }
 
+      // Stop media stream
       if (this.mediaStream) {
         this.mediaStream.getTracks().forEach(track => track.stop());
         this.mediaStream = null;
@@ -433,7 +456,7 @@ Keep it SHORT and natural. Hype up the action and respect the Boss.`
 
       this.isRecording = false;
       this.isMicMuted = true;
-      console.log('[GeminiAudio] Recording stopped');
+      console.log('[GeminiAudio] Recording stopped, transcription will begin');
     } catch (error) {
       console.error('[GeminiAudio] Failed to stop recording:', error);
     }
