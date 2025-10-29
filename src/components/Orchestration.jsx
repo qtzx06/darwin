@@ -348,7 +348,7 @@ function Orchestration() {
     setChatMessages(prev => [...prev, likeMessage]);
   };
 
-  const handleUserMessage = useCallback(async (userMessage) => {
+  const handleUserMessage = useCallback(async (userMessage, skipAddingToChat = false) => {
     console.log('[Orchestration] handleUserMessage called with:', userMessage);
 
     // Add user message to chat
@@ -360,7 +360,10 @@ function Orchestration() {
       }]);
     };
 
-    addChatMessage(`[YOU] ${userMessage}`, 'user');
+    // Only add to chat if not skipped (manager messages are already in chat)
+    if (!skipAddingToChat) {
+      addChatMessage(`[YOU] ${userMessage}`, 'user');
+    }
 
     // Import the functions
     const { analyzeFeedback, iterateOnCode } = await import('../services/geminiService');
@@ -573,9 +576,9 @@ function Orchestration() {
       console.error('Failed to process user message:', error);
       addChatMessage('[ERROR] failed to process that', 'error');
     }
-  }, [agentCode]);
+  }, [agentCode, setChatMessages, setAgentStatus, setAgentCode]);
 
-  // Watch for manager feedback messages and trigger iteration
+  // Watch for manager and user messages and trigger iteration
   useEffect(() => {
     const lastMessage = chatMessages[chatMessages.length - 1];
 
@@ -588,8 +591,22 @@ function Orchestration() {
         const messageText = lastMessage.text.replace('[MANAGER]', '').trim();
         console.log('[Manager] Triggering iteration for message:', messageText);
 
-        // Trigger iteration
-        handleUserMessage(messageText);
+        // Trigger iteration (skip adding to chat since it's already there as [MANAGER])
+        handleUserMessage(messageText, true);
+      }
+    }
+
+    // Check if it's a user message (from voice or typing) and trigger iteration
+    if (lastMessage && lastMessage.type === 'user' && lastMessage.timestamp) {
+      if (!processedManagerMessages.current.has(lastMessage.timestamp)) {
+        // Mark as processed
+        processedManagerMessages.current.add(lastMessage.timestamp);
+
+        const messageText = lastMessage.text.replace('[YOU]', '').trim();
+        console.log('[User] Triggering iteration for message:', messageText);
+
+        // Trigger iteration (skip adding to chat since it's already there as [YOU])
+        handleUserMessage(messageText, true);
       }
     }
   }, [chatMessages, handleUserMessage]);
@@ -913,12 +930,56 @@ function Orchestration() {
               if (ref.current) {
                 // User transcript callback (when user speaks via mic)
                 console.log('[Orchestration] Setting onUserTranscript callback');
-                ref.current.onUserTranscript = (text) => {
+                ref.current.onUserTranscript = async (text) => {
                   console.log('[Orchestration] ✅ User transcript:', text);
                   setTranscripts(prev => [...prev, { speaker: 'user', text, timestamp: Date.now() }]);
 
-                  // Also send user speech to agents as a message
-                  handleUserMessage(text);
+                  // Convert speech to instruction using Gemini
+                  try {
+                    const { GoogleGenAI } = await import('@google/genai');
+                    const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_GEMINI_API_KEY });
+
+                    const response = await ai.models.generateContent({
+                      model: 'gemini-2.5-flash',
+                      contents: [{
+                        role: 'user',
+                        parts: [{
+                          text: `You are converting casual speech into clear UI/design instructions for coding agents.
+
+User said: "${text}"
+
+Convert this into a clear, actionable instruction (max 10 words). Examples:
+- "make it blue" → "make it blue"
+- "I don't like this" → "improve the design"
+- "looks ugly" → "make it look better"
+- "too small" → "make it bigger"
+- "what's up" → "keep working on current task"
+
+Only output the instruction, nothing else:`
+                        }]
+                      }]
+                    });
+
+                    const instruction = response.text.trim();
+                    console.log('[Orchestration] Converted speech to instruction:', instruction);
+
+                    // Add instruction to chat as "Boss said: ..."
+                    const messageId = `voice_${Date.now()}`;
+                    setChatMessages(prev => [...prev, {
+                      text: `Boss said: ${instruction}`,
+                      type: 'voice',
+                      timestamp: Date.now(),
+                      messageId: messageId
+                    }]);
+                  } catch (error) {
+                    console.error('[Orchestration] Failed to convert speech:', error);
+                    // Fallback: just use the original text
+                    setChatMessages(prev => [...prev, {
+                      text: `[YOU] ${text}`,
+                      type: 'user',
+                      timestamp: Date.now()
+                    }]);
+                  }
                 };
 
                 // Commentator transcript callback (when commentator speaks)
