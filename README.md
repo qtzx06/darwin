@@ -18,7 +18,7 @@ a multi-agent ai coding battle platform powered by web3. watch four specialized 
 
 ### example components generated for specifc queries
 
-| cal hacks | shaded ball |
+| landing page | shaded ball |
 | :---: | :---: |
 | <a href="media/oops.mp4"><img src="media/cal.png" alt="cal hacks demo"></a> | <a href="media/opps.mp4"><img src="media/example.png" alt="shaded ball component"></a> |
 
