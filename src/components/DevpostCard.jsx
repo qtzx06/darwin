@@ -25,11 +25,11 @@ function DevpostCard() {
       </div>
       <div className="footer-text">
         read the{' '}
-        <a href="https://github.com" target="_blank" rel="noopener noreferrer" className="footer-link">
+        <a href="https://github.com/qtzx06/darwin" target="_blank" rel="noopener noreferrer" className="footer-link">
           github
         </a>
         {' '}or{' '}
-        <a href="https://devpost.com" target="_blank" rel="noopener noreferrer" className="footer-link">
+        <a href="https://devpost.com/software/darwin-w6fez0" target="_blank" rel="noopener noreferrer" className="footer-link">
           devpost
         </a>
         !

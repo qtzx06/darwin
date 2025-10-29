@@ -53,14 +53,16 @@
   margin: 0;
   line-height: 1;
   font-weight: 400;
-  -webkit-text-stroke: 1px rgba(255, 255, 255, 0.95);
-  text-stroke: 1px rgba(255, 255, 255, 0.95);
-  text-shadow: 0 0 35px rgba(255, 255, 255, 0.4);
+  -webkit-text-stroke: 1.5px rgba(255, 255, 255, 0.9);
+  text-stroke: 1.5px rgba(255, 255, 255, 0.9);
+  text-shadow: 0 0 15px rgba(255, 255, 255, 0.15),
+               0 0 30px rgba(240, 176, 208, 0.1);
   font-family: "BBH Sans Bartle", sans-serif;
   text-transform: lowercase;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  letter-spacing: 0.15em;
+  letter-spacing: 0.2em;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
 }
 
 .subheader {

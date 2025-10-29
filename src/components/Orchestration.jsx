@@ -855,7 +855,13 @@ function Orchestration() {
           <HeaderDither />
           <div className="header-content">
             <div className="header-text">
-              <span className="header-title">DARWIN // </span>
+              <span
+                className="header-title"
+                onClick={() => window.location.href = '/'}
+                style={{ cursor: 'pointer' }}
+              >
+                DARWIN //
+              </span>
               <span className="header-subtitle">evolve your agents.</span>
             </div>
             {query && (
