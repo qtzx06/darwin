@@ -1,6 +1,6 @@
 /* Glass Card Container - Scoped to orchestration page */
 .orchestration-container .glass-card {
-  --bg-color: rgba(0, 0, 0, 0.65);
+  --bg-color: rgba(0, 0, 0, 0.4);
   --highlight: rgba(255, 255, 255, 0.25);
 
   position: relative;
@@ -256,7 +256,7 @@
 
 /* Agent live transcript boxes */
 .orchestration-container .agent-transcript {
-  --bg-color: rgba(0, 0, 0, 0.75);
+  --bg-color: rgba(0, 0, 0, 0.5);
   --highlight: rgba(255, 255, 255, 0.2);
 
   position: relative;
