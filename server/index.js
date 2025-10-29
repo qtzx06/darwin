@@ -82,7 +82,7 @@ app.post('/api/vote', async (req, res) => {
 });
 
 // LiveKit token generation endpoint
-app.post('/api/livekit/token', (req, res) => {
+app.post('/api/livekit/token', async (req, res) => {
   try {
     const { roomName, participantName } = req.body;
 
@@ -98,12 +98,12 @@ app.post('/api/livekit/token', (req, res) => {
     }
 
     // Create access token
-    const at = new AccessToken(apiKey, apiSecret, {
+    const accessToken = new AccessToken(apiKey, apiSecret, {
       identity: participantName,
       ttl: '1h',
     });
 
-    at.addGrant({
+    accessToken.addGrant({
       room: roomName,
       roomJoin: true,
       canPublish: true,
@@ -111,7 +111,7 @@ app.post('/api/livekit/token', (req, res) => {
       canPublishData: true,
     });
 
-    const token = await at.toJwt();
+    const token = await accessToken.toJwt();
 
     console.log(`Generated LiveKit token for ${participantName} in room ${roomName}`);
     console.log(`Token type: ${typeof token}, Token preview: ${token.substring(0, 50)}...`);

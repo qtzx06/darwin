@@ -332,20 +332,168 @@ function Orchestration() {
     setExpandedAgent(null);
   };
 
-  const handleAgentLike = (agentName, agentId) => {
+  const handleAgentLike = async (agentName, agentId) => {
     // Increment vote count
     setVoteCounts(prev => ({
       ...prev,
       [agentId]: prev[agentId] + 1
     }));
 
-    // Send message to chat
+    // Send vote message to chat
     const likeMessage = {
       text: `[YOU] voted for ${agentName}`,
       timestamp: Date.now(),
       type: 'user'
     };
     setChatMessages(prev => [...prev, likeMessage]);
+
+    // Manager analysis of why this agent won
+    const managerAnalysis = {
+      speedrunner: [
+        "Speedrunner takes it with pure execution speed. That O(log n) optimization was chef's kiss - load time dropped 75%. Users don't wait, users click away. Fast code = better UX.",
+        "Speedrunner secured the W with aggressive performance tuning. Parallel processing, memoization, lazy loading - the full stack. Initial bundle went from 2.4MB to 680KB. That's production-ready optimization.",
+        "Speedrunner wins on raw speed metrics. Response time under 200ms, time to interactive under 1 second. The competition was writing elegant code while Speedrunner was writing FAST code.",
+        "No contest - Speedrunner's performance-first approach dominates. Debounced inputs, cached data structures, eliminated redundant API calls. This is what users actually feel when they use the app."
+      ],
+      bloom: [
+        "Bloom gets the vote for creative vision. Those particle effects and neural network visualizations? Users remember beautiful UI. The code might be scattered but the output is pure art.",
+        "Bloom wins on aesthetic execution. Three-layer glass effects, animated gradients, attention-grabbing transitions. Users don't see your clean architecture - they see the interface. And Bloom's interface POPS.",
+        "Gotta give it to Bloom for visual innovation. That scatter-gather animation pattern with the distributing data layers? Unconventional code structure but the UX is memorable. Design is function.",
+        "Bloom takes it with pure creativity. The multi-cluster rendering approach creates depth and motion that keeps users engaged. Yeah the code's chaotic but the result is magnetic."
+      ],
+      solver: [
+        "Solver wins with methodical precision. That A* pathfinding approach to state management? Elegant and scalable. Clean code isn't just about style - it's about maintaining this 6 months from now.",
+        "Solver gets my vote for algorithmic correctness. Binary search for data filtering, dynamic programming for subproblem caching. This is the code you WANT when you're debugging at 2am.",
+        "Solver's systematic approach takes the W. Constraint satisfaction, backtracking algorithms, optimal solutions verified. Fast code breaks, pretty code gets messy, but correct code just works.",
+        "Solver secures it with computational rigor. Graph traversal for component relationships, minimax for decision logic. This isn't flashy but it's the foundation that scales to millions of users."
+      ],
+      loader: [
+        "Loader wins on production reliability. That graceful degradation system with fallback chains? Users on spotty connections still get a working app. Resilience beats raw speed when the network drops.",
+        "Gotta respect Loader's async coordination. Multi-phase loading, resource prioritization, connection pooling. This is the boring code that prevents 3am emergency deployments.",
+        "Loader takes it with operational excellence. Error boundaries, retry logic, memory management. Flashy code impresses developers; Loader's code impresses SREs who have to keep it running.",
+        "Loader gets the nod for infrastructure awareness. Lazy initialization, efficient buffer pools, cache warming strategies. This code doesn't just work - it works under load when everything's on fire."
+      ]
+    };
+
+    const analysis = managerAnalysis[agentId][Math.floor(Math.random() * managerAnalysis[agentId].length)];
+
+    setTimeout(() => {
+      setChatMessages(prev => [...prev, {
+        text: `[MANAGER] ${analysis}`,
+        timestamp: Date.now(),
+        type: 'manager'
+      }]);
+    }, 800);
+
+    // Salty reactions from other agents
+    const saltyReactions = {
+      speedrunner: {
+        bloom: [
+          "yo what??? my animations were CLEAN tho",
+          "aight i guess... let me add some more optimizations then",
+          "bruh the particle effects were working perfectly but ok",
+          "fine fine, i'll make it faster AND prettier",
+        ],
+        solver: [
+          "how did speedrunner win with that nested loop mess",
+          "aight lemme refactor this real quick",
+          "fine i'll look at their approach i guess",
+          "whatever, optimal solutions take time to compute",
+        ],
+        loader: [
+          "wait how... my async handling was flawless",
+          "ok ok let me add more performance metrics",
+          "fine, i'll speed up the loading phase",
+          "aight time to optimize the resource pipeline",
+        ]
+      },
+      bloom: {
+        speedrunner: [
+          "LMAO bloom won??? their code is EVERYWHERE",
+          "fine i'll add some visual polish i guess",
+          "aight let me make this prettier somehow",
+          "ok ok aesthetic matters apparently",
+        ],
+        solver: [
+          "bloom's code structure is literally chaos how",
+          "alright lemme add some creative flair then",
+          "fine i'll make the UI more engaging",
+          "whatever, users like pretty things i guess",
+        ],
+        loader: [
+          "bloom won?? with those unoptimized renders??",
+          "ok time to add some visual effects then",
+          "fine i'll work on the presentation layer",
+          "aight bet, loading screens bout to be BEAUTIFUL",
+        ]
+      },
+      solver: {
+        speedrunner: [
+          "solver won with like... normal code? ok",
+          "fine lemme clean up my implementation",
+          "aight i'll add more structure i guess",
+          "bet, time to write some proper algorithms",
+        ],
+        bloom: [
+          "BRUH solver's code is so dry tho how they win",
+          "ok ok lemme organize this mess",
+          "fine i'll add some actual logic patterns",
+          "aight time to structure this properly",
+        ],
+        loader: [
+          "wait solver beat my production code? cap",
+          "ok lemme refactor with better patterns",
+          "fine i'll use proper data structures",
+          "aight bet, time to write some clean code",
+        ]
+      },
+      loader: {
+        speedrunner: [
+          "loader??? bro their code takes FOREVER to load",
+          "fine i'll add better error handling",
+          "aight lemme work on the reliability layer",
+          "ok ok production readiness matters i guess",
+        ],
+        bloom: [
+          "how did loader win i didn't even see effects",
+          "ok time to add proper async handling",
+          "fine i'll make this more resilient",
+          "aight bet, edge cases bout to be HANDLED",
+        ],
+        solver: [
+          "loader over me?? my algorithms were OPTIMAL",
+          "fine lemme add better resource management",
+          "ok i'll focus on the operational side",
+          "aight time to make this production-grade",
+        ]
+      }
+    };
+
+    // Get two random other agents to react
+    const allAgents = ['speedrunner', 'bloom', 'solver', 'loader'];
+    const otherAgents = allAgents.filter(id => id !== agentId);
+    const reactingAgents = otherAgents.sort(() => Math.random() - 0.5).slice(0, 2);
+
+    reactingAgents.forEach((reactingAgentId, index) => {
+      const reactions = saltyReactions[agentId][reactingAgentId];
+      const reaction = reactions[Math.floor(Math.random() * reactions.length)];
+      const agentNames = { speedrunner: 'Speedrunner', bloom: 'Bloom', solver: 'Solver', loader: 'Loader' };
+
+      setTimeout(() => {
+        setChatMessages(prev => [...prev, {
+          text: `[${agentNames[reactingAgentId]}] ${reaction}`,
+          timestamp: Date.now(),
+          type: 'agent',
+          agent: agentNames[reactingAgentId]
+        }]);
+      }, 1500 + (index * 800));
+    });
+
+    // Trigger all agents to iterate on their code
+    setTimeout(async () => {
+      const prompt = `Boss voted for ${agentName}. Improve your approach based on what made them win.`;
+      handleUserMessage(prompt, true); // Skip adding to chat since reactions are already there
+    }, 3500);
   };
 
   const handleUserMessage = useCallback(async (userMessage, skipAddingToChat = false) => {
@@ -362,7 +510,7 @@ function Orchestration() {
 
     // Only add to chat if not skipped (manager/voice messages are already in chat)
     if (!skipAddingToChat) {
-      addChatMessage(`[MANAGER] ${userMessage}`, 'user');
+      addChatMessage(`[YOU] ${userMessage}`, 'user');
     }
 
     // Import the functions

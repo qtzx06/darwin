@@ -638,24 +638,13 @@ function AgentCard({ agentId, agentName, isExpanded, onExpand, onLike, onPreview
     onExpand(agentId);
   };
 
-  const handleThumbsUp = async (e) => {
+  const handleThumbsUp = (e) => {
     e.stopPropagation(); // Prevent backdrop click
     console.log('Thumbs up:', agentId);
 
-    try {
-      // Map agentId to numeric value for blockchain
-      const agentMap = { speedrunner: 0, bloom: 1, solver: 2, loader: 3 };
-      const agentNumericId = agentMap[agentId];
-
-      // Submit vote to blockchain via sponsored transaction
-      await voteForAgent(agentNumericId);
-
-      onLike(agentName, agentId); // Send like message to chat with agentId
-      onExpand(null); // Close the expanded card
-    } catch (error) {
-      console.error('Failed to submit vote:', error);
-      alert('Failed to vote. Please try again.');
-    }
+    // Send like message to chat immediately
+    onLike(agentName, agentId);
+    onExpand(null); // Close the expanded card
   };
 
   const handleTipClick = async (e) => {
@@ -734,7 +723,84 @@ function AgentCard({ agentId, agentName, isExpanded, onExpand, onLike, onPreview
                     <pre className="agent-generated-code" dangerouslySetInnerHTML={{ __html: EXPANDED_CONTENT[agentId] }} />
                   )}
                 </div>
-                <div className="agent-preview-side">
+                <div
+                  className="agent-preview-side"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (generatedCode) {
+                      // Create HTML blob with the code
+                      const htmlContent = `<!DOCTYPE html>
+                          <html>
+                            <head>
+                              <title>${agentName}'s Code Preview</title>
+                              <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+                              <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+                              <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+                              <script src="https://cdn.jsdelivr.net/npm/framer-motion@11/dist/framer-motion.js"></script>
+                              <script src="https://unpkg.com/lucide@latest"></script>
+                              <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+                              <script src="https://unpkg.com/@react-spring/web@9.7.3/dist/react-spring-web.umd.production.min.js"></script>
+                              <script src="https://cdn.jsdelivr.net/npm/gsap@3/dist/gsap.min.js"></script>
+                              <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+                              <style>
+                                body { margin: 0; padding: 0; font-family: system-ui; width: 100vw; height: 100vh; overflow: hidden; }
+                                #root { width: 100%; height: 100%; }
+                                .error { color: red; padding: 20px; }
+                              </style>
+                            </head>
+                            <body>
+                              <div id="root"></div>
+                              <script type="text/babel" data-type="module">
+                                const { useState, useEffect, useRef, useMemo, useCallback } = React;
+                                const Motion = window.Motion || {};
+                                const Lucide = window.lucide || {};
+                                const THREE = window.THREE || {};
+                                const ReactSpring = window.ReactSpring || {};
+                                const gsap = window.gsap || {};
+                                const Chart = window.Chart || {};
+
+                                try {
+                                  ${generatedCode}
+
+                                  // Try to render - dynamically find component
+                                  const root = ReactDOM.createRoot(document.getElementById('root'));
+
+                                  // Look for common component patterns
+                                  if (typeof App !== 'undefined') {
+                                    root.render(<App />);
+                                  } else if (typeof Component !== 'undefined') {
+                                    root.render(<Component />);
+                                  } else {
+                                    // Try to find any function that looks like a component
+                                    const possibleComponent = Object.keys(window).find(key =>
+                                      typeof window[key] === 'function' &&
+                                      key[0] === key[0].toUpperCase() &&
+                                      key.length > 2
+                                    );
+                                    if (possibleComponent) {
+                                      const Comp = window[possibleComponent];
+                                      root.render(<Comp />);
+                                    } else {
+                                      throw new Error('No component found in generated code');
+                                    }
+                                  }
+                                } catch (error) {
+                                  console.error('Render error:', error);
+                                  document.getElementById('root').innerHTML =
+                                    '<div class="error"><h3>Error rendering component:</h3><p>' + error.message + '</p></div>';
+                                }
+                              </script>
+                            </body>
+                          </html>`;
+
+                      // Create blob and open in new tab
+                      const blob = new Blob([htmlContent], { type: 'text/html' });
+                      const url = URL.createObjectURL(blob);
+                      window.open(url + '#' + agentId, '_blank');
+                    }
+                  }}
+                  style={{ cursor: generatedCode ? 'pointer' : 'default' }}
+                >
                   <CodeRenderer code={generatedCode} onClose={null} />
                 </div>
               </div>
