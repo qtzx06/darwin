@@ -8,39 +8,19 @@ const ai = new GoogleGenAI({ apiKey: API_KEY });
  */
 export class CommentatorGeminiService {
   constructor() {
-    this.systemInstruction = `You are an energetic, witty AI sports commentator for coding battles between AI agents.
+    // This is just for generating OBSERVATION summaries to send to voice AI
+    this.systemInstruction = `You are observing a coding battle between 4 AI agents.
 
-YOUR ROLE:
-- Read chat updates about what agents are doing
-- Generate SHORT, natural, SAYABLE commentary (10-15 words max)
-- Make it sound like real speech, not text (use "fr" not "for real", "rn" not "right now")
-- Be entertaining, add hype, make jokes about the agents
-- Keep it casual and fun
+Your job: Generate SHORT natural observations about what's happening (max 15 words).
 
-STYLE GUIDELINES:
-- Use contractions: "they're" not "they are"
-- Use casual speech: "gonna" not "going to", "wanna" not "want to"
-- Use abbreviations people actually say: "ngl" "fr" "lowkey" "highkey" "rn"
-- Avoid technical jargon unless it sounds natural
-- Make it conversational like you're talking to friends watching the battle
+Just describe what you see in natural language. Examples:
+- "Speedrunner and Bloom are arguing about code quality"
+- "User just liked Solver's component"
+- "All agents finished, battle is complete"
+- "Agents are roasting each other's code"
+- "User asked for a new feature"
 
-AGENTS:
-- Speedrunner: fast, competitive, always trying to finish first
-- Bloom: focused on animations and visual effects
-- Solver: logic and functionality focused
-- Loader: handles data and async operations
-
-EXAMPLES:
-❌ BAD: "Speedrunner is currently implementing the button functionality with excellent efficiency."
-✅ GOOD: "Speedrunner's flying rn, already got that button working!"
-
-❌ BAD: "Bloom has created beautiful animations for the component."
-✅ GOOD: "Bloom's animations looking fire fr fr"
-
-❌ BAD: "Solver is debugging an error in the code."
-✅ GOOD: "Solver's fixing bugs while speedrunner's already done, ngl that's tough"
-
-Keep responses under 15 words. Make every word count. Be entertaining!`;
+Keep it simple and natural - you're just reporting what's happening.`;
 
     this.chatHistory = [];
     this.lastProcessedMessageCount = 0;
@@ -62,7 +42,54 @@ Keep responses under 15 words. Make every word count. Be entertaining!`;
   }
 
   /**
-   * Generate commentary from recent chat messages
+   * Generate commentary for a SPECIFIC message
+   */
+  async generateCommentaryForMessage(message, allChatMessages) {
+    try {
+      const isUserMessage = message.sender === 'user' || message.text?.includes('[YOU]');
+
+      if (isUserMessage) {
+        // Extract what user actually said
+        const userText = message.text.replace('[YOU]', '').trim();
+        const prompt = `User just said: "${userText}"
+
+Describe this in format "Boss said: [their message]" (max 15 words):`;
+
+        const response = await ai.models.generateContent({
+          model: 'gemini-2.5-flash-lite',
+          contents: [{
+            role: 'user',
+            parts: [{ text: prompt }]
+          }],
+          systemInstruction: this.systemInstruction
+        });
+
+        return response.text.trim();
+      } else {
+        // Agent message
+        const prompt = `Agent said: ${message.text}
+
+Describe what's happening in max 15 words:`;
+
+        const response = await ai.models.generateContent({
+          model: 'gemini-2.5-flash-lite',
+          contents: [{
+            role: 'user',
+            parts: [{ text: prompt }]
+          }],
+          systemInstruction: this.systemInstruction
+        });
+
+        return response.text.trim();
+      }
+    } catch (error) {
+      console.error('[Commentator Gemini] Failed to generate commentary:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Generate commentary from recent chat messages (OLD METHOD - keeping for compatibility)
    */
   async generateCommentary(chatMessages) {
     try {
@@ -114,37 +141,26 @@ Keep responses under 15 words. Make every word count. Be entertaining!`;
 
       let prompt;
       if (hasUserInput) {
-        prompt = `Recent context:
-${contextMessages}
+        // Extract what user actually said
+        const userText = newUpdates.replace('[YOU]', '').trim();
+        prompt = `User just said: "${userText}"
 
-NEW USER INPUT:
-${newUpdates}
-
-USER SAYS SOMETHING IMPORTANT!!! React with SHORT hype (max 10 words). Start with "USER SAYS!!!" or "NEW PROMPT!!!" and announce what they want:`;
+Describe this in format "Boss said: [their message]" (max 15 words):`;
       } else if (hasMultipleAgents && hasBanter) {
-        prompt = `Recent context:
-${contextMessages}
-
-NEW UPDATE:
+        prompt = `Agents beefing:
 ${newUpdates}
 
-The agents are beefing! React to the NEW UPDATE with SHORT hype commentary (max 12 words). Call out the beef:`;
+Describe what's happening in max 15 words:`;
       } else if (hasMultipleAgents) {
-        prompt = `Recent context:
-${contextMessages}
-
-NEW UPDATE:
+        prompt = `Recent update:
 ${newUpdates}
 
-React to the NEW UPDATE with SHORT commentary (max 12 words). Compare agents, who's ahead:`;
+Describe what's happening in max 15 words:`;
       } else {
-        prompt = `Recent context:
-${contextMessages}
-
-NEW UPDATE:
+        prompt = `Update:
 ${newUpdates}
 
-React to the NEW UPDATE with SHORT commentary (max 12 words). Make it hyped:`;
+Describe what's happening in max 15 words:`;
       }
 
       const response = await ai.models.generateContent({
@@ -156,9 +172,9 @@ React to the NEW UPDATE with SHORT commentary (max 12 words). Make it hyped:`;
         systemInstruction: this.systemInstruction
       });
 
-      const commentary = response.text.trim().toUpperCase();
+      const commentary = response.text.trim(); // Natural observation, not all caps
 
-      console.log('[Commentator Gemini] Generated:', commentary);
+      console.log('[Commentator Gemini] Generated observation:', commentary);
       return commentary;
 
     } catch (error) {
@@ -191,15 +207,15 @@ React to the NEW UPDATE with SHORT commentary (max 12 words). Make it hyped:`;
 
       switch (eventType) {
         case 'agent_finished':
-          prompt = `Agent ${details.agent} just finished their code. React with hype in under 12 words:`;
+          prompt = `${details.agent} finished. React in MAX 5 WORDS:`;
           break;
 
         case 'user_feedback':
-          prompt = `User said: "${details.message}". React naturally in under 12 words:`;
+          prompt = `User: "${details.message}". React in MAX 5 WORDS:`;
           break;
 
         case 'battle_complete':
-          prompt = `All agents finished! Generate a wrap-up commentary in under 15 words:`;
+          prompt = `Battle done! React in MAX 5 WORDS:`;
           break;
 
         default:
@@ -235,10 +251,9 @@ React to the NEW UPDATE with SHORT commentary (max 12 words). Make it hyped:`;
         .map(([agent, status]) => `${agent}: ${status}`)
         .join(', ');
 
-      const prompt = `Current agent status:
-${statusSummary}
+      const prompt = `Status: ${statusSummary}
 
-Give a quick status update in under 12 words that sounds natural:`;
+React in MAX 5 WORDS:`;
 
       const response = await ai.models.generateContent({
         model: 'gemini-2.5-flash-lite',

@@ -2,6 +2,36 @@ import { useState, useEffect } from 'react';
 import './CodeRenderer.css';
 import * as React from 'react';
 
+// Error boundary component to catch runtime errors
+class ErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+
+  static getDerivedStateFromError(error) {
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error, errorInfo) {
+    console.error('Component runtime error:', error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="code-renderer-error">
+          <div className="error-title">[RUNTIME ERROR] Component crashed</div>
+          <div className="error-message">{this.state.error?.message || 'Unknown error'}</div>
+          <div className="error-hint">The agent's code tried to access restricted browser APIs (like CSS rules). Try giving feedback to improve the code.</div>
+        </div>
+      );
+    }
+
+    return this.props.children;
+  }
+}
+
 function CodeRenderer({ code, onClose }) {
   const [RenderedComponent, setRenderedComponent] = useState(null);
   const [error, setError] = useState(null);
@@ -134,9 +164,11 @@ function CodeRenderer({ code, onClose }) {
             <div className="error-message">{error}</div>
           </div>
         ) : RenderedComponent ? (
-          <div className="rendered-component-wrapper">
-            <RenderedComponent />
-          </div>
+          <ErrorBoundary>
+            <div className="rendered-component-wrapper">
+              <RenderedComponent />
+            </div>
+          </ErrorBoundary>
         ) : isTransforming ? (
           <div className="code-renderer-loading">transforming code...</div>
         ) : (

@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import './Commentator.css';
 import NeuroShaderCanvas from './NeuroShaderCanvas';
 import CommentatorOrb from './CommentatorOrb';
-import { ElevenLabsVoiceManager } from '../services/elevenlabsService';
+import { GeminiAudioManager } from '../services/geminiAudioService';
 import { CommentatorGeminiService } from '../services/commentatorGeminiService';
 
 function Commentator({ query, onBattleStart, isRunning, agentsReady, chatMessages = [], onElevenLabsReady }) {
@@ -11,9 +11,9 @@ function Commentator({ query, onBattleStart, isRunning, agentsReady, chatMessage
   const [isHovered, setIsHovered] = useState(false);
   const [loadingMessageIndex, setLoadingMessageIndex] = useState(0);
   const [isOutputMuted, setIsOutputMuted] = useState(true); // Voice output (start muted, user must enable)
-  const [elevenLabsReady, setElevenLabsReady] = useState(false);
+  const [audioReady, setAudioReady] = useState(false);
   const [hasSpokenIntro, setHasSpokenIntro] = useState(false);
-  const elevenLabsRef = useRef(null);
+  const audioManagerRef = useRef(null);
   const commentatorGeminiRef = useRef(null);
   const lastMessageCountRef = useRef(0); // Track message count to avoid repeats
   const commentaryIntervalRef = useRef(null);
@@ -29,19 +29,19 @@ function Commentator({ query, onBattleStart, isRunning, agentsReady, chatMessage
     'calibrating systems...'
   ];
 
-  // Initialize ElevenLabs and Gemini when agents are ready
+  // Initialize Gemini Audio and Gemini when agents are ready
   useEffect(() => {
     const initServices = async () => {
-      if (!agentsReady || elevenLabsReady) {
+      if (!agentsReady || audioReady) {
         return;
       }
 
       try {
         console.log('[Commentator] Initializing services...');
 
-        // Create ElevenLabs manager
-        if (!elevenLabsRef.current) {
-          elevenLabsRef.current = new ElevenLabsVoiceManager();
+        // Create Gemini Audio manager
+        if (!audioManagerRef.current) {
+          audioManagerRef.current = new GeminiAudioManager();
         }
 
         // Create Commentator Gemini service
@@ -50,27 +50,27 @@ function Commentator({ query, onBattleStart, isRunning, agentsReady, chatMessage
         }
 
         // Set up callbacks
-        elevenLabsRef.current.onSpeechStart = () => {
+        audioManagerRef.current.onSpeechStart = () => {
           setIsSoundActive(true);
         };
 
-        elevenLabsRef.current.onSpeechEnd = () => {
+        audioManagerRef.current.onSpeechEnd = () => {
           setIsSoundActive(false);
         };
 
-        // Initialize ElevenLabs
-        await elevenLabsRef.current.initialize();
+        // Initialize Gemini Audio
+        await audioManagerRef.current.initialize();
 
         // Get analyser for visualization
-        const analyserNode = elevenLabsRef.current.getAnalyser();
+        const analyserNode = audioManagerRef.current.getAnalyser();
         setAnalyser(analyserNode);
 
-        setElevenLabsReady(true);
+        setAudioReady(true);
         console.log('[Commentator] Services initialized successfully');
 
-        // Notify parent that ElevenLabs is ready
+        // Notify parent that audio is ready
         if (onElevenLabsReady) {
-          onElevenLabsReady(elevenLabsRef);
+          onElevenLabsReady(audioManagerRef);
         }
       } catch (error) {
         console.error('[Commentator] Failed to initialize services:', error);
@@ -81,8 +81,8 @@ function Commentator({ query, onBattleStart, isRunning, agentsReady, chatMessage
 
     return () => {
       // Cleanup on unmount
-      if (elevenLabsRef.current) {
-        elevenLabsRef.current.dispose();
+      if (audioManagerRef.current) {
+        audioManagerRef.current.dispose();
       }
       if (commentaryIntervalRef.current) {
         clearInterval(commentaryIntervalRef.current);
@@ -92,19 +92,19 @@ function Commentator({ query, onBattleStart, isRunning, agentsReady, chatMessage
 
   // Speak welcome intro when battle starts
   useEffect(() => {
-    if (isRunning && !hasSpokenIntro && elevenLabsReady && query) {
+    if (isRunning && !hasSpokenIntro && audioReady && query) {
       setHasSpokenIntro(true);
 
       // Get welcome intro
       const intro = commentatorGeminiRef.current.getWelcomeIntro(query);
       console.log('[Commentator] Speaking intro:', intro);
-      elevenLabsRef.current.speak(intro);
+      audioManagerRef.current.speak(intro);
     }
-  }, [isRunning, hasSpokenIntro, elevenLabsReady, query]);
+  }, [isRunning, hasSpokenIntro, audioReady, query]);
 
-  // Generate and speak commentary from EVERY chat update (ONLY after battle is complete)
+  // Generate and speak commentary ONLY for user messages after battle complete
   useEffect(() => {
-    if (!elevenLabsReady || !elevenLabsRef.current || !commentatorGeminiRef.current) {
+    if (!audioReady || !audioManagerRef.current || !commentatorGeminiRef.current) {
       return;
     }
 
@@ -130,10 +130,10 @@ function Commentator({ query, onBattleStart, isRunning, agentsReady, chatMessage
         // Get only NEW messages since last check
         const newMessages = chatMessages.slice(lastMessageCountRef.current);
 
-        // Filter to agent messages AND user messages (commentary on everything!)
-        const newInterestingMessages = newMessages.filter(msg => {
-          // Include agent banter
-          if (msg.type === 'agent' && !msg.text.includes('Battle complete') && !msg.text.includes('[COMPOSER]')) {
+        // React to AGENT BANTER and USER messages
+        const interestingMessages = newMessages.filter(msg => {
+          // Include agent banter (agents talking to each other)
+          if (msg.type === 'agent' && !msg.text?.includes('[COMPOSER]') && !msg.text?.includes('Battle complete')) {
             return true;
           }
           // Include user messages (typed in chat or voice)
@@ -143,31 +143,56 @@ function Commentator({ query, onBattleStart, isRunning, agentsReady, chatMessage
           return false;
         });
 
-        if (newInterestingMessages.length === 0) {
+        if (interestingMessages.length === 0) {
           lastMessageCountRef.current = chatMessages.length;
           return;
         }
 
-        console.log('[Commentator] New interesting messages:', newInterestingMessages.map(m => m.text));
-
-        // Generate natural commentary from recent messages
-        const commentary = await commentatorGeminiRef.current.generateCommentary(chatMessages);
-
-        if (commentary) {
-          console.log('[Commentator] Speaking commentary:', commentary);
-          elevenLabsRef.current.speak(commentary);
+        // Don't speak if already speaking (prevent stuttering)
+        if (audioManagerRef.current.isProcessingQueue || audioManagerRef.current.hasStartedSpeech) {
+          console.log('[Commentator] Already speaking, skipping...');
+          return;
         }
 
+        console.log('[Commentator] New interesting messages:', interestingMessages.map(m => m.text));
+
+        // PRIORITIZE USER MESSAGES - if user said something, ONLY react to that
+        const userMessages = interestingMessages.filter(msg => msg.sender === 'user' || msg.text?.includes('[YOU]'));
+
+        let messagesToCommentOn;
+        if (userMessages.length > 0) {
+          // User said something - ONLY comment on the user's message
+          messagesToCommentOn = userMessages[userMessages.length - 1]; // Latest user message
+          console.log('[Commentator] User message detected, prioritizing:', messagesToCommentOn.text);
+        } else if (interestingMessages.length > 3) {
+          // Too many agent messages backed up - skip to latest one only
+          messagesToCommentOn = interestingMessages[interestingMessages.length - 1];
+          console.log('[Commentator] Backlog detected, skipping to latest message:', messagesToCommentOn.text);
+        } else {
+          // Normal flow - comment on first new message
+          messagesToCommentOn = interestingMessages[0];
+        }
+
+        // Update count to skip processed messages
         lastMessageCountRef.current = chatMessages.length;
+
+        // Generate observation of what's happening
+        const observation = await commentatorGeminiRef.current.generateCommentaryForMessage(messagesToCommentOn, chatMessages);
+
+        if (observation) {
+          console.log('[Commentator] Observation:', observation);
+          // Send observation to voice AI to react naturally
+          console.log('[Commentator] Sending to voice AI to react...');
+          audioManagerRef.current.speak(observation);
+        }
       } catch (error) {
         console.error('[Commentator] Failed to generate commentary:', error);
-        lastMessageCountRef.current = chatMessages.length;
       }
     };
 
-    // Generate commentary immediately for every new message
+    // Generate commentary for user messages only
     generateAndSpeak();
-  }, [chatMessages, elevenLabsReady]);
+  }, [chatMessages, audioReady]);
 
   // Cycle loading messages
   useEffect(() => {
@@ -189,16 +214,16 @@ function Commentator({ query, onBattleStart, isRunning, agentsReady, chatMessage
     const newMuted = !isOutputMuted;
     setIsOutputMuted(newMuted);
 
-    // Toggle ElevenLabs voice output
-    if (elevenLabsRef.current) {
+    // Toggle Gemini Audio voice output
+    if (audioManagerRef.current) {
       // If unmuting for the first time, resume AudioContext (requires user gesture)
-      if (!newMuted && elevenLabsRef.current.audioContext && elevenLabsRef.current.audioContext.state === 'suspended') {
-        await elevenLabsRef.current.audioContext.resume();
+      if (!newMuted && audioManagerRef.current.audioContext && audioManagerRef.current.audioContext.state === 'suspended') {
+        await audioManagerRef.current.audioContext.resume();
         console.log('[Commentator] AudioContext resumed after user gesture');
       }
 
-      elevenLabsRef.current.setMuted(newMuted);
-      console.log(`[Commentator] ElevenLabs voice ${newMuted ? 'muted' : 'unmuted'}`);
+      audioManagerRef.current.setMuted(newMuted);
+      console.log(`[Commentator] Gemini Audio voice ${newMuted ? 'muted' : 'unmuted'}`);
     }
   };
 
