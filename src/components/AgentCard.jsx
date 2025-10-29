@@ -650,12 +650,24 @@ function AgentCard({ agentId, agentName, isExpanded, onExpand, onLike, onPreview
     onExpand(agentId);
   };
 
-  const handleThumbsUp = (e) => {
+  const handleThumbsUp = async (e) => {
     e.stopPropagation(); // Prevent backdrop click
     console.log('Thumbs up:', agentId);
 
     // Send like message to chat immediately
     onLike(agentName, agentId);
+
+    // Also submit to blockchain in background (don't wait for it)
+    try {
+      const agentMap = { speedrunner: 0, bloom: 1, solver: 2, loader: 3 };
+      const agentNumericId = agentMap[agentId];
+      voteForAgent(agentNumericId).catch(err => {
+        console.error('Blockchain vote failed:', err);
+      });
+    } catch (error) {
+      console.error('Failed to submit blockchain vote:', error);
+    }
+
     onExpand(null); // Close the expanded card
   };
 
