@@ -32,7 +32,7 @@ class ErrorBoundary extends React.Component {
   }
 }
 
-function CodeRenderer({ code, onClose }) {
+function CodeRenderer({ code, onClose, fullscreen = false }) {
   const [RenderedComponent, setRenderedComponent] = useState(null);
   const [error, setError] = useState(null);
   const [isTransforming, setIsTransforming] = useState(false);
@@ -154,6 +154,59 @@ function CodeRenderer({ code, onClose }) {
 
     loadBabelAndTransform();
   }, [code]);
+
+  // Fullscreen mode - render component directly without wrappers
+  if (fullscreen) {
+    return (
+      <div style={{
+        width: '100vw',
+        height: '100vh',
+        minWidth: '100vw',
+        minHeight: '100vh',
+        margin: 0,
+        padding: 0,
+        overflow: 'auto',
+        display: 'flex',
+        alignItems: 'stretch',
+        justifyContent: 'stretch'
+      }}>
+        {error ? (
+          <div style={{ color: 'red', padding: '20px' }}>
+            <h3>Error</h3>
+            <p>{error}</p>
+          </div>
+        ) : RenderedComponent ? (
+          <ErrorBoundary>
+            <div style={{
+              width: '100vw',
+              height: '100vh',
+              minWidth: '100vw',
+              minHeight: '100vh',
+              flex: 1,
+              display: 'flex',
+              flexDirection: 'column'
+            }}>
+              <div style={{
+                width: '100%',
+                height: '100%',
+                flex: 1
+              }}>
+                <RenderedComponent />
+              </div>
+            </div>
+          </ErrorBoundary>
+        ) : isTransforming ? (
+          <div style={{ color: '#fff', padding: '40px', textAlign: 'center', width: '100%' }}>
+            transforming code...
+          </div>
+        ) : (
+          <div style={{ color: '#666', padding: '40px', textAlign: 'center', width: '100%' }}>
+            waiting for code...
+          </div>
+        )}
+      </div>
+    );
+  }
 
   return (
     <div className="code-renderer-inline">

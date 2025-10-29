@@ -551,6 +551,18 @@ function AgentCard({ agentId, agentName, isExpanded, onExpand, onLike, onPreview
   const [visibleMessages, setVisibleMessages] = useState([0]); // Track which messages are visible
   const [displayedCode, setDisplayedCode] = useState('');
   const [isTyping, setIsTyping] = useState(false);
+  const [isPreviewExpanded, setIsPreviewExpanded] = useState(false);
+
+  // ESC key to close preview
+  useEffect(() => {
+    const handleEsc = (e) => {
+      if (e.key === 'Escape' && isPreviewExpanded) {
+        setIsPreviewExpanded(false);
+      }
+    };
+    window.addEventListener('keydown', handleEsc);
+    return () => window.removeEventListener('keydown', handleEsc);
+  }, [isPreviewExpanded]);
 
   // Typing animation for generated code
   useEffect(() => {
@@ -713,90 +725,24 @@ function AgentCard({ agentId, agentName, isExpanded, onExpand, onLike, onPreview
             <div className="glass-specular"></div>
             {isExpanded ? (
               <div className="agent-split-view">
-                <div className="agent-code-side">
-                  {generatedCode ? (
-                    <pre className="agent-generated-code">
-                      {displayedCode}
-                      {isTyping && <span className="typing-cursor">▋</span>}
-                    </pre>
-                  ) : (
-                    <pre className="agent-generated-code" dangerouslySetInnerHTML={{ __html: EXPANDED_CONTENT[agentId] }} />
-                  )}
-                </div>
+                {!isPreviewExpanded && (
+                  <div className="agent-code-side">
+                    {generatedCode ? (
+                      <pre className="agent-generated-code">
+                        {displayedCode}
+                        {isTyping && <span className="typing-cursor">▋</span>}
+                      </pre>
+                    ) : (
+                      <pre className="agent-generated-code" dangerouslySetInnerHTML={{ __html: EXPANDED_CONTENT[agentId] }} />
+                    )}
+                  </div>
+                )}
                 <div
-                  className="agent-preview-side"
+                  className={`agent-preview-side ${isPreviewExpanded ? 'preview-fullwidth' : ''}`}
                   onClick={(e) => {
                     e.stopPropagation();
                     if (generatedCode) {
-                      // Create HTML blob with the code
-                      const htmlContent = `<!DOCTYPE html>
-                          <html>
-                            <head>
-                              <title>${agentName}'s Code Preview</title>
-                              <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-                              <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-                              <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-                              <script src="https://cdn.jsdelivr.net/npm/framer-motion@11/dist/framer-motion.js"></script>
-                              <script src="https://unpkg.com/lucide@latest"></script>
-                              <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-                              <script src="https://unpkg.com/@react-spring/web@9.7.3/dist/react-spring-web.umd.production.min.js"></script>
-                              <script src="https://cdn.jsdelivr.net/npm/gsap@3/dist/gsap.min.js"></script>
-                              <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-                              <style>
-                                body { margin: 0; padding: 0; font-family: system-ui; width: 100vw; height: 100vh; overflow: hidden; }
-                                #root { width: 100%; height: 100%; }
-                                .error { color: red; padding: 20px; }
-                              </style>
-                            </head>
-                            <body>
-                              <div id="root"></div>
-                              <script type="text/babel" data-type="module">
-                                const { useState, useEffect, useRef, useMemo, useCallback } = React;
-                                const Motion = window.Motion || {};
-                                const Lucide = window.lucide || {};
-                                const THREE = window.THREE || {};
-                                const ReactSpring = window.ReactSpring || {};
-                                const gsap = window.gsap || {};
-                                const Chart = window.Chart || {};
-
-                                try {
-                                  ${generatedCode}
-
-                                  // Try to render - dynamically find component
-                                  const root = ReactDOM.createRoot(document.getElementById('root'));
-
-                                  // Look for common component patterns
-                                  if (typeof App !== 'undefined') {
-                                    root.render(<App />);
-                                  } else if (typeof Component !== 'undefined') {
-                                    root.render(<Component />);
-                                  } else {
-                                    // Try to find any function that looks like a component
-                                    const possibleComponent = Object.keys(window).find(key =>
-                                      typeof window[key] === 'function' &&
-                                      key[0] === key[0].toUpperCase() &&
-                                      key.length > 2
-                                    );
-                                    if (possibleComponent) {
-                                      const Comp = window[possibleComponent];
-                                      root.render(<Comp />);
-                                    } else {
-                                      throw new Error('No component found in generated code');
-                                    }
-                                  }
-                                } catch (error) {
-                                  console.error('Render error:', error);
-                                  document.getElementById('root').innerHTML =
-                                    '<div class="error"><h3>Error rendering component:</h3><p>' + error.message + '</p></div>';
-                                }
-                              </script>
-                            </body>
-                          </html>`;
-
-                      // Create blob and open in new tab
-                      const blob = new Blob([htmlContent], { type: 'text/html' });
-                      const url = URL.createObjectURL(blob);
-                      window.open(url + '#' + agentId, '_blank');
+                      setIsPreviewExpanded(!isPreviewExpanded);
                     }
                   }}
                   style={{ cursor: generatedCode ? 'pointer' : 'default' }}
@@ -826,6 +772,7 @@ function AgentCard({ agentId, agentName, isExpanded, onExpand, onLike, onPreview
           </div>
         </div>
       </div>
+
     </div>
   );
 }

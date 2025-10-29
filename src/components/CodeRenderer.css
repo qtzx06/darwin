@@ -170,3 +170,32 @@
   font-size: 12px;
   font-family: 'Geist Mono', monospace;
 }
+
+/* Fullscreen mode overrides - force everything to fill screen */
+body:has(.code-renderer-fullscreen-active) {
+  overflow: hidden;
+}
+
+.code-renderer-fullscreen-active {
+  width: 100vw !important;
+  height: 100vh !important;
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  z-index: 10000 !important;
+}
+
+.code-renderer-fullscreen-active * {
+  box-sizing: border-box;
+}
+
+.code-renderer-fullscreen-active > div,
+.code-renderer-fullscreen-active > div > div,
+.code-renderer-fullscreen-active > div > div > div {
+  width: 100% !important;
+  height: 100% !important;
+  min-width: 100% !important;
+  min-height: 100% !important;
+}

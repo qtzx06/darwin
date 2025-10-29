@@ -377,6 +377,12 @@
   padding-bottom: 4px;
 }
 
+/* Preview expanded to full width */
+.orchestration-container .preview-fullwidth {
+  width: 100% !important;
+  flex: 1 !important;
+}
+
 /* Agent status message */
 .orchestration-container .agent-status-message {
   margin-top: 8px;
