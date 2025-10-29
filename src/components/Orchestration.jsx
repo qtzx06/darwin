@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import './Orchestration.css';
 import './PreviewCard.css';
@@ -60,7 +60,8 @@ function Orchestration() {
   const [transcripts, setTranscripts] = useState([]); // Voice transcripts
   const banterIntervalRef = useRef(null);
   const elevenLabsRef = useRef(null); // Store ElevenLabs ref from Commentator
-  const managerFeedbackIntervalRef = useRef(null); // Manager feedback interval
+  const banterCountRef = useRef(0); // Count agent banter messages
+  const processedManagerMessages = useRef(new Set()); // Track processed manager messages
 
   // Debug: Log when previewCode changes
   useEffect(() => {
@@ -165,6 +166,59 @@ function Orchestration() {
             type: 'agent',
             timestamp: Date.now() + Math.random()
           }]);
+
+          // Increment banter count
+          banterCountRef.current += 1;
+
+          // Every 4 banter messages, send manager feedback
+          if (banterCountRef.current >= 4) {
+            banterCountRef.current = 0; // Reset counter
+
+            // Check if battle is complete before sending manager feedback
+            const battleComplete = chatMessages.some(msg =>
+              msg.text && msg.text.toLowerCase().includes('battle complete')
+            );
+
+            if (battleComplete) {
+              // Send manager feedback after a short delay
+              setTimeout(() => {
+                const managerMessages = [
+                  "make it more colorful",
+                  "this needs to be bigger",
+                  "add some animations",
+                  "make it blue",
+                  "follow bloom's aesthetic",
+                  "speedrunner optimize this",
+                  "solver fix the logic",
+                  "loader handle this better",
+                  "needs more contrast",
+                  "make the text bigger",
+                  "add some shadows",
+                  "this is too plain",
+                  "spice it up",
+                  "make it pop more",
+                  "add gradients",
+                  "improve the layout",
+                  "make it responsive",
+                  "add hover effects",
+                  "needs better spacing",
+                  "center this properly"
+                ];
+
+                const randomMessage = managerMessages[Math.floor(Math.random() * managerMessages.length)];
+                const messageId = `manager_${Date.now()}`; // Unique ID for this message
+                console.log('[Manager] Sending feedback:', randomMessage);
+
+                // Add to chat as [MANAGER]
+                setChatMessages(prev => [...prev, {
+                  text: `[MANAGER] ${randomMessage}`,
+                  type: 'manager',
+                  timestamp: Date.now(),
+                  messageId: messageId
+                }]);
+              }, 2000); // 2 second delay after banter
+            }
+          }
         }
       };
 
@@ -294,7 +348,7 @@ function Orchestration() {
     setChatMessages(prev => [...prev, likeMessage]);
   };
 
-  const handleUserMessage = async (userMessage) => {
+  const handleUserMessage = useCallback(async (userMessage) => {
     console.log('[Orchestration] handleUserMessage called with:', userMessage);
 
     // Add user message to chat
@@ -519,7 +573,26 @@ function Orchestration() {
       console.error('Failed to process user message:', error);
       addChatMessage('[ERROR] failed to process that', 'error');
     }
-  };
+  }, [agentCode]);
+
+  // Watch for manager feedback messages and trigger iteration
+  useEffect(() => {
+    const lastMessage = chatMessages[chatMessages.length - 1];
+
+    // Check if it's a manager message and we haven't processed it yet
+    if (lastMessage && lastMessage.type === 'manager' && lastMessage.messageId) {
+      if (!processedManagerMessages.current.has(lastMessage.messageId)) {
+        // Mark as processed
+        processedManagerMessages.current.add(lastMessage.messageId);
+
+        const messageText = lastMessage.text.replace('[MANAGER]', '').trim();
+        console.log('[Manager] Triggering iteration for message:', messageText);
+
+        // Trigger iteration
+        handleUserMessage(messageText);
+      }
+    }
+  }, [chatMessages, handleUserMessage]);
 
   const handleBattleStart = async () => {
     if (!query || isBattleRunning || !agentsReady) return;
