@@ -13,6 +13,9 @@ dist-ssr
 *.local
 .env
 
+# Media files
+media/*.mov
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
