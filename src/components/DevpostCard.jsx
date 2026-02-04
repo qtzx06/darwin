@@ -4,7 +4,7 @@ import './DevpostCard.css';
 function DevpostCard() {
   const [showQuack, setShowQuack] = useState(false);
 
-  const handleLogoHover = () => {
+  const handleLogoClick = () => {
     setShowQuack(true);
     setTimeout(() => {
       setShowQuack(false);
@@ -19,7 +19,7 @@ function DevpostCard() {
           src="/favicon.png"
           alt="Logo"
           className="footer-logo"
-          onMouseEnter={handleLogoHover}
+          onClick={handleLogoClick}
           style={{ cursor: 'pointer' }}
         />
       </div>
